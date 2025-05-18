@@ -1,0 +1,92 @@
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  padding: 1.5rem;
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 1rem;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-icon.orders {
+  background-color: var(--primary-color);
+}
+
+.stat-icon.customers {
+  background-color: var(--success-color);
+}
+
+.stat-icon.receivable {
+  background-color: var(--warning-color);
+}
+
+.stat-details h3 {
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.view-all-link {
+  text-align: right;
+  margin-top: 1rem;
+}
+
+.view-all-link a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.view-all-link a:hover {
+  text-decoration: underline;
+}
+
+.no-data {
+  padding: 2rem;
+  text-align: center;
+  color: var(--gray-600);
+}
+
+@media (max-width: 768px) {
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+}
