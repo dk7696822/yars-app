@@ -64,8 +64,10 @@ const generateInvoice = async (req, res) => {
       return error(res, 404, "No eligible orders found for invoicing");
     }
 
-    // Calculate total amount
+    // Calculate total amount (without subtracting advance)
     let totalAmount = 0;
+    let totalAdvanceReceived = 0;
+
     for (const order of orders) {
       // Calculate product amount
       let productAmount = 0;
@@ -77,17 +79,22 @@ const generateInvoice = async (req, res) => {
       // Add plate charge
       const plateCharge = parseFloat(order.plateType.charge);
 
-      // Subtract advance
+      // Track advance separately (don't subtract it from the total amount)
       const advanceReceived = parseFloat(order.advance_received);
+      totalAdvanceReceived += advanceReceived;
 
-      // Calculate total receivable for this order
-      const orderTotal = productAmount + plateCharge - advanceReceived;
+      // Calculate total for this order (without subtracting advance)
+      const orderTotal = productAmount + plateCharge;
       totalAmount += orderTotal;
     }
 
     // Calculate tax amount
     const taxAmount = (totalAmount * parseFloat(tax_percent)) / 100;
     const finalAmount = totalAmount + taxAmount;
+
+    // Note: totalAmount is the full order amount without subtracting advance
+    // finalAmount is totalAmount + tax
+    // The actual amount due is finalAmount - totalAdvanceReceived - any additional payments
 
     // Create a date object for today
     const today = new Date();
@@ -761,17 +768,24 @@ const generatePDF = async (req, res) => {
       }
     }
 
-    // Calculate total payments made
+    // Calculate total payments made (excluding advance payments which are already in invoice items)
     let totalPayments = 0;
     if (invoice.payments && invoice.payments.length > 0) {
-      totalPayments = invoice.payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+      // Filter out ADVANCE type payments to avoid double counting
+      const advancePayments = invoice.payments.filter((payment) => payment.payment_type === "ADVANCE");
+      const otherPayments = invoice.payments.filter((payment) => payment.payment_type !== "ADVANCE");
+
+      // Only count non-advance payments
+      totalPayments = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
     }
 
+    // For the PDF, we should use the original total amount from the invoice
+    // This is already the full order amount without advance subtracted
     // Convert all values to numbers to ensure toFixed works
     const totalAmount = parseFloat(invoice.total_amount);
     const taxPercent = parseFloat(invoice.tax_percent);
     const taxAmount = parseFloat(invoice.tax_amount);
-    const finalAmount = parseFloat(invoice.final_amount);
+    // We don't need finalAmount since we're calculating the remaining amount based on totalAmount
 
     doc.fontSize(12).font("Helvetica-Bold").text("Subtotal", 350, y);
     doc.text(`Rs. ${totalAmount.toFixed(2)}`, 450, y, { align: "right", width: 100 });
@@ -785,7 +799,8 @@ const generatePDF = async (req, res) => {
     }
 
     // Show additional payments if any (excluding advance payments which are already shown in invoice items)
-    if (totalPayments > 0) {
+    // Only show additional payments if they are different from the advance payment
+    if (totalPayments > 0 && totalPayments !== advancePaymentTotal) {
       doc.text("Additional Payments", 350, y);
       doc.text(`Rs. ${totalPayments.toFixed(2)}`, 450, y, { align: "right", width: 100 });
       y += 20;
@@ -803,7 +818,12 @@ const generatePDF = async (req, res) => {
     y += 20;
 
     // Calculate remaining amount after all payments
-    const remainingAmount = Math.max(0, finalAmount - totalPayments - advancePaymentTotal);
+    // First, calculate the total amount that has been paid (advance + additional payments)
+    const totalPaidAmount = advancePaymentTotal + totalPayments;
+
+    // The remaining amount is the subtotal minus all payments
+    // We use totalAmount (subtotal) instead of finalAmount (which includes tax)
+    const remainingAmount = Math.max(0, totalAmount - totalPaidAmount);
 
     doc.fontSize(14).text("Total Payable", 350, y);
     doc.text(`Rs. ${remainingAmount.toFixed(2)}`, 450, y, { align: "right", width: 100 });
