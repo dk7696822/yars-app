@@ -22,24 +22,228 @@
   text-decoration: underline;
 }
 
-.customer-info-card {
-  margin-bottom: 1.5rem;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+  background-color: var(--primary-color, #3b82f6);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-dark, #2563eb);
+}
+
+.orders-card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.orders-header {
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid var(--gray-200);
+  font-weight: 600;
+  font-size: 1.25rem;
+  background-color: var(--gray-50);
+  color: var(--gray-800);
+}
+
+.orders-body {
+  padding: 1.75rem;
+}
+
+/* These classes are no longer needed as we're using media queries
+.dark-mode-card {
+  background-color: var(--gray-800, #1f2937) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+}
+
+.dark-mode-heading {
+  color: var(--gray-100, #f3f4f6) !important;
+}
+
+.dark-mode-text {
+  color: var(--gray-300, #d1d5db) !important;
+}
+*/
+
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .customer-info h2 {
   font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
   color: var(--gray-800);
 }
 
-.customer-info p {
+.edit-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: var(--transition);
+}
+
+.edit-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.customer-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.metadata-icon {
+  color: var(--primary-color);
+  font-size: 1.125rem;
+}
+
+.metadata-value {
+  color: var(--gray-700);
+  text-decoration: none;
+}
+
+.metadata-value:hover {
+  text-decoration: underline;
+}
+
+.customer-since {
   color: var(--gray-600);
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .no-data {
   padding: 2rem;
   text-align: center;
   color: var(--gray-600);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .orders-card {
+    background-color: var(--gray-800, #1f2937);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  .orders-header {
+    background-color: var(--gray-900, #111827);
+    color: var(--gray-100, #f3f4f6);
+    border-bottom-color: var(--gray-700, #374151);
+  }
+
+  .customer-metadata {
+    border-top-color: var(--gray-700);
+    border-bottom-color: var(--gray-700);
+  }
+
+  .metadata-icon {
+    color: var(--blue-400);
+  }
+
+  .metadata-value {
+    color: var(--gray-300);
+  }
+
+  .customer-since {
+    color: var(--gray-400);
+  }
+
+  .no-data {
+    color: var(--gray-400);
+  }
+
+  .back-link {
+    color: var(--blue-400);
+  }
+
+  .btn-primary {
+    background-color: var(--blue-600);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--blue-700);
+  }
+}
+
+/* Support for class-based dark mode */
+
+.dark .orders-card {
+  background-color: var(--gray-800, #1f2937);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.dark .orders-header {
+  background-color: var(--gray-900, #111827);
+  color: var(--gray-100, #f3f4f6);
+  border-bottom-color: var(--gray-700, #374151);
+}
+
+.dark .customer-metadata {
+  border-top-color: var(--gray-700);
+  border-bottom-color: var(--gray-700);
+}
+
+.dark .metadata-icon {
+  color: var(--blue-400);
+}
+
+.dark .metadata-value {
+  color: var(--gray-300);
+}
+
+.dark .customer-since {
+  color: var(--gray-400);
+}
+
+.dark .no-data {
+  color: var(--gray-400);
+}
+
+.dark .back-link {
+  color: var(--blue-400);
+}
+
+.dark .btn-primary {
+  background-color: var(--blue-600);
+  color: white;
+}
+
+.dark .btn-primary:hover {
+  background-color: var(--blue-700);
 }
 
 .loading-container {

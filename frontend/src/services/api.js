@@ -45,4 +45,42 @@ export const orderAPI = {
   delete: (id) => api.delete(`/orders/${id}`),
 };
 
+// Expense Category API
+export const expenseCategoryAPI = {
+  getAll: (params) => api.get("/expense-categories", { params }),
+  getById: (id) => api.get(`/expense-categories/${id}`),
+  create: (data) => api.post("/expense-categories", data),
+  update: (id, data) => api.put(`/expense-categories/${id}`, data),
+  delete: (id) => api.delete(`/expense-categories/${id}`),
+};
+
+// Expense API
+export const expenseAPI = {
+  getAll: (params) => api.get("/expenses", { params }),
+  getById: (id) => api.get(`/expenses/${id}`),
+  create: (data) => api.post("/expenses", data),
+  update: (id, data) => api.put(`/expenses/${id}`, data),
+  delete: (id) => api.delete(`/expenses/${id}`),
+  getSummary: (params) => api.get("/expenses/summary", { params }),
+};
+
+// Invoice API
+export const invoiceAPI = {
+  getAll: (params) => api.get("/invoices", { params }),
+  getById: (id) => api.get(`/invoices/${id}`),
+  generate: (data) => api.post("/invoices/generate", data),
+  updateStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
+  delete: (id) => api.delete(`/invoices/${id}`),
+  getPdfUrl: (id) => `${API_URL}/invoices/${id}/pdf`,
+};
+
+// Payment API
+export const paymentAPI = {
+  getAll: (params) => api.get("/payments", { params }),
+  getById: (id) => api.get(`/payments/${id}`),
+  create: (data) => api.post("/payments", data),
+  update: (id, data) => api.put(`/payments/${id}`, data),
+  delete: (id) => api.delete(`/payments/${id}`),
+};
+
 export default api;

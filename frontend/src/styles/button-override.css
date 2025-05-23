@@ -1,0 +1,11 @@
+/* Dark mode overrides for buttons */
+.dark [variant="outline"] {
+  background-color: #374151 !important; /* dark:bg-gray-700 */
+  border-color: #4B5563 !important; /* dark:border-gray-600 */
+  color: #E5E7EB !important; /* dark:text-gray-300 */
+}
+
+.dark [variant="outline"]:hover {
+  background-color: #4B5563 !important; /* dark:hover:bg-gray-600 */
+  color: #F3F4F6 !important; /* dark:hover:text-gray-200 */
+}

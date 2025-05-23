@@ -1,0 +1,299 @@
+/* Expense List Styles */
+.expense-list .table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.expense-list .table th,
+.expense-list .table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.expense-list .table th {
+  background-color: var(--gray-100);
+  font-weight: 600;
+  color: var(--gray-700);
+  padding: 1.25rem 1rem;
+}
+
+.expense-list .table tr:hover {
+  background-color: var(--gray-50);
+}
+
+.expense-list .status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expense-list .status-badge.paid {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--success-color);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.expense-list .status-badge.unpaid {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning-color);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Expense Form Styles */
+.expense-form .form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.expense-form .form-group {
+  flex: 1;
+}
+
+.expense-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.expense-form input,
+.expense-form select,
+.expense-form textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.expense-form input:focus,
+.expense-form select:focus,
+.expense-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.expense-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Expense Filter Styles */
+.expense-filter {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background-color: var(--gray-50);
+}
+
+.expense-filter .filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.expense-filter .search-container {
+  flex: 1;
+  margin-right: 1.5rem;
+}
+
+.expense-filter .search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-filter .btn-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--gray-200);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-filter .btn-filter:hover {
+  background-color: var(--gray-300);
+  color: var(--gray-800);
+}
+
+.expense-filter .filter-form {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.expense-filter .filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.expense-filter .filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.expense-filter .filter-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.expense-filter .filter-select,
+.expense-filter .filter-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-filter .filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Expense Category Styles */
+.expense-category-list .table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.expense-category-list .table th,
+.expense-category-list .table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.expense-category-list .table th {
+  background-color: var(--gray-100);
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.expense-category-list .table tr:hover {
+  background-color: var(--gray-50);
+}
+
+.expense-category-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.expense-category-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.expense-category-form input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.expense-category-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Common Styles */
+.expenses-page {
+  padding: 0.5rem 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: white;
+  color: var(--primary-color);
+  border: 1px solid var(--gray-200);
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: var(--gray-100);
+  color: var(--primary-dark);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--gray-500);
+  font-size: 1.1rem;
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
+  margin: 1rem 0;
+}
+
+.no-categories-message {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--gray-50);
+  border-radius: var(--border-radius);
+  margin: 1rem 0;
+}

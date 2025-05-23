@@ -5,8 +5,8 @@ import Cookies from 'js-cookie';
 const AuthContext = createContext();
 
 // Hardcoded credentials (in a real app, these would be in environment variables)
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'password123';
+const ADMIN_USERNAME = 'rahul13nh@gmail.com';
+const ADMIN_PASSWORD = 'Rahul@102938';
 const AUTH_TOKEN_NAME = 'yars_auth_token';
 
 export const AuthProvider = ({ children }) => {

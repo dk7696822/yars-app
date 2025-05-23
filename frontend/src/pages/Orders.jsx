@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaExclamationCircle } from "react-icons/fa";
 import { orderAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import OrderFilter from "../components/orders/OrderFilter";
 import OrderList from "../components/orders/OrderList";
-import Card from "../components/common/Card";
-import Spinner from "../components/common/Spinner";
-import Alert from "../components/common/Alert";
 import ConfirmationModal from "../components/common/ConfirmationModal";
-import "./Orders.css";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -40,7 +36,33 @@ const Orders = () => {
       }
 
       const response = await orderAPI.getAll(params);
-      setOrders(response.data.data);
+
+      // Ensure we have all the data needed for summary calculations
+      const ordersWithDetails = response.data.data.map((order) => {
+        // Make sure orderProductSizes is always an array
+        if (!order.orderProductSizes) {
+          order.orderProductSizes = [];
+        }
+
+        // Make sure payment_summary exists
+        if (!order.payment_summary && order.payments) {
+          const totalPaid = order.payments.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0);
+          const advanceReceived = parseFloat(order.advance_received || 0);
+          const totalAmount = parseFloat(order.total_amount || 0);
+
+          order.payment_summary = {
+            total_paid: totalPaid,
+            advance_received: advanceReceived,
+            total_payments: totalPaid + advanceReceived,
+            remaining_balance: totalAmount - totalPaid - advanceReceived,
+            is_fully_paid: totalPaid + advanceReceived >= totalAmount,
+          };
+        }
+
+        return order;
+      });
+
+      setOrders(ordersWithDetails);
       setError("");
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -75,27 +97,50 @@ const Orders = () => {
   };
 
   return (
-    <div className="orders-page">
-      {error && <Alert type="danger" message={error} />}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
+          <FaExclamationCircle className="text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
 
-      <div className="page-actions">
-        <Link to="/orders/new" className="btn">
-          <FaPlus /> New Order
-        </Link>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/orders/new"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          >
+            <FaPlus className="mr-2 h-4 w-4" /> New Order
+          </Link>
+        </div>
       </div>
 
-      <OrderFilter onFilter={handleFilter} />
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
+        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Filter Orders</h2>
+        </div>
+        <div className="p-6">
+          <OrderFilter onFilter={handleFilter} />
+        </div>
+      </div>
 
-      <Card title="Orders">
-        {loading ? (
-          <div className="loading-container">
-            <Spinner size="large" />
-            <p>Loading orders...</p>
-          </div>
-        ) : (
-          <OrderList orders={orders} onDelete={handleDeleteOrder} />
-        )}
-      </Card>
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
+        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Orders</h2>
+        </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="mt-4 text-gray-500 dark:text-gray-400">Loading orders...</p>
+            </div>
+          ) : (
+            <OrderList orders={orders} onDelete={handleDeleteOrder} />
+          )}
+        </div>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

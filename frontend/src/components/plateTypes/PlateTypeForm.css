@@ -2,7 +2,21 @@
   background-color: white;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  padding: 1.5rem;
+  padding: 1.75rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .plate-type-form {
+    background-color: var(--gray-800, #1f2937);
+    color: var(--gray-200, #e5e7eb);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .plate-type-form {
+  background-color: var(--gray-800, #1f2937);
+  color: var(--gray-200, #e5e7eb);
 }
 
 .form-group {
@@ -11,17 +25,33 @@
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.625rem;
   font-weight: 500;
+  color: var(--gray-700, #374151);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .form-group label {
+    color: var(--gray-300, #d1d5db);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .form-group label {
+  color: var(--gray-300, #d1d5db);
 }
 
 .form-control {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
   border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  transition: var(--transition);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  background-color: white;
+  color: var(--gray-900);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .form-control:focus {
@@ -30,14 +60,108 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .form-control {
+    background-color: var(--gray-700, #374151);
+    border-color: var(--gray-600, #4b5563);
+    color: var(--gray-100, #f3f4f6);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .form-control:focus {
+    border-color: var(--blue-500, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .form-control {
+  background-color: var(--gray-700, #374151);
+  border-color: var(--gray-600, #4b5563);
+  color: var(--gray-100, #f3f4f6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .form-control:focus {
+  border-color: var(--blue-500, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  margin-top: 2rem;
 }
 
 .form-actions button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* Ensure the save button is always visible */
+.form-actions .save-button {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.btn-primary, .save-button {
+  background-color: var(--primary-color, #3b82f6) !important;
+  color: white !important;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover, .save-button:hover {
+  background-color: var(--primary-color-dark, #2563eb) !important;
+}
+
+.btn-secondary {
+  background-color: var(--gray-200, #e5e7eb);
+  color: var(--gray-700, #374151);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background-color: var(--gray-300, #d1d5db);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .btn-primary {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-secondary {
+    background-color: var(--gray-700, #374151);
+    color: var(--gray-200, #e5e7eb);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--gray-600, #4b5563);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .btn-primary {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .btn-secondary {
+  background-color: var(--gray-700, #374151);
+  color: var(--gray-200, #e5e7eb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .btn-secondary:hover {
+  background-color: var(--gray-600, #4b5563);
 }

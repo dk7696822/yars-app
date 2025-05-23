@@ -5,6 +5,20 @@
   padding: 1.5rem;
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .order-form {
+    background-color: var(--gray-800, #1f2937);
+    color: var(--gray-200, #e5e7eb);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .order-form {
+  background-color: var(--gray-800, #1f2937);
+  color: var(--gray-200, #e5e7eb);
+}
+
 .form-row {
   display: flex;
   gap: 1rem;
@@ -29,6 +43,8 @@ select {
   border: 1px solid var(--gray-300);
   border-radius: var(--border-radius);
   transition: var(--transition);
+  background-color: white;
+  color: var(--gray-900);
 }
 
 .form-control:focus,
@@ -36,6 +52,32 @@ select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .form-group label {
+    color: var(--gray-300, #d1d5db);
+  }
+
+  .form-control,
+  select {
+    background-color: var(--gray-700, #374151);
+    border-color: var(--gray-600, #4b5563);
+    color: var(--gray-100, #f3f4f6);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .form-group label {
+  color: var(--gray-300, #d1d5db);
+}
+
+.dark .form-control,
+.dark select {
+  background-color: var(--gray-700, #374151);
+  border-color: var(--gray-600, #4b5563);
+  color: var(--gray-100, #f3f4f6);
 }
 
 .product-sizes-section {
@@ -56,6 +98,28 @@ select:focus {
 .section-header h3 {
   font-size: 1.125rem;
   color: var(--gray-700);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .product-sizes-section {
+    border-color: var(--gray-700, #374151);
+    background-color: var(--gray-900, #111827);
+  }
+
+  .section-header h3 {
+    color: var(--gray-300, #d1d5db);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .product-sizes-section {
+  border-color: var(--gray-700, #374151);
+  background-color: var(--gray-900, #111827);
+}
+
+.dark .section-header h3 {
+  color: var(--gray-300, #d1d5db);
 }
 
 .btn-sm {
@@ -94,6 +158,30 @@ select:focus {
   text-align: right;
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .product-size-row {
+    border-bottom-color: var(--gray-700, #374151);
+  }
+
+  .amount-display {
+    background-color: var(--gray-800, #1f2937);
+    border-color: var(--gray-700, #374151);
+    color: var(--gray-200, #e5e7eb);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .product-size-row {
+  border-bottom-color: var(--gray-700, #374151);
+}
+
+.dark .amount-display {
+  background-color: var(--gray-800, #1f2937);
+  border-color: var(--gray-700, #374151);
+  color: var(--gray-200, #e5e7eb);
+}
+
 .remove-btn {
   align-self: flex-end;
   margin-bottom: 0.5rem;
@@ -124,6 +212,26 @@ select:focus {
   padding-top: 0.75rem;
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .order-summary {
+    background-color: var(--gray-800, #1f2937);
+  }
+
+  .summary-row {
+    border-bottom-color: var(--gray-700, #374151);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .order-summary {
+  background-color: var(--gray-800, #1f2937);
+}
+
+.dark .summary-row {
+  border-bottom-color: var(--gray-700, #374151);
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -142,7 +250,7 @@ select:focus {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .amount-column {
     width: 100%;
   }

@@ -5,6 +5,20 @@
   padding: 1.5rem;
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .product-size-form {
+    background-color: var(--gray-800, #1f2937);
+    color: var(--gray-200, #e5e7eb);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .product-size-form {
+  background-color: var(--gray-800, #1f2937);
+  color: var(--gray-200, #e5e7eb);
+}
+
 .form-group {
   margin-bottom: 1.5rem;
 }
@@ -22,12 +36,38 @@
   border: 1px solid var(--gray-300);
   border-radius: var(--border-radius);
   transition: var(--transition);
+  background-color: white;
+  color: var(--gray-900);
 }
 
 .form-control:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .form-group label {
+    color: var(--gray-300, #d1d5db);
+  }
+
+  .form-control {
+    background-color: var(--gray-700, #374151);
+    border-color: var(--gray-600, #4b5563);
+    color: var(--gray-100, #f3f4f6);
+  }
+}
+
+/* Support for class-based dark mode */
+.dark .form-group label {
+  color: var(--gray-300, #d1d5db);
+}
+
+.dark .form-control {
+  background-color: var(--gray-700, #374151);
+  border-color: var(--gray-600, #4b5563);
+  color: var(--gray-100, #f3f4f6);
 }
 
 .form-actions {

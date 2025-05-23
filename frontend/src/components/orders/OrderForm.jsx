@@ -5,6 +5,8 @@ import { FaPlus, FaTrash, FaSave, FaTimes } from "react-icons/fa";
 import { formatCurrency } from "../../utils/formatters";
 import Alert from "../common/Alert";
 import Spinner from "../common/Spinner";
+import Select from "../ui/Select";
+import Dropdown from "../ui/Dropdown";
 import "react-datepicker/dist/react-datepicker.css";
 import "./OrderForm.css";
 
@@ -141,14 +143,21 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="customer_id">Customer *</label>
-            <select id="customer_id" name="customer_id" value={formData.customer_id} onChange={handleChange} required>
-              <option value="">Select Customer</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              id="customer_id"
+              name="customer_id"
+              value={formData.customer_id}
+              onChange={handleChange}
+              placeholder="Select Customer"
+              required
+              options={[
+                { value: "", label: "Select Customer" },
+                ...customers.map((customer) => ({
+                  value: customer.id,
+                  label: customer.name,
+                })),
+              ]}
+            />
           </div>
 
           <div className="form-group">
@@ -160,14 +169,21 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="plate_type_id">Plate Type *</label>
-            <select id="plate_type_id" name="plate_type_id" value={formData.plate_type_id} onChange={handleChange} required>
-              <option value="">Select Plate Type</option>
-              {plateTypes.map((plateType) => (
-                <option key={plateType.id} value={plateType.id}>
-                  {plateType.type_name} ({formatCurrency(plateType.charge)})
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              id="plate_type_id"
+              name="plate_type_id"
+              value={formData.plate_type_id}
+              onChange={handleChange}
+              placeholder="Select Plate Type"
+              required
+              options={[
+                { value: "", label: "Select Plate Type" },
+                ...plateTypes.map((plateType) => ({
+                  value: plateType.id,
+                  label: `${plateType.type_name} (${formatCurrency(plateType.charge)})`,
+                })),
+              ]}
+            />
           </div>
 
           <div className="form-group">
@@ -179,13 +195,20 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="status">Order Status *</label>
-            <select id="status" name="status" value={formData.status} onChange={handleChange} required>
-              <option value="PENDING">Pending</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
+            <Dropdown
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              required
+              options={[
+                { value: "PENDING", label: "Pending" },
+                { value: "IN_PROGRESS", label: "In Progress" },
+                { value: "COMPLETED", label: "Completed" },
+                { value: "DELIVERED", label: "Delivered" },
+                { value: "CANCELLED", label: "Cancelled" },
+              ]}
+            />
           </div>
         </div>
 
@@ -201,14 +224,21 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
             <div key={index} className="product-size-row">
               <div className="form-group">
                 <label htmlFor={`product_size_${index}`}>Size</label>
-                <select id={`product_size_${index}`} value={item.product_size_id} onChange={(e) => handleProductSizeChange(index, "product_size_id", e.target.value)} required>
-                  <option value="">Select Size</option>
-                  {productSizes.map((size) => (
-                    <option key={size.id} value={size.id}>
-                      {size.size_label} ({formatCurrency(size.rate_per_kg)}/kg)
-                    </option>
-                  ))}
-                </select>
+                <Dropdown
+                  id={`product_size_${index}`}
+                  name={`product_size_${index}`}
+                  value={item.product_size_id}
+                  onChange={(e) => handleProductSizeChange(index, "product_size_id", e.target.value)}
+                  placeholder="Select Size"
+                  required
+                  options={[
+                    { value: "", label: "Select Size" },
+                    ...productSizes.map((size) => ({
+                      value: size.id,
+                      label: `${size.size_label} (${formatCurrency(size.rate_per_kg)}/kg)`,
+                    })),
+                  ]}
+                />
               </div>
 
               <div className="form-group">
