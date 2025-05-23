@@ -3,48 +3,32 @@ const { Model } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
 
 module.exports = (sequelize, DataTypes) => {
-  class Order extends Model {
+  class Invoice extends Model {
     static associate(models) {
       // define association here
-      Order.belongsTo(models.Customer, {
+      Invoice.belongsTo(models.Customer, {
         foreignKey: "customer_id",
         as: "customer",
       });
 
-      Order.belongsTo(models.PlateType, {
-        foreignKey: "plate_type_id",
-        as: "plateType",
-      });
-
-      Order.belongsToMany(models.ProductSize, {
-        through: models.OrderProductSize,
-        foreignKey: "order_id",
-        as: "productSizes",
-      });
-
-      Order.hasMany(models.OrderProductSize, {
-        foreignKey: "order_id",
-        as: "orderProductSizes",
-      });
-
-      Order.belongsTo(models.Invoice, {
+      Invoice.hasMany(models.Order, {
         foreignKey: "invoice_id",
-        as: "invoice",
+        as: "orders",
       });
 
-      Order.hasMany(models.InvoiceItem, {
-        foreignKey: "order_id",
+      Invoice.hasMany(models.InvoiceItem, {
+        foreignKey: "invoice_id",
         as: "invoiceItems",
       });
 
-      Order.hasMany(models.Payment, {
-        foreignKey: "order_id",
+      Invoice.hasMany(models.Payment, {
+        foreignKey: "invoice_id",
         as: "payments",
       });
     }
   }
 
-  Order.init(
+  Invoice.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -59,12 +43,29 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      order_date: {
+      invoice_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      invoice_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
-      advance_received: {
+      billing_period_start: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      billing_period_end: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      payment_due_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      total_amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
@@ -73,16 +74,35 @@ module.exports = (sequelize, DataTypes) => {
           min: 0,
         },
       },
-      plate_type_id: {
-        type: DataTypes.UUID,
+      tax_percent: {
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false,
-        references: {
-          model: "plate_types",
-          key: "id",
+        defaultValue: 0,
+        validate: {
+          isDecimal: true,
+          min: 0,
+        },
+      },
+      tax_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          isDecimal: true,
+          min: 0,
+        },
+      },
+      final_amount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          isDecimal: true,
+          min: 0,
         },
       },
       status: {
-        type: DataTypes.ENUM("PENDING", "IN_PROGRESS", "COMPLETED", "DELIVERED", "CANCELLED"),
+        type: DataTypes.ENUM("PENDING", "PAID", "CANCELLED"),
         allowNull: false,
         defaultValue: "PENDING",
       },
@@ -101,23 +121,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
-      invoice_id: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-          model: "invoices",
-          key: "id",
-        },
-      },
     },
     {
       sequelize,
-      modelName: "Order",
-      tableName: "orders",
+      modelName: "Invoice",
+      tableName: "invoices",
       timestamps: true,
       underscored: true,
     }
   );
 
-  return Order;
+  return Invoice;
 };

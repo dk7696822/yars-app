@@ -3,27 +3,17 @@ const { Model } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
 
 module.exports = (sequelize, DataTypes) => {
-  class Customer extends Model {
+  class ExpenseCategory extends Model {
     static associate(models) {
       // define association here
-      Customer.hasMany(models.Order, {
-        foreignKey: "customer_id",
-        as: "orders",
-      });
-
-      Customer.hasMany(models.Invoice, {
-        foreignKey: "customer_id",
-        as: "invoices",
-      });
-
-      Customer.hasMany(models.Payment, {
-        foreignKey: "customer_id",
-        as: "payments",
+      ExpenseCategory.hasMany(models.Expense, {
+        foreignKey: "category_id",
+        as: "expenses",
       });
     }
   }
 
-  Customer.init(
+  ExpenseCategory.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -33,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.TEXT,
         allowNull: false,
+        unique: true,
         validate: {
           notEmpty: true,
         },
@@ -41,11 +32,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
-      },
-      metadata: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-        defaultValue: {},
       },
       created_at: {
         type: DataTypes.DATE,
@@ -60,12 +46,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Customer",
-      tableName: "customers",
+      modelName: "ExpenseCategory",
+      tableName: "expense_categories",
       timestamps: true,
       underscored: true,
     }
   );
 
-  return Customer;
+  return ExpenseCategory;
 };

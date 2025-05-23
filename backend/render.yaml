@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: yars-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DB_USERNAME
+        value: postgres
+      - key: DB_PASSWORD
+        value: Dk@9741397943
+      - key: DB_NAME
+        value: postgres
+      - key: DB_HOSTNAME
+        value: db.tnrwottbdozuvdcmugve.supabase.co
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DIALECT
+        value: postgres
+      - key: JWT_SECRET
+        value: mysecretisopen
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: NODE_ENV
+        value: production

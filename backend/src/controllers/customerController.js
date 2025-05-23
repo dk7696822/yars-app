@@ -12,13 +12,22 @@ const { Op } = require("sequelize");
  */
 const createCustomer = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, email, phone, address } = req.body;
 
     if (!name) {
       return error(res, 400, "Customer name is required");
     }
 
-    const customer = await Customer.create({ name });
+    // Create metadata object with optional fields
+    const metadata = {};
+    if (email) metadata.email = email;
+    if (phone) metadata.phone = phone;
+    if (address) metadata.address = address;
+
+    const customer = await Customer.create({
+      name,
+      metadata,
+    });
 
     return success(res, 201, "Customer created successfully", customer);
   } catch (err) {
@@ -95,7 +104,7 @@ const getCustomerById = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, email, phone, address } = req.body;
 
     if (!name) {
       return error(res, 400, "Customer name is required");
@@ -112,7 +121,26 @@ const updateCustomer = async (req, res) => {
       return error(res, 404, "Customer not found");
     }
 
-    await customer.update({ name });
+    // Get current metadata or initialize empty object
+    const currentMetadata = customer.metadata || {};
+
+    // Update metadata with new values or keep existing ones
+    const updatedMetadata = {
+      ...currentMetadata,
+      ...(email !== undefined && { email }),
+      ...(phone !== undefined && { phone }),
+      ...(address !== undefined && { address }),
+    };
+
+    // Remove properties that are explicitly set to null or empty string
+    if (email === null || email === "") delete updatedMetadata.email;
+    if (phone === null || phone === "") delete updatedMetadata.phone;
+    if (address === null || address === "") delete updatedMetadata.address;
+
+    await customer.update({
+      name,
+      metadata: updatedMetadata,
+    });
 
     return success(res, 200, "Customer updated successfully", customer);
   } catch (err) {

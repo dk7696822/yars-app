@@ -1,6 +1,6 @@
 "use strict";
 
-const { Order, Customer, PlateType, ProductSize, OrderProductSize, sequelize } = require("../models");
+const { Order, Customer, PlateType, ProductSize, OrderProductSize, Payment, sequelize } = require("../models");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
@@ -33,6 +33,22 @@ const createOrder = async (req, res) => {
       },
       { transaction }
     );
+
+    // If advance payment was provided, create a payment record
+    if (advance_received && parseFloat(advance_received) > 0) {
+      await Payment.create(
+        {
+          order_id: order.id,
+          customer_id,
+          amount: parseFloat(advance_received),
+          payment_date: order_date || new Date(),
+          payment_method: "CASH", // Default to cash, can be updated later
+          payment_type: "ADVANCE",
+          notes: "Advance payment at order creation",
+        },
+        { transaction }
+      );
+    }
 
     // Create order product sizes
     const orderProductSizes = [];
@@ -93,12 +109,24 @@ const createOrder = async (req, res) => {
  */
 const getAllOrders = async (req, res) => {
   try {
-    const { customerName, dateFrom, dateTo, date, status } = req.query;
+    const { customerName, dateFrom, dateTo, date, status, customer_id, invoice_id } = req.query;
 
     // Build the where clause for Order
     const orderWhere = {
       is_archived: false,
     };
+
+    // Customer ID filtering
+    if (customer_id) {
+      orderWhere.customer_id = customer_id;
+    }
+
+    // Invoice ID filtering - special case for 'null' to find unbilled orders
+    if (invoice_id === "null") {
+      orderWhere.invoice_id = null;
+    } else if (invoice_id) {
+      orderWhere.invoice_id = invoice_id;
+    }
 
     // Date filtering
     if (date) {
@@ -152,6 +180,11 @@ const getAllOrders = async (req, res) => {
           },
         ],
       },
+      {
+        model: Payment,
+        as: "payments",
+        required: false,
+      },
     ];
 
     const orders = await Order.findAll({
@@ -174,15 +207,40 @@ const getAllOrders = async (req, res) => {
       // Add plate charge
       const plateCharge = parseFloat(orderData.plateType.charge);
 
-      // Subtract advance
-      const advanceReceived = parseFloat(orderData.advance_received);
+      // Calculate total order amount
+      const totalOrderAmount = totalProductAmount + plateCharge;
 
-      // Calculate total receivable
-      const totalReceivable = totalProductAmount + plateCharge - advanceReceived;
+      // Calculate payment summary
+      // Filter out ADVANCE type payments to avoid double counting
+      const advancePayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type === "ADVANCE") : [];
+
+      const otherPayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type !== "ADVANCE") : [];
+
+      // Calculate total of non-advance payments
+      const totalPaid = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+
+      // Use either the advance_received field or the sum of ADVANCE payments, not both
+      // This handles both old orders (with advance_received) and new orders (with ADVANCE payments)
+      const advanceFromPayments = advancePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+      const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(orderData.advance_received || 0);
+
+      // Calculate remaining balance
+      const remainingBalance = totalOrderAmount - totalPaid - advanceReceived;
+
+      // Calculate total receivable (for backward compatibility)
+      const totalReceivable = totalOrderAmount - advanceReceived;
 
       return {
         ...orderData,
-        totalReceivable: parseFloat(totalReceivable.toFixed(2)),
+        total_amount: parseFloat(totalOrderAmount.toFixed(2)),
+        totalReceivable: parseFloat(totalReceivable.toFixed(2)), // For backward compatibility
+        payment_summary: {
+          total_paid: totalPaid,
+          advance_received: advanceReceived,
+          total_payments: totalPaid + advanceReceived,
+          remaining_balance: parseFloat(remainingBalance.toFixed(2)),
+          is_fully_paid: totalPaid + advanceReceived >= totalOrderAmount,
+        },
       };
     });
 
@@ -236,6 +294,11 @@ const getOrderById = async (req, res) => {
             },
           ],
         },
+        {
+          model: Payment,
+          as: "payments",
+          required: false,
+        },
       ],
     });
 
@@ -256,15 +319,40 @@ const getOrderById = async (req, res) => {
     // Add plate charge
     const plateCharge = parseFloat(orderData.plateType.charge);
 
-    // Subtract advance
-    const advanceReceived = parseFloat(orderData.advance_received);
+    // Calculate total order amount
+    const totalOrderAmount = totalProductAmount + plateCharge;
 
-    // Calculate total receivable
-    const totalReceivable = totalProductAmount + plateCharge - advanceReceived;
+    // Calculate payment summary
+    // Filter out ADVANCE type payments to avoid double counting
+    const advancePayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type === "ADVANCE") : [];
+
+    const otherPayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type !== "ADVANCE") : [];
+
+    // Calculate total of non-advance payments
+    const totalPaid = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+
+    // Use either the advance_received field or the sum of ADVANCE payments, not both
+    // This handles both old orders (with advance_received) and new orders (with ADVANCE payments)
+    const advanceFromPayments = advancePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+    const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(orderData.advance_received || 0);
+
+    // Calculate remaining balance
+    const remainingBalance = totalOrderAmount - totalPaid - advanceReceived;
+
+    // Calculate total receivable (for backward compatibility)
+    const totalReceivable = totalOrderAmount - advanceReceived;
 
     const orderWithTotal = {
       ...orderData,
-      totalReceivable: parseFloat(totalReceivable.toFixed(2)),
+      total_amount: parseFloat(totalOrderAmount.toFixed(2)),
+      totalReceivable: parseFloat(totalReceivable.toFixed(2)), // For backward compatibility
+      payment_summary: {
+        total_paid: totalPaid,
+        advance_received: advanceReceived,
+        total_payments: totalPaid + advanceReceived,
+        remaining_balance: parseFloat(remainingBalance.toFixed(2)),
+        is_fully_paid: totalPaid + advanceReceived >= totalOrderAmount,
+      },
     };
 
     return success(res, 200, "Order retrieved successfully", orderWithTotal);
@@ -299,17 +387,58 @@ const updateOrder = async (req, res) => {
       return error(res, 404, "Order not found");
     }
 
+    // Get the original advance amount before updating
+    const originalAdvance = parseFloat(order.advance_received || 0);
+    const newAdvance = advance_received !== undefined ? parseFloat(advance_received) : originalAdvance;
+
     // Update order details
     await order.update(
       {
         customer_id: customer_id || order.customer_id,
         order_date: order_date || order.order_date,
-        advance_received: advance_received !== undefined ? advance_received : order.advance_received,
+        advance_received: newAdvance,
         plate_type_id: plate_type_id || order.plate_type_id,
         status: status || order.status,
       },
       { transaction }
     );
+
+    // Handle changes in advance payment
+    if (newAdvance !== originalAdvance) {
+      // Find existing advance payment
+      const existingAdvancePayment = await Payment.findOne({
+        where: {
+          order_id: id,
+          payment_type: "ADVANCE",
+        },
+        transaction,
+      });
+
+      if (existingAdvancePayment) {
+        // Update existing advance payment
+        await existingAdvancePayment.update(
+          {
+            amount: newAdvance,
+            payment_date: order_date || existingAdvancePayment.payment_date,
+          },
+          { transaction }
+        );
+      } else if (newAdvance > 0) {
+        // Create new advance payment if none exists and amount > 0
+        await Payment.create(
+          {
+            order_id: id,
+            customer_id: customer_id || order.customer_id,
+            amount: newAdvance,
+            payment_date: order_date || new Date(),
+            payment_method: "CASH",
+            payment_type: "ADVANCE",
+            notes: "Advance payment updated",
+          },
+          { transaction }
+        );
+      }
+    }
 
     // Update product sizes if provided
     if (product_sizes && product_sizes.length > 0) {
@@ -380,6 +509,11 @@ const updateOrder = async (req, res) => {
               },
             },
           ],
+        },
+        {
+          model: Payment,
+          as: "payments",
+          required: false,
         },
       ],
     });
