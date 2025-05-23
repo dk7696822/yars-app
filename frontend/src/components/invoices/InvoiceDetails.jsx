@@ -151,7 +151,13 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
 
             <div className="flex justify-between py-2 text-lg font-bold">
               <span className="text-gray-900 dark:text-white">Total Payable</span>
-              <span className="text-gray-900 dark:text-white">{formatCurrency(invoice.final_amount)}</span>
+              <span className="text-gray-900 dark:text-white">
+                {formatCurrency(
+                  parseFloat(invoice.total_amount) -
+                    invoice.invoiceItems.filter((item) => item.description.includes("Advance Payment")).reduce((total, item) => total + Math.abs(parseFloat(item.total_price)), 0) -
+                    (invoice.payments ? invoice.payments.filter((payment) => payment.payment_type !== "ADVANCE").reduce((sum, payment) => sum + parseFloat(payment.amount), 0) : 0)
+                )}
+              </span>
             </div>
           </div>
         </div>

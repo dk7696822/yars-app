@@ -9,12 +9,29 @@ const PaymentSummary = ({ invoice, onAddPayment }) => {
 
   const { payment_summary, payments = [] } = invoice;
 
-  // If payment_summary is not available, calculate it
-  const totalPaid = payment_summary?.total_paid || payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+  // Calculate advance payments from invoice items
+  const advancePaid = invoice.invoiceItems
+    ? invoice.invoiceItems.filter((item) => item.description.includes("Advance Payment")).reduce((total, item) => total + Math.abs(parseFloat(item.total_price)), 0)
+    : 0;
 
-  const remainingBalance = payment_summary?.remaining_balance || parseFloat(invoice.final_amount) - totalPaid;
+  // Get additional payments (excluding advance payments which are already in invoice items)
+  // Filter out any payments that might be duplicating the advance payment
+  const advancePayments = payments.filter((payment) => payment.payment_type === "ADVANCE");
+  const otherPayments = payments.filter((payment) => payment.payment_type !== "ADVANCE");
 
-  const isFullyPaid = payment_summary?.is_fully_paid || totalPaid >= parseFloat(invoice.final_amount);
+  // Calculate total of non-advance payments
+  const additionalPayments = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+
+  // Total amount should be subtotal (without tax)
+  const subtotal = parseFloat(invoice.total_amount);
+
+  // Calculate remaining balance as subtotal minus all payments (advance + additional)
+  const remainingBalance = payment_summary?.remaining_balance || subtotal - advancePaid - additionalPayments;
+
+  // Total paid is the sum of advance and additional payments
+  const totalPaid = additionalPayments;
+
+  const isFullyPaid = payment_summary?.is_fully_paid || remainingBalance <= 0;
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
@@ -31,12 +48,13 @@ const PaymentSummary = ({ invoice, onAddPayment }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Invoice Amount</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(invoice.final_amount)}</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(subtotal)}</p>
         </div>
 
         <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <p className="text-sm text-gray-500 dark:text-gray-400">Total Paid</p>
-          <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalPaid)}</p>
+          <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalPaid + advancePaid)}</p>
+          {advancePaid > 0 && <p className="text-xs text-gray-500 dark:text-gray-400">(Includes {formatCurrency(advancePaid)} advance)</p>}
         </div>
 
         <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
