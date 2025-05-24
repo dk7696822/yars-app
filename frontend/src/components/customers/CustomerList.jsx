@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { formatDate } from "../../utils/formatters";
+import MobileActionDropdown from "../ui/MobileActionDropdown";
 
 const CustomerList = ({ customers, onDelete }) => {
   if (!customers || customers.length === 0) {
@@ -48,29 +49,28 @@ const CustomerList = ({ customers, onDelete }) => {
               </td>
               <td className="p-4 align-middle text-gray-900 dark:text-gray-300">{formatDate(customer.created_at)}</td>
               <td className="p-4 align-middle text-right">
-                <div className="flex justify-end space-x-2">
-                  <Link
-                    to={`/customers/${customer.id}`}
-                    title="View Orders"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-0 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    <FaEye className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                  </Link>
-                  <Link
-                    to={`/customers/edit/${customer.id}`}
-                    title="Edit"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-0 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    <FaEdit className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                  </Link>
-                  <button
-                    onClick={() => onDelete(customer.id)}
-                    title="Delete"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-0 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
-                  >
-                    <FaTrash className="h-4 w-4 text-red-500 dark:text-red-400" />
-                  </button>
-                </div>
+                <MobileActionDropdown
+                  actions={[
+                    {
+                      title: "View Orders",
+                      icon: FaEye,
+                      iconColor: "text-gray-600 dark:text-gray-300",
+                      to: `/customers/${customer.id}`,
+                    },
+                    {
+                      title: "Edit",
+                      icon: FaEdit,
+                      iconColor: "text-blue-500 dark:text-blue-400",
+                      to: `/customers/edit/${customer.id}`,
+                    },
+                    {
+                      title: "Delete",
+                      icon: FaTrash,
+                      iconColor: "text-red-500 dark:text-red-400",
+                      onClick: () => onDelete(customer.id),
+                    },
+                  ]}
+                />
               </td>
             </tr>
           ))}

@@ -97,7 +97,7 @@ const Orders = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
           <FaExclamationCircle className="text-red-500 mt-0.5 mr-3 flex-shrink-0" />
@@ -118,19 +118,19 @@ const Orders = () => {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Filter Orders</h2>
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Filter Orders</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <OrderFilter onFilter={handleFilter} />
         </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Orders</h2>
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Orders</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>

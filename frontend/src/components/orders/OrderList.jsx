@@ -7,6 +7,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFoo
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import ActionButton from "../ui/action-button";
+import MobileActionDropdown from "../ui/MobileActionDropdown";
 
 const OrderList = ({ orders, onDelete }) => {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -99,11 +100,28 @@ const OrderList = ({ orders, onDelete }) => {
                   </TableCell>
                   <TableCell className="font-medium">{formatCurrency(order.total_amount || 0)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end items-center space-x-2">
-                      <ActionButton to={`/orders/${order.id}`} title="View Details" icon={FaEye} iconColor="text-gray-600 dark:text-gray-300" />
-                      <ActionButton to={`/orders/edit/${order.id}`} title="Edit" icon={FaEdit} iconColor="text-blue-500 dark:text-blue-400" />
-                      <ActionButton onClick={() => onDelete(order.id)} title="Delete" icon={FaTrash} iconColor="text-red-500 dark:text-red-400" />
-                    </div>
+                    <MobileActionDropdown
+                      actions={[
+                        {
+                          title: "View Details",
+                          icon: FaEye,
+                          iconColor: "text-gray-600 dark:text-gray-300",
+                          to: `/orders/${order.id}`,
+                        },
+                        {
+                          title: "Edit",
+                          icon: FaEdit,
+                          iconColor: "text-blue-500 dark:text-blue-400",
+                          to: `/orders/edit/${order.id}`,
+                        },
+                        {
+                          title: "Delete",
+                          icon: FaTrash,
+                          iconColor: "text-red-500 dark:text-red-400",
+                          onClick: () => onDelete(order.id),
+                        },
+                      ]}
+                    />
                   </TableCell>
                 </TableRow>
                 {expandedOrderId === order.id && (

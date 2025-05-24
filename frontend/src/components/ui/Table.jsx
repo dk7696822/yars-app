@@ -2,25 +2,19 @@ import { forwardRef } from "react";
 import { cn } from "../../lib/utils";
 
 const Table = forwardRef(({ className, ...props }, ref) => (
-  <div className="w-full overflow-auto">
+  <div className="w-full overflow-auto -mx-3 sm:mx-0">
     <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
   </div>
 ));
 Table.displayName = "Table";
 
-const TableHeader = forwardRef(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-gray-200 dark:[&_tr]:border-gray-700", className)} {...props} />
-));
+const TableHeader = forwardRef(({ className, ...props }, ref) => <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-gray-200 dark:[&_tr]:border-gray-700", className)} {...props} />);
 TableHeader.displayName = "TableHeader";
 
-const TableBody = forwardRef(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("divide-y divide-gray-100 dark:divide-gray-700 [&_tr:last-child]:border-0", className)} {...props} />
-));
+const TableBody = forwardRef(({ className, ...props }, ref) => <tbody ref={ref} className={cn("divide-y divide-gray-100 dark:divide-gray-700 [&_tr:last-child]:border-0", className)} {...props} />);
 TableBody.displayName = "TableBody";
 
-const TableFooter = forwardRef(({ className, ...props }, ref) => (
-  <tfoot ref={ref} className={cn("bg-primary dark:bg-primary-900 font-medium text-primary-foreground", className)} {...props} />
-));
+const TableFooter = forwardRef(({ className, ...props }, ref) => <tfoot ref={ref} className={cn("bg-primary dark:bg-primary-900 font-medium text-primary-foreground", className)} {...props} />);
 TableFooter.displayName = "TableFooter";
 
 const TableRow = forwardRef(({ className, ...props }, ref) => (
@@ -33,14 +27,10 @@ const TableHead = forwardRef(({ className, ...props }, ref) => (
 ));
 TableHead.displayName = "TableHead";
 
-const TableCell = forwardRef(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn("p-4 align-middle dark:text-gray-300 [&:has([role=checkbox])]:pr-0", className)} {...props} />
-));
+const TableCell = forwardRef(({ className, ...props }, ref) => <td ref={ref} className={cn("p-4 align-middle dark:text-gray-300 [&:has([role=checkbox])]:pr-0", className)} {...props} />);
 TableCell.displayName = "TableCell";
 
-const TableCaption = forwardRef(({ className, ...props }, ref) => (
-  <caption ref={ref} className={cn("mt-4 text-sm text-muted-foreground dark:text-gray-400", className)} {...props} />
-));
+const TableCaption = forwardRef(({ className, ...props }, ref) => <caption ref={ref} className={cn("mt-4 text-sm text-muted-foreground dark:text-gray-400", className)} {...props} />);
 TableCaption.displayName = "TableCaption";
 
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
