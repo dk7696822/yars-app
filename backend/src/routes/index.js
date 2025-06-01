@@ -11,6 +11,7 @@ const expenseCategoryRoutes = require("./expenseCategoryRoutes");
 const expenseRoutes = require("./expenseRoutes");
 const invoiceRoutes = require("./invoiceRoutes");
 const paymentRoutes = require("./paymentRoutes");
+const exportRoutes = require("./exportRoutes");
 
 // API routes
 router.use("/customers", customerRoutes);
@@ -21,6 +22,7 @@ router.use("/expense-categories", expenseCategoryRoutes);
 router.use("/expenses", expenseRoutes);
 router.use("/invoices", invoiceRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/export", exportRoutes);
 
 // Health check route
 router.get("/health", (req, res) => {

@@ -12,25 +12,11 @@ const { Op } = require("sequelize");
  */
 const createExpense = async (req, res) => {
   try {
-    const {
-      bill_date,
-      category_id,
-      description,
-      vendor,
-      quantity,
-      unit_cost,
-      total_cost,
-      due_date,
-      payment_status,
-    } = req.body;
+    const { bill_date, category_id, description, vendor, quantity, unit_cost, total_cost, due_date, payment_status } = req.body;
 
     // Validate required fields
     if (!bill_date || !category_id || !description || !vendor || !unit_cost) {
-      return error(
-        res,
-        400,
-        "Bill date, category, description, vendor, and unit cost are required"
-      );
+      return error(res, 400, "Bill date, category, description, vendor, and unit cost are required");
     }
 
     // Validate category exists
@@ -75,14 +61,7 @@ const createExpense = async (req, res) => {
  */
 const getAllExpenses = async (req, res) => {
   try {
-    const {
-      category_id,
-      from_date,
-      to_date,
-      payment_status,
-      vendor,
-      search,
-    } = req.query;
+    const { category_id, from_date, to_date, payment_status, vendor, search } = req.query;
 
     let whereClause = {
       is_archived: false,
@@ -118,10 +97,7 @@ const getAllExpenses = async (req, res) => {
     }
 
     if (search) {
-      whereClause[Op.or] = [
-        { description: { [Op.iLike]: `%${search}%` } },
-        { vendor: { [Op.iLike]: `%${search}%` } },
-      ];
+      whereClause[Op.or] = [{ description: { [Op.iLike]: `%${search}%` } }, { vendor: { [Op.iLike]: `%${search}%` } }];
     }
 
     const expenses = await Expense.findAll({
@@ -138,7 +114,20 @@ const getAllExpenses = async (req, res) => {
       order: [["bill_date", "DESC"]],
     });
 
-    return success(res, 200, "Expenses retrieved successfully", expenses);
+    // Calculate total expense for the filtered results
+    const totalResult = await Expense.findOne({
+      where: whereClause,
+      attributes: [[sequelize.fn("SUM", sequelize.col("total_cost")), "total_expense"]],
+      raw: true,
+    });
+
+    const totalExpense = parseFloat(totalResult?.total_expense || 0);
+
+    return success(res, 200, "Expenses retrieved successfully", {
+      expenses,
+      total_expense: totalExpense,
+      count: expenses.length,
+    });
   } catch (err) {
     console.error("Error retrieving expenses:", err);
     return error(res, 500, "Failed to retrieve expenses", err.message);
@@ -191,17 +180,7 @@ const getExpenseById = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      bill_date,
-      category_id,
-      description,
-      vendor,
-      quantity,
-      unit_cost,
-      total_cost,
-      due_date,
-      payment_status,
-    } = req.body;
+    const { bill_date, category_id, description, vendor, quantity, unit_cost, total_cost, due_date, payment_status } = req.body;
 
     const expense = await Expense.findOne({
       where: {
@@ -315,41 +294,39 @@ const getExpenseSummary = async (req, res) => {
 
     let summary;
 
-    if (group_by === 'category') {
+    if (group_by === "category") {
       summary = await Expense.findAll({
-        attributes: [
-          [sequelize.fn('SUM', sequelize.col('total_cost')), 'total'],
-        ],
+        attributes: [[sequelize.fn("SUM", sequelize.col("total_cost")), "total"]],
         include: [
           {
             model: ExpenseCategory,
-            as: 'category',
-            attributes: ['id', 'name'],
+            as: "category",
+            attributes: ["id", "name"],
             where: {
               is_archived: false,
             },
           },
         ],
         where: whereClause,
-        group: ['category.id', 'category.name'],
-        order: [[sequelize.fn('SUM', sequelize.col('total_cost')), 'DESC']],
+        group: ["category.id", "category.name"],
+        order: [[sequelize.fn("SUM", sequelize.col("total_cost")), "DESC"]],
       });
-    } else if (group_by === 'month') {
+    } else if (group_by === "month") {
       summary = await Expense.findAll({
         attributes: [
-          [sequelize.fn('date_trunc', 'month', sequelize.col('bill_date')), 'month'],
-          [sequelize.fn('SUM', sequelize.col('total_cost')), 'total'],
+          [sequelize.fn("date_trunc", "month", sequelize.col("bill_date")), "month"],
+          [sequelize.fn("SUM", sequelize.col("total_cost")), "total"],
         ],
         where: whereClause,
-        group: [sequelize.fn('date_trunc', 'month', sequelize.col('bill_date'))],
-        order: [[sequelize.fn('date_trunc', 'month', sequelize.col('bill_date')), 'DESC']],
+        group: [sequelize.fn("date_trunc", "month", sequelize.col("bill_date"))],
+        order: [[sequelize.fn("date_trunc", "month", sequelize.col("bill_date")), "DESC"]],
       });
     } else {
       // Default summary - total expenses
       summary = await Expense.findAll({
         attributes: [
-          [sequelize.fn('SUM', sequelize.col('total_cost')), 'total'],
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+          [sequelize.fn("SUM", sequelize.col("total_cost")), "total"],
+          [sequelize.fn("COUNT", sequelize.col("id")), "count"],
         ],
         where: whereClause,
       });

@@ -14,7 +14,7 @@ const createOrder = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status } = req.body;
+    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge } = req.body;
 
     // Validate required fields
     if (!customer_id || !plate_type_id || !product_sizes || !product_sizes.length) {
@@ -30,6 +30,7 @@ const createOrder = async (req, res) => {
         advance_received: advance_received || 0,
         plate_type_id,
         status: status || "PENDING",
+        custom_plate_charge: custom_plate_charge ? parseFloat(custom_plate_charge) : null,
       },
       { transaction }
     );
@@ -70,7 +71,7 @@ const createOrder = async (req, res) => {
           order_id: order.id,
           product_size_id: ps.product_size_id,
           quantity_kg: ps.quantity_kg,
-          rate_per_kg: productSize.rate_per_kg, // Store the current rate
+          rate_per_kg: ps.rate_per_kg || productSize.rate_per_kg, // Use custom rate if provided, otherwise use master rate
         },
         { transaction }
       );
@@ -204,8 +205,8 @@ const getAllOrders = async (req, res) => {
         totalProductAmount += parseFloat(ops.quantity_kg) * parseFloat(ops.rate_per_kg || ops.productSize.rate_per_kg);
       });
 
-      // Add plate charge
-      const plateCharge = parseFloat(orderData.plateType.charge);
+      // Add plate charge (use custom charge if available, otherwise use plate type charge)
+      const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
 
       // Calculate total order amount
       const totalOrderAmount = totalProductAmount + plateCharge;
@@ -316,8 +317,8 @@ const getOrderById = async (req, res) => {
       totalProductAmount += parseFloat(ops.quantity_kg) * parseFloat(ops.rate_per_kg || ops.productSize.rate_per_kg);
     });
 
-    // Add plate charge
-    const plateCharge = parseFloat(orderData.plateType.charge);
+    // Add plate charge (use custom charge if available, otherwise use plate type charge)
+    const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
 
     // Calculate total order amount
     const totalOrderAmount = totalProductAmount + plateCharge;
@@ -373,7 +374,7 @@ const updateOrder = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status } = req.body;
+    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge } = req.body;
 
     // Check if order exists
     const order = await Order.findOne({
@@ -399,6 +400,7 @@ const updateOrder = async (req, res) => {
         advance_received: newAdvance,
         plate_type_id: plate_type_id || order.plate_type_id,
         status: status || order.status,
+        custom_plate_charge: custom_plate_charge !== undefined ? (custom_plate_charge ? parseFloat(custom_plate_charge) : null) : order.custom_plate_charge,
       },
       { transaction }
     );
@@ -467,7 +469,7 @@ const updateOrder = async (req, res) => {
             order_id: id,
             product_size_id: ps.product_size_id,
             quantity_kg: ps.quantity_kg,
-            rate_per_kg: productSize.rate_per_kg, // Store the current rate
+            rate_per_kg: ps.rate_per_kg || productSize.rate_per_kg, // Use custom rate if provided, otherwise use master rate
           },
           { transaction }
         );
