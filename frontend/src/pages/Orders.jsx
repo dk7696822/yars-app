@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaExclamationCircle } from "react-icons/fa";
-import { orderAPI } from "../services/api";
+import { FaPlus, FaExclamationCircle, FaDownload } from "react-icons/fa";
+import { orderAPI, exportAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import OrderFilter from "../components/orders/OrderFilter";
 import OrderList from "../components/orders/OrderList";
@@ -96,6 +96,29 @@ const Orders = () => {
     }
   };
 
+  const handleDownloadExcel = () => {
+    try {
+      // Format filters for API (same logic as fetchOrders)
+      const params = { ...filters };
+      if (params.dateFrom) {
+        params.dateFrom = formatDateForAPI(params.dateFrom);
+      }
+      if (params.dateTo) {
+        params.dateTo = formatDateForAPI(params.dateTo);
+      }
+      if (params.date) {
+        params.date = formatDateForAPI(params.date);
+      }
+
+      // Get download URL and trigger download
+      const downloadUrl = exportAPI.downloadDashboardData(params);
+      window.open(downloadUrl, "_blank");
+    } catch (err) {
+      console.error("Error downloading Excel:", err);
+      setError("Failed to download Excel file. Please try again.");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
       {error && (
@@ -106,8 +129,15 @@ const Orders = () => {
       )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleDownloadExcel}
+            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            title="Download filtered data as Excel"
+          >
+            <FaDownload className="mr-2 h-4 w-4" /> Download Excel
+          </button>
           <Link
             to="/orders/new"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"

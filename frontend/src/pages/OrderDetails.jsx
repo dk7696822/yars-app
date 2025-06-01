@@ -176,9 +176,9 @@ const OrderDetails = () => {
               ))}
               <TableRow className="bg-muted/30 dark:bg-gray-700/30">
                 <TableCell colSpan={3} className="font-medium">
-                  Plate Charge ({order.plateType.type_name})
+                  Plate Charge ({order.plateType.type_name}){order.custom_plate_charge && <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Custom)</span>}
                 </TableCell>
-                <TableCell className="text-right">{formatCurrency(order.plateType.charge)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</TableCell>
               </TableRow>
               <TableRow className="bg-primary/5 dark:bg-primary-900/20">
                 <TableCell colSpan={3} className="font-bold">
