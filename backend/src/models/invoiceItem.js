@@ -5,7 +5,6 @@ const { v4: uuidv4 } = require("uuid");
 module.exports = (sequelize, DataTypes) => {
   class InvoiceItem extends Model {
     static associate(models) {
-      // define association here
       InvoiceItem.belongsTo(models.Invoice, {
         foreignKey: "invoice_id",
         as: "invoice",
@@ -72,7 +71,6 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         validate: {
           isDecimal: true,
-          // Removed min: 0 validation to allow negative values for advance payments
         },
       },
       created_at: {

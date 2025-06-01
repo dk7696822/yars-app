@@ -4,22 +4,14 @@ const { Expense, ExpenseCategory, sequelize } = require("../models");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
-/**
- * Create a new expense
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const createExpense = async (req, res) => {
   try {
     const { bill_date, category_id, description, vendor, quantity, unit_cost, total_cost, due_date, payment_status } = req.body;
 
-    // Validate required fields
     if (!bill_date || !category_id || !description || !vendor || !unit_cost) {
       return error(res, 400, "Bill date, category, description, vendor, and unit cost are required");
     }
 
-    // Validate category exists
     const category = await ExpenseCategory.findOne({
       where: {
         id: category_id,
@@ -53,12 +45,6 @@ const createExpense = async (req, res) => {
   }
 };
 
-/**
- * Get all expenses with filtering options
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getAllExpenses = async (req, res) => {
   try {
     const { category_id, from_date, to_date, payment_status, vendor, search } = req.query;
@@ -67,7 +53,6 @@ const getAllExpenses = async (req, res) => {
       is_archived: false,
     };
 
-    // Apply filters
     if (category_id) {
       whereClause.category_id = category_id;
     }
@@ -114,7 +99,6 @@ const getAllExpenses = async (req, res) => {
       order: [["bill_date", "DESC"]],
     });
 
-    // Calculate total expense for the filtered results
     const totalResult = await Expense.findOne({
       where: whereClause,
       attributes: [[sequelize.fn("SUM", sequelize.col("total_cost")), "total_expense"]],
@@ -234,12 +218,6 @@ const updateExpense = async (req, res) => {
   }
 };
 
-/**
- * Delete an expense (soft delete)
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
@@ -264,12 +242,6 @@ const deleteExpense = async (req, res) => {
   }
 };
 
-/**
- * Get expense summary grouped by category or month
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getExpenseSummary = async (req, res) => {
   try {
     const { group_by, from_date, to_date } = req.query;
@@ -322,7 +294,6 @@ const getExpenseSummary = async (req, res) => {
         order: [[sequelize.fn("date_trunc", "month", sequelize.col("bill_date")), "DESC"]],
       });
     } else {
-      // Default summary - total expenses
       summary = await Expense.findAll({
         attributes: [
           [sequelize.fn("SUM", sequelize.col("total_cost")), "total"],

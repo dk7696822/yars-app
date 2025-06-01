@@ -7,12 +7,6 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
-/**
- * Generate a new invoice for a customer
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const generateInvoice = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -259,12 +253,6 @@ const generateInvoice = async (req, res) => {
   }
 };
 
-/**
- * Get all invoices
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getAllInvoices = async (req, res) => {
   try {
     const { customer_id, status, dateFrom, dateTo, search } = req.query;
@@ -351,12 +339,6 @@ const getAllInvoices = async (req, res) => {
   }
 };
 
-/**
- * Get an invoice by ID
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getInvoiceById = async (req, res) => {
   try {
     const { id } = req.params;
