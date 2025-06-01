@@ -4,12 +4,6 @@ const { ExpenseCategory, Expense } = require("../models");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
-/**
- * Create a new expense category
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const createExpenseCategory = async (req, res) => {
   try {
     const { name } = req.body;
@@ -18,14 +12,13 @@ const createExpenseCategory = async (req, res) => {
       return error(res, 400, "Category name is required");
     }
 
-    // Check if category with the same name already exists
     const existingCategory = await ExpenseCategory.findOne({
       where: {
         name: {
-          [Op.iLike]: name
+          [Op.iLike]: name,
         },
-        is_archived: false
-      }
+        is_archived: false,
+      },
     });
 
     if (existingCategory) {
@@ -41,12 +34,6 @@ const createExpenseCategory = async (req, res) => {
   }
 };
 
-/**
- * Get all expense categories
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getAllExpenseCategories = async (req, res) => {
   try {
     const { name } = req.query;
@@ -130,13 +117,13 @@ const updateExpenseCategory = async (req, res) => {
     const existingCategory = await ExpenseCategory.findOne({
       where: {
         name: {
-          [Op.iLike]: name
+          [Op.iLike]: name,
         },
         id: {
-          [Op.ne]: id
+          [Op.ne]: id,
         },
-        is_archived: false
-      }
+        is_archived: false,
+      },
     });
 
     if (existingCategory) {
@@ -152,12 +139,6 @@ const updateExpenseCategory = async (req, res) => {
   }
 };
 
-/**
- * Delete an expense category (soft delete)
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const deleteExpenseCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,7 +154,6 @@ const deleteExpenseCategory = async (req, res) => {
       return error(res, 404, "Expense category not found");
     }
 
-    // Check if the category is being used by any expenses
     const expensesCount = await Expense.count({
       where: {
         category_id: id,
@@ -182,11 +162,7 @@ const deleteExpenseCategory = async (req, res) => {
     });
 
     if (expensesCount > 0) {
-      return error(
-        res,
-        400,
-        "Cannot delete this category as it is being used by expenses"
-      );
+      return error(res, 400, "Cannot delete this category as it is being used by expenses");
     }
 
     await expenseCategory.update({ is_archived: true });

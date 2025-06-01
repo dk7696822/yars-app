@@ -49,8 +49,8 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
                 }
               }
 
-              // Add plate charge
-              const plateCharge = order.plateType ? parseFloat(order.plateType.charge) : 0;
+              // Add plate charge (use custom charge if available, otherwise use plate type charge)
+              const plateCharge = order.custom_plate_charge ? parseFloat(order.custom_plate_charge) : order.plateType ? parseFloat(order.plateType.charge) : 0;
 
               // Subtract advance
               const advanceReceived = parseFloat(order.advance_received || 0);

@@ -11,8 +11,8 @@ const expenseCategoryRoutes = require("./expenseCategoryRoutes");
 const expenseRoutes = require("./expenseRoutes");
 const invoiceRoutes = require("./invoiceRoutes");
 const paymentRoutes = require("./paymentRoutes");
+const exportRoutes = require("./exportRoutes");
 
-// API routes
 router.use("/customers", customerRoutes);
 router.use("/product-sizes", productSizeRoutes);
 router.use("/plate-types", plateTypeRoutes);
@@ -21,8 +21,7 @@ router.use("/expense-categories", expenseCategoryRoutes);
 router.use("/expenses", expenseRoutes);
 router.use("/invoices", invoiceRoutes);
 router.use("/payments", paymentRoutes);
-
-// Health check route
+router.use("/export", exportRoutes);
 router.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "API is running" });
 });

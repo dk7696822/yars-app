@@ -5,7 +5,6 @@ const { v4: uuidv4 } = require("uuid");
 module.exports = (sequelize, DataTypes) => {
   class Customer extends Model {
     static associate(models) {
-      // define association here
       Customer.hasMany(models.Order, {
         foreignKey: "customer_id",
         as: "orders",

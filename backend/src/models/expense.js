@@ -5,7 +5,6 @@ const { v4: uuidv4 } = require("uuid");
 module.exports = (sequelize, DataTypes) => {
   class Expense extends Model {
     static associate(models) {
-      // define association here
       Expense.belongsTo(models.ExpenseCategory, {
         foreignKey: "category_id",
         as: "category",

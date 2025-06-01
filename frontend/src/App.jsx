@@ -41,10 +41,8 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            {/* Public routes */}
             <Route path="/login" element={<Login />} />
 
-            {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Dashboard />} />

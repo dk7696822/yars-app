@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle } from "react-icons/fa";
-import { expenseAPI, expenseCategoryAPI } from "../services/api";
+import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle, FaDownload } from "react-icons/fa";
+import { expenseAPI, expenseCategoryAPI, exportAPI } from "../services/api";
 import ExpenseList from "../components/expenses/ExpenseList";
 import ExpenseFilter from "../components/expenses/ExpenseFilter";
+import TotalExpenseCard from "../components/expenses/TotalExpenseCard";
 
 const Expenses = () => {
   const location = useLocation();
@@ -45,7 +46,7 @@ const Expenses = () => {
       try {
         setLoading(true);
         const response = await expenseAPI.getAll(filters);
-        setExpenses(response.data.data);
+        setExpenses(response.data.data.expenses || response.data.data);
         setError("");
       } catch (err) {
         console.error("Error fetching expenses:", err);
@@ -85,6 +86,31 @@ const Expenses = () => {
     }
   };
 
+  const handleDownloadExcel = () => {
+    try {
+      const params = { ...filters };
+
+      if (params.from_date && typeof params.from_date === "object") {
+        params.from_date = params.from_date.toISOString().split("T")[0];
+      }
+      if (params.to_date && typeof params.to_date === "object") {
+        params.to_date = params.to_date.toISOString().split("T")[0];
+      }
+
+      Object.keys(params).forEach((key) => {
+        if (params[key] === null || params[key] === "") {
+          delete params[key];
+        }
+      });
+
+      const downloadUrl = exportAPI.downloadExpensesData(params);
+      window.open(downloadUrl, "_blank");
+    } catch (err) {
+      console.error("Error downloading Excel:", err);
+      setError("Failed to download Excel file. Please try again.");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {error && (
@@ -104,6 +130,13 @@ const Expenses = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Expenses</h1>
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleDownloadExcel}
+            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            title="Download filtered data as Excel"
+          >
+            <FaDownload className="mr-2 h-4 w-4" /> Download Excel
+          </button>
           <Link
             to="/expenses/new"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -117,6 +150,11 @@ const Expenses = () => {
             <FaListAlt className="mr-2 h-4 w-4" /> Manage Categories
           </Link>
         </div>
+      </div>
+
+      {/* Total Expense Card */}
+      <div className="mb-6">
+        <TotalExpenseCard filters={filters} />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">

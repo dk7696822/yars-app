@@ -17,6 +17,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     advance_received: 0,
     plate_type_id: "",
     status: "PENDING",
+    custom_plate_charge: null,
     product_sizes: [{ product_size_id: "", quantity_kg: 1, rate_per_kg: 0 }],
   });
 
@@ -39,6 +40,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
         advance_received: parseFloat(initialValues.advance_received) || 0,
         plate_type_id: initialValues.plate_type_id || "",
         status: initialValues.status || "PENDING",
+        custom_plate_charge: initialValues.custom_plate_charge ? parseFloat(initialValues.custom_plate_charge) : null,
         product_sizes: productSizesData,
       });
     }
@@ -57,9 +59,10 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
       }
     });
 
-    // Get plate charge
+    // Get plate charge (use custom charge if available, otherwise use plate type charge)
     const selectedPlateType = plateTypes.find((pt) => pt.id === formData.plate_type_id);
-    const charge = selectedPlateType ? parseFloat(selectedPlateType.charge) : 0;
+    const defaultCharge = selectedPlateType ? parseFloat(selectedPlateType.charge) : 0;
+    const charge = formData.custom_plate_charge !== null ? parseFloat(formData.custom_plate_charge || 0) : defaultCharge;
 
     // Calculate total receivable
     const receivable = amount + charge - parseFloat(formData.advance_received || 0);
@@ -187,6 +190,31 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
           </div>
 
           <div className="form-group">
+            <label htmlFor="custom_plate_charge">
+              Custom Plate Charge
+              {formData.plate_type_id && (
+                <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Default: {formatCurrency(plateTypes.find((pt) => pt.id === formData.plate_type_id)?.charge || 0)})</span>
+              )}
+            </label>
+            <input
+              type="number"
+              id="custom_plate_charge"
+              name="custom_plate_charge"
+              value={formData.custom_plate_charge || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  custom_plate_charge: e.target.value ? parseFloat(e.target.value) : null,
+                }))
+              }
+              min="0"
+              step="0.01"
+              placeholder="Enter custom charge (optional)"
+              className="form-control"
+            />
+          </div>
+
+          <div className="form-group">
             <label htmlFor="advance_received">Advance Received</label>
             <input type="number" id="advance_received" name="advance_received" value={formData.advance_received} onChange={handleChange} min="0" step="0.01" className="form-control" />
           </div>
@@ -251,6 +279,25 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
                   min="0.1"
                   step="0.1"
                   required
+                  className="form-control"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor={`rate_${index}`}>
+                  Rate/kg
+                  {item.product_size_id && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Default: {formatCurrency(productSizes.find((ps) => ps.id === item.product_size_id)?.rate_per_kg || 0)})</span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  id={`rate_${index}`}
+                  value={item.rate_per_kg || ""}
+                  onChange={(e) => handleProductSizeChange(index, "rate_per_kg", e.target.value ? parseFloat(e.target.value) : null)}
+                  min="0"
+                  step="0.01"
+                  placeholder="Custom rate (optional)"
                   className="form-control"
                 />
               </div>

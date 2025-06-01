@@ -7,12 +7,6 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
-/**
- * Generate a new invoice for a customer
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const generateInvoice = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -76,8 +70,8 @@ const generateInvoice = async (req, res) => {
         productAmount += itemTotal;
       }
 
-      // Add plate charge
-      const plateCharge = parseFloat(order.plateType.charge);
+      // Add plate charge (use custom charge if available, otherwise use plate type charge)
+      const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge);
 
       // Track advance separately (don't subtract it from the total amount)
       const advanceReceived = parseFloat(order.advance_received);
@@ -176,15 +170,20 @@ const generateInvoice = async (req, res) => {
         );
       }
 
-      // Add plate charge as an invoice item
+      // Add plate charge as an invoice item (use custom charge if available, otherwise use plate type charge)
+      const plateChargeAmount = parseFloat(order.custom_plate_charge || order.plateType.charge);
+      const plateChargeDescription = order.custom_plate_charge
+        ? `Plate Charge: ${order.plateType.type_name} (Custom) (${order.order_date})`
+        : `Plate Charge: ${order.plateType.type_name} (${order.order_date})`;
+
       await InvoiceItem.create(
         {
           invoice_id: invoice.id,
           order_id: order.id,
-          description: `Plate Charge: ${order.plateType.type_name} (${order.order_date})`,
+          description: plateChargeDescription,
           quantity: 1,
-          unit_price: parseFloat(order.plateType.charge),
-          total_price: parseFloat(order.plateType.charge),
+          unit_price: plateChargeAmount,
+          total_price: plateChargeAmount,
         },
         { transaction }
       );
@@ -254,12 +253,6 @@ const generateInvoice = async (req, res) => {
   }
 };
 
-/**
- * Get all invoices
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getAllInvoices = async (req, res) => {
   try {
     const { customer_id, status, dateFrom, dateTo, search } = req.query;
@@ -346,12 +339,6 @@ const getAllInvoices = async (req, res) => {
   }
 };
 
-/**
- * Get an invoice by ID
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
 const getInvoiceById = async (req, res) => {
   try {
     const { id } = req.params;

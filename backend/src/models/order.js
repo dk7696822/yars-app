@@ -109,6 +109,15 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      custom_plate_charge: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        validate: {
+          isDecimal: true,
+          min: 0,
+        },
+        comment: "Custom plate charge for this order. If NULL, uses plate_types.charge",
+      },
     },
     {
       sequelize,

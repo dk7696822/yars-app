@@ -83,4 +83,18 @@ export const paymentAPI = {
   delete: (id) => api.delete(`/payments/${id}`),
 };
 
+// Export API
+export const exportAPI = {
+  downloadDashboardData: (params) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_URL}/export/dashboard?${queryString}`;
+    return url;
+  },
+  downloadExpensesData: (params) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_URL}/export/expenses?${queryString}`;
+    return url;
+  },
+};
+
 export default api;
