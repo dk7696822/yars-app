@@ -6,7 +6,6 @@ import { Button } from "../ui/Button";
 import Dropdown from "../ui/Dropdown";
 import "react-datepicker/dist/react-datepicker.css";
 
-// Custom DatePicker input component with dark mode support
 const CustomDatePickerInput = forwardRef(({ value, onClick, className }, ref) => (
   <div className="relative">
     <input ref={ref} className={`${className} pr-10`} value={value} onClick={onClick} readOnly />

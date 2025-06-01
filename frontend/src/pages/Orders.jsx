@@ -98,7 +98,6 @@ const Orders = () => {
 
   const handleDownloadExcel = () => {
     try {
-      // Format filters for API (same logic as fetchOrders)
       const params = { ...filters };
       if (params.dateFrom) {
         params.dateFrom = formatDateForAPI(params.dateFrom);
@@ -110,7 +109,6 @@ const Orders = () => {
         params.date = formatDateForAPI(params.date);
       }
 
-      // Get download URL and trigger download
       const downloadUrl = exportAPI.downloadDashboardData(params);
       window.open(downloadUrl, "_blank");
     } catch (err) {

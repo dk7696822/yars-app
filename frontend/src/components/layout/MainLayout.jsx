@@ -7,18 +7,14 @@ const MainLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Handle sidebar toggle
   const handleSidebarToggle = () => {
     if (window.innerWidth < 1024) {
-      // Mobile: toggle mobile menu
       setIsMobileOpen(!isMobileOpen);
     } else {
-      // Desktop: toggle collapsed state
       setIsSidebarCollapsed(!isSidebarCollapsed);
     }
   };
 
-  // Close mobile menu on window resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {

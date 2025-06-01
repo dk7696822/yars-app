@@ -88,10 +88,8 @@ const Expenses = () => {
 
   const handleDownloadExcel = () => {
     try {
-      // Format filters for API (same logic as fetchExpenses)
       const params = { ...filters };
 
-      // Format dates if they exist
       if (params.from_date && typeof params.from_date === "object") {
         params.from_date = params.from_date.toISOString().split("T")[0];
       }
@@ -99,14 +97,12 @@ const Expenses = () => {
         params.to_date = params.to_date.toISOString().split("T")[0];
       }
 
-      // Remove null/empty values
       Object.keys(params).forEach((key) => {
         if (params[key] === null || params[key] === "") {
           delete params[key];
         }
       });
 
-      // Get download URL and trigger download
       const downloadUrl = exportAPI.downloadExpensesData(params);
       window.open(downloadUrl, "_blank");
     } catch (err) {
