@@ -3,6 +3,7 @@
 const { Expense, ExpenseCategory, sequelize } = require("../models");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
+const { parseISO, endOfDay,addDays } = require("date-fns");
 
 const createExpense = async (req, res) => {
   try {
@@ -59,7 +60,7 @@ const getAllExpenses = async (req, res) => {
 
     if (from_date && to_date) {
       whereClause.bill_date = {
-        [Op.between]: [from_date, to_date],
+        [Op.between]: [parseISO(from_date), addDays(parseISO(to_date), 1)],
       };
     } else if (from_date) {
       whereClause.bill_date = {
@@ -67,7 +68,7 @@ const getAllExpenses = async (req, res) => {
       };
     } else if (to_date) {
       whereClause.bill_date = {
-        [Op.lte]: to_date,
+        [Op.lte]: addDays(parseISO(to_date), 1),
       };
     }
 
