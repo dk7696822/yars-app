@@ -60,7 +60,7 @@ const getAllExpenses = async (req, res) => {
 
     if (from_date && to_date) {
       whereClause.bill_date = {
-        [Op.between]: [parseISO(from_date), addDays(parseISO(to_date), 1)],
+        [Op.between]: [parseISO(from_date),addDays(parseISO(to_date), 1)],
       };
     } else if (from_date) {
       whereClause.bill_date = {
