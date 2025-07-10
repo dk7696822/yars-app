@@ -52,11 +52,13 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               // Add plate charge (use custom charge if available, otherwise use plate type charge)
               const plateCharge = order.custom_plate_charge ? parseFloat(order.custom_plate_charge) : order.plateType ? parseFloat(order.plateType.charge) : 0;
 
+              const roundOffAmount = parseFloat(order.round_off_amount || 0);
+
               // Subtract advance
               const advanceReceived = parseFloat(order.advance_received || 0);
 
-              // Calculate total receivable
-              const totalReceivable = productAmount + plateCharge - advanceReceived;
+              // Calculate total receivable (including round off)
+              const totalReceivable = productAmount + plateCharge - roundOffAmount - advanceReceived;
 
               return {
                 ...order,

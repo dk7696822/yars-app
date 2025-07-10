@@ -66,25 +66,44 @@ const generateInvoice = async (req, res) => {
       // Calculate product amount
       let productAmount = 0;
       for (const item of order.orderProductSizes) {
-        const itemTotal = parseFloat(item.quantity_kg) * parseFloat(item.rate_per_kg);
+        const quantity = parseFloat(item.quantity_kg) || 0;
+        const rate = parseFloat(item.rate_per_kg) || 0;
+        const itemTotal = quantity * rate;
         productAmount += itemTotal;
       }
 
       // Add plate charge (use custom charge if available, otherwise use plate type charge)
-      const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge);
+      const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge) || 0;
+
+      // Apply round off amount
+      const roundOffAmount = parseFloat(order.round_off_amount) || 0;
 
       // Track advance separately (don't subtract it from the total amount)
-      const advanceReceived = parseFloat(order.advance_received);
+      const advanceReceived = parseFloat(order.advance_received) || 0;
       totalAdvanceReceived += advanceReceived;
 
-      // Calculate total for this order (without subtracting advance)
-      const orderTotal = productAmount + plateCharge;
+      // Calculate total for this order (including round off)
+      const orderTotal = productAmount + plateCharge - roundOffAmount;
+
+      // Safety check for this order's total
+      if (isNaN(orderTotal)) {
+        await transaction.rollback();
+        return error(res, 400, `Invalid calculation for order ${order.id}. Please check order data.`);
+      }
+
       totalAmount += orderTotal;
     }
 
-    // Calculate tax amount
-    const taxAmount = (totalAmount * parseFloat(tax_percent)) / 100;
+    // Calculate tax amount with safety checks
+    const taxPercent = parseFloat(tax_percent) || 0;
+    const taxAmount = (totalAmount * taxPercent) / 100;
     const finalAmount = totalAmount + taxAmount;
+
+    // Safety check to prevent NaN values
+    if (isNaN(totalAmount) || isNaN(taxAmount) || isNaN(finalAmount)) {
+      await transaction.rollback();
+      return error(res, 400, "Invalid calculation values. Please check order data.");
+    }
 
     // Note: totalAmount is the full order amount without subtracting advance
     // finalAmount is totalAmount + tax
@@ -135,10 +154,10 @@ const generateInvoice = async (req, res) => {
             dueDate.setDate(dueDate.getDate() + 30);
             return dueDate;
           })(),
-        total_amount: totalAmount,
-        tax_percent: tax_percent || 0,
-        tax_amount: taxAmount,
-        final_amount: finalAmount,
+        total_amount: parseFloat(totalAmount.toFixed(2)),
+        tax_percent: parseFloat((tax_percent || 0).toFixed(2)),
+        tax_amount: parseFloat(taxAmount.toFixed(2)),
+        final_amount: parseFloat(finalAmount.toFixed(2)),
         status: "PENDING",
       },
       { transaction }
