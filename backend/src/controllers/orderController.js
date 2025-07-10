@@ -14,7 +14,7 @@ const createOrder = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge } = req.body;
+    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
 
     // Validate required fields
     if (!customer_id || !plate_type_id || !product_sizes || !product_sizes.length) {
@@ -31,6 +31,7 @@ const createOrder = async (req, res) => {
         plate_type_id,
         status: status || "PENDING",
         custom_plate_charge: custom_plate_charge ? parseFloat(custom_plate_charge) : null,
+        round_off_amount: round_off_amount ? parseFloat(round_off_amount) : 0,
       },
       { transaction }
     );
@@ -208,8 +209,12 @@ const getAllOrders = async (req, res) => {
       // Add plate charge (use custom charge if available, otherwise use plate type charge)
       const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
 
-      // Calculate total order amount
-      const totalOrderAmount = totalProductAmount + plateCharge;
+      // Calculate total order amount before round off
+      const totalOrderAmountBeforeRoundOff = totalProductAmount + plateCharge;
+
+      // Apply round off amount
+      const roundOffAmount = parseFloat(orderData.round_off_amount || 0);
+      const totalOrderAmount = totalOrderAmountBeforeRoundOff - roundOffAmount;
 
       // Calculate payment summary
       // Filter out ADVANCE type payments to avoid double counting
@@ -320,8 +325,12 @@ const getOrderById = async (req, res) => {
     // Add plate charge (use custom charge if available, otherwise use plate type charge)
     const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
 
-    // Calculate total order amount
-    const totalOrderAmount = totalProductAmount + plateCharge;
+    // Calculate total order amount before round off
+    const totalOrderAmountBeforeRoundOff = totalProductAmount + plateCharge;
+
+    // Apply round off amount
+    const roundOffAmount = parseFloat(orderData.round_off_amount || 0);
+    const totalOrderAmount = totalOrderAmountBeforeRoundOff - roundOffAmount;
 
     // Calculate payment summary
     // Filter out ADVANCE type payments to avoid double counting
@@ -374,7 +383,7 @@ const updateOrder = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge } = req.body;
+    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
 
     // Check if order exists
     const order = await Order.findOne({
@@ -401,6 +410,7 @@ const updateOrder = async (req, res) => {
         plate_type_id: plate_type_id || order.plate_type_id,
         status: status || order.status,
         custom_plate_charge: custom_plate_charge !== undefined ? (custom_plate_charge ? parseFloat(custom_plate_charge) : null) : order.custom_plate_charge,
+        round_off_amount: round_off_amount !== undefined ? parseFloat(round_off_amount || 0) : order.round_off_amount,
       },
       { transaction }
     );

@@ -180,6 +180,14 @@ const OrderDetails = () => {
                 </TableCell>
                 <TableCell className="text-right">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</TableCell>
               </TableRow>
+              {order.round_off_amount && parseFloat(order.round_off_amount) !== 0 && (
+                <TableRow className="bg-orange-50 dark:bg-orange-900/20">
+                  <TableCell colSpan={3} className="font-medium text-orange-700 dark:text-orange-300">
+                    Round Off Amount
+                  </TableCell>
+                  <TableCell className="text-right text-orange-700 dark:text-orange-300">-{formatCurrency(Math.abs(parseFloat(order.round_off_amount)))}</TableCell>
+                </TableRow>
+              )}
               <TableRow className="bg-primary/5 dark:bg-primary-900/20">
                 <TableCell colSpan={3} className="font-bold">
                   Total Order Amount

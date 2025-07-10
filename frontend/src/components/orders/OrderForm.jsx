@@ -18,6 +18,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     plate_type_id: "",
     status: "PENDING",
     custom_plate_charge: null,
+    round_off_amount: 0,
     product_sizes: [{ product_size_id: "", quantity_kg: 1, rate_per_kg: 0 }],
   });
 
@@ -41,6 +42,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
         plate_type_id: initialValues.plate_type_id || "",
         status: initialValues.status || "PENDING",
         custom_plate_charge: initialValues.custom_plate_charge ? parseFloat(initialValues.custom_plate_charge) : null,
+        round_off_amount: parseFloat(initialValues.round_off_amount) || 0,
         product_sizes: productSizesData,
       });
     }
@@ -64,8 +66,15 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     const defaultCharge = selectedPlateType ? parseFloat(selectedPlateType.charge) : 0;
     const charge = formData.custom_plate_charge !== null ? parseFloat(formData.custom_plate_charge || 0) : defaultCharge;
 
-    // Calculate total receivable
-    const receivable = amount + charge - parseFloat(formData.advance_received || 0);
+    // Calculate total before round off
+    const totalBeforeRoundOff = amount + charge;
+
+    // Apply round off amount
+    const roundOffAmount = parseFloat(formData.round_off_amount || 0);
+    const totalAfterRoundOff = totalBeforeRoundOff - roundOffAmount;
+
+    // Calculate total receivable (after round off minus advance)
+    const receivable = totalAfterRoundOff - parseFloat(formData.advance_received || 0);
 
     setTotalAmount(amount);
     setPlateCharge(charge);
@@ -210,6 +219,23 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
               min="0"
               step="0.01"
               placeholder="Enter custom charge (optional)"
+              className="form-control"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="round_off_amount">
+              Round Off Amount
+              <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Amount to subtract from total)</span>
+            </label>
+            <input
+              type="number"
+              id="round_off_amount"
+              name="round_off_amount"
+              value={formData.round_off_amount || ""}
+              onChange={handleChange}
+              step="0.01"
+              placeholder="Enter round off amount (e.g., 5 for ₹10005 → ₹10000)"
               className="form-control"
             />
           </div>
