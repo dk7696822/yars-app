@@ -15,7 +15,7 @@ const CustomDatePickerInput = forwardRef(({ value, onClick, className }, ref) =>
 
 CustomDatePickerInput.displayName = "CustomDatePickerInput";
 
-const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel }) => {
+const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = false }) => {
   const [formData, setFormData] = useState({
     amount: "",
     payment_date: new Date(),
@@ -201,6 +201,7 @@ PaymentForm.propTypes = {
   order: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
+  isEditing: PropTypes.bool,
 };
 
 export default PaymentForm;

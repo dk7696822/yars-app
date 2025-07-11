@@ -22,6 +22,8 @@ const OrderDetails = () => {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -43,6 +45,15 @@ const OrderDetails = () => {
 
   const handleAddPayment = () => {
     setPaymentError("");
+    setEditingPayment(null);
+    setIsEditMode(false);
+    setPaymentModalOpen(true);
+  };
+
+  const handleEditPayment = (payment) => {
+    setPaymentError("");
+    setEditingPayment(payment);
+    setIsEditMode(true);
     setPaymentModalOpen(true);
   };
 
@@ -51,19 +62,32 @@ const OrderDetails = () => {
       setPaymentSubmitting(true);
       setPaymentError("");
 
-      await paymentAPI.create(paymentData);
+      if (isEditMode && editingPayment) {
+        await paymentAPI.update(editingPayment.id, paymentData);
+      } else {
+        await paymentAPI.create(paymentData);
+      }
 
       // Refresh order data
       const response = await orderAPI.getById(id);
       setOrder(response.data.data);
 
       setPaymentModalOpen(false);
+      setEditingPayment(null);
+      setIsEditMode(false);
     } catch (err) {
-      console.error("Error recording payment:", err);
-      setPaymentError(err.response?.data?.message || "Failed to record payment. Please try again.");
+      console.error("Error saving payment:", err);
+      setPaymentError(err.response?.data?.message || "Failed to save payment. Please try again.");
     } finally {
       setPaymentSubmitting(false);
     }
+  };
+
+  const handlePaymentCancel = () => {
+    setPaymentModalOpen(false);
+    setEditingPayment(null);
+    setIsEditMode(false);
+    setPaymentError("");
   };
 
   if (loading) {
@@ -199,12 +223,12 @@ const OrderDetails = () => {
         </div>
       </Card>
 
-      <OrderPaymentSummary order={order} onAddPayment={handleAddPayment} />
+      <OrderPaymentSummary order={order} onAddPayment={handleAddPayment} onEditPayment={handleEditPayment} />
 
       {/* Payment Modal */}
-      <Modal isOpen={paymentModalOpen} title="Record Payment" onClose={() => setPaymentModalOpen(false)} size="md">
+      <Modal isOpen={paymentModalOpen} title={isEditMode ? "Edit Payment" : "Record Payment"} onClose={handlePaymentCancel} size="md">
         {paymentError && <Alert type="danger" message={paymentError} className="mb-4" />}
-        <PaymentForm order={order} onSubmit={handlePaymentSubmit} onCancel={() => setPaymentModalOpen(false)} />
+        <PaymentForm payment={editingPayment} order={order} onSubmit={handlePaymentSubmit} onCancel={handlePaymentCancel} isEditing={isEditMode} />
       </Modal>
     </div>
   );

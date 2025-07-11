@@ -1,10 +1,10 @@
 import PropTypes from "prop-types";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaEdit } from "react-icons/fa";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 
-const OrderPaymentSummary = ({ order, onAddPayment }) => {
+const OrderPaymentSummary = ({ order, onAddPayment, onEditPayment }) => {
   if (!order) return null;
 
   const { payment_summary, payments = [] } = order;
@@ -71,6 +71,7 @@ const OrderPaymentSummary = ({ order, onAddPayment }) => {
                   <th className="py-2 px-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
                   <th className="py-2 px-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Method</th>
                   <th className="py-2 px-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reference</th>
+                  <th className="py-2 px-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -81,6 +82,19 @@ const OrderPaymentSummary = ({ order, onAddPayment }) => {
                     <td className="py-2 px-2 text-gray-900 dark:text-white">{payment.payment_type}</td>
                     <td className="py-2 px-2 text-gray-900 dark:text-white">{payment.payment_method}</td>
                     <td className="py-2 px-2 text-gray-900 dark:text-white">{payment.reference_number || "—"}</td>
+                    <td className="py-2 px-2">
+                      {onEditPayment && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditPayment(payment)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          <FaEdit className="h-3 w-3" />
+                          Edit
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -95,6 +109,7 @@ const OrderPaymentSummary = ({ order, onAddPayment }) => {
 OrderPaymentSummary.propTypes = {
   order: PropTypes.object,
   onAddPayment: PropTypes.func,
+  onEditPayment: PropTypes.func,
 };
 
 export default OrderPaymentSummary;
