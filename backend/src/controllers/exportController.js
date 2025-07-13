@@ -40,7 +40,7 @@ const exportDashboardData = async (req, res) => {
     }
 
     if (search && search !== "undefined" && search !== "null" && search.trim() !== "") {
-      whereClause[Op.or] = [{ "$customer.name$": { [Op.iLike]: `%${search}%` } }, { "$customer.company_name$": { [Op.iLike]: `%${search}%` } }];
+      whereClause[Op.or] = [{ "$customer.name$": { [Op.iLike]: `%${search}%` } }, sequelize.literal(`"customer"."metadata"->>'company_name' ILIKE '%${search.replace(/'/g, "''")}%'`)];
     }
 
     let paymentWhereClause = {};
@@ -142,9 +142,9 @@ const exportDashboardData = async (req, res) => {
         "Order ID": order.id,
         "Order Date": new Date(order.order_date).toLocaleDateString(),
         "Customer Name": order.customer.name,
-        "Company Name": order.customer.company_name || "",
-        "Customer Phone": order.customer.phone || "",
-        "Customer Email": order.customer.email || "",
+        "Company Name": order.customer.metadata?.company_name || "",
+        "Customer Phone": order.customer.metadata?.phone || "",
+        "Customer Email": order.customer.metadata?.email || "",
         "Order Status": order.status,
         "Payment Status": paymentStatusText,
         "Plate Type": order.plateType.type_name,

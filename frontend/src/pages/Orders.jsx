@@ -98,17 +98,29 @@ const Orders = () => {
 
   const handleDownloadExcel = () => {
     try {
-      const params = { ...filters };
-      if (params.dateFrom) {
-        params.dateFrom = formatDateForAPI(params.dateFrom);
-      }
-      if (params.dateTo) {
-        params.dateTo = formatDateForAPI(params.dateTo);
-      }
-      if (params.date) {
-        params.date = formatDateForAPI(params.date);
+      const params = {};
+
+      if (filters.customerName) {
+        params.search = filters.customerName;
       }
 
+      if (filters.status) {
+        params.status = filters.status;
+      }
+
+      if (filters.dateFrom) {
+        params.from_date = formatDateForAPI(filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        params.to_date = formatDateForAPI(filters.dateTo);
+      }
+      if (filters.date) {
+        const formattedDate = formatDateForAPI(filters.date);
+        params.from_date = formattedDate;
+        params.to_date = formattedDate;
+      }
+
+      // Clean up undefined, null, or empty string values
       Object.keys(params).forEach((key) => {
         if (params[key] === undefined || params[key] === null || params[key] === "" || params[key] === "undefined") {
           delete params[key];
