@@ -651,22 +651,26 @@ const generatePDF = async (req, res) => {
     doc
       .fontSize(12)
       .font("Helvetica-Bold")
-      .text("M/s YARS Industries", logoX, logoY + logoHeight + 10);
+      .text("M/s YARS INDUSTRIES", logoX, logoY + logoHeight + 10);
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text("GSTIN: 29ADN2449Q3ZJ", logoX, logoY + logoHeight + 25);
     doc
       .fontSize(9)
-      .font("Helvetica")
-      .text("Plot #21 KIADB Kolhar Industrial Area", logoX, logoY + logoHeight + 30);
+      .font("Helvetica-Bold")
+      .text("PLOT #21 KIADB KOLHAR INDUSTRIAL AREA", logoX, logoY + logoHeight + 40);
     doc
       .fontSize(9)
-      .font("Helvetica")
-      .text("2nd phase Village Ballura", logoX, logoY + logoHeight + 45);
+      .font("Helvetica-Bold")
+      .text("2ND PHASE VILLAGE BALLURA", logoX, logoY + logoHeight + 55);
     doc
       .fontSize(9)
-      .font("Helvetica")
-      .text("Bidar - 585403", logoX, logoY + logoHeight + 60);
+      .font("Helvetica-Bold")
+      .text("BIDAR - 585403", logoX, logoY + logoHeight + 70);
 
     // Add a horizontal line below the header
-    const headerBottomY = logoY + logoHeight + 90;
+    const headerBottomY = logoY + logoHeight + 95;
     doc.moveTo(leftMargin, headerBottomY).lineTo(rightMargin, headerBottomY).stroke();
 
     // Add invoice details - adjust position based on the new header layout
@@ -687,24 +691,8 @@ const generatePDF = async (req, res) => {
       .font("Helvetica-Bold")
       .text(new Date(invoice.invoice_date).toLocaleDateString(), leftMargin, detailsStartY + 55);
 
-    const rightColumnX = 300;
-    doc.fontSize(11).font("Helvetica").text("Billing Period:", rightColumnX, detailsStartY);
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text(`${new Date(invoice.billing_period_start).toLocaleDateString()} - ${new Date(invoice.billing_period_end).toLocaleDateString()}`, rightColumnX, detailsStartY + 15);
-
-    doc
-      .fontSize(11)
-      .font("Helvetica")
-      .text("Due Date:", rightColumnX, detailsStartY + 40);
-    doc
-      .fontSize(11)
-      .font("Helvetica-Bold")
-      .text(invoice.payment_due_date ? new Date(invoice.payment_due_date).toLocaleDateString() : "N/A", rightColumnX, detailsStartY + 55);
-
     // Add customer details
-    const customerY = detailsStartY + 90;
+    const customerY = detailsStartY + 80;
     doc.fontSize(11).font("Helvetica").text("Billed To:", leftMargin, customerY);
     doc
       .fontSize(11)
