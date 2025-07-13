@@ -109,6 +109,12 @@ const Orders = () => {
         params.date = formatDateForAPI(params.date);
       }
 
+      Object.keys(params).forEach((key) => {
+        if (params[key] === undefined || params[key] === null || params[key] === "" || params[key] === "undefined") {
+          delete params[key];
+        }
+      });
+
       const downloadUrl = exportAPI.downloadDashboardData(params);
       window.open(downloadUrl, "_blank");
     } catch (err) {

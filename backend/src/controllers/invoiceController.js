@@ -155,7 +155,7 @@ const generateInvoice = async (req, res) => {
             return dueDate;
           })(),
         total_amount: parseFloat(totalAmount.toFixed(2)),
-        tax_percent: parseFloat((tax_percent || 0).toFixed(2)),
+        tax_percent: parseFloat(parseFloat(tax_percent || 0).toFixed(2)),
         tax_amount: parseFloat(taxAmount.toFixed(2)),
         final_amount: parseFloat(finalAmount.toFixed(2)),
         status: "PENDING",

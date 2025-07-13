@@ -13,7 +13,7 @@ const exportDashboardData = async (req, res) => {
       is_archived: false,
     };
 
-    if (customer_id) {
+    if (customer_id && customer_id !== "undefined" && customer_id !== "null" && customer_id.trim() !== "") {
       whereClause.customer_id = customer_id;
     }
 
@@ -31,20 +31,20 @@ const exportDashboardData = async (req, res) => {
       };
     }
 
-    if (status) {
+    if (status && status !== "undefined" && status !== "null" && status.trim() !== "") {
       whereClause.status = status;
     }
 
-    if (plate_type_id) {
+    if (plate_type_id && plate_type_id !== "undefined" && plate_type_id !== "null" && plate_type_id.trim() !== "") {
       whereClause.plate_type_id = plate_type_id;
     }
 
-    if (search) {
+    if (search && search !== "undefined" && search !== "null" && search.trim() !== "") {
       whereClause[Op.or] = [{ "$customer.name$": { [Op.iLike]: `%${search}%` } }, { "$customer.company_name$": { [Op.iLike]: `%${search}%` } }];
     }
 
     let paymentWhereClause = {};
-    if (payment_status) {
+    if (payment_status && payment_status !== "undefined" && payment_status !== "null" && payment_status.trim() !== "") {
       if (payment_status === "PAID") {
         paymentWhereClause = {
           [Op.and]: [
@@ -117,7 +117,10 @@ const exportDashboardData = async (req, res) => {
       }
 
       const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge);
-      const totalOrderAmount = productAmount + plateCharge;
+
+      const roundOffAmount = parseFloat(order.round_off_amount || 0);
+
+      const totalOrderAmount = productAmount + plateCharge - roundOffAmount;
 
       const totalPaid = order.payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
       const remainingAmount = totalOrderAmount - totalPaid;
@@ -147,6 +150,7 @@ const exportDashboardData = async (req, res) => {
         "Plate Type": order.plateType.type_name,
         "Plate Charge": plateCharge,
         "Custom Plate Charge": order.custom_plate_charge ? "Yes" : "No",
+        "Round Off Amount": roundOffAmount,
         "Product Amount": productAmount,
         "Total Order Amount": totalOrderAmount,
         "Advance Received": parseFloat(order.advance_received || 0),
@@ -223,6 +227,7 @@ const exportDashboardData = async (req, res) => {
       { wch: 15 },
       { wch: 15 },
       { wch: 12 },
+      { wch: 15 },
       { wch: 15 },
       { wch: 15 },
       { wch: 18 },
