@@ -267,7 +267,7 @@ const updatePayment = async (req, res) => {
     // Update payment
     await payment.update(
       {
-        amount: amount || payment.amount,
+        amount: amount !== undefined ? amount : payment.amount,
         payment_date: payment_date || payment.payment_date,
         payment_method: payment_method || payment.payment_method,
         payment_type: payment_type || payment.payment_type,

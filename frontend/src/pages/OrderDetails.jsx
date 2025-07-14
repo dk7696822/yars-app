@@ -24,6 +24,8 @@ const OrderDetails = () => {
   const [paymentError, setPaymentError] = useState("");
   const [editingPayment, setEditingPayment] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -88,6 +90,34 @@ const OrderDetails = () => {
     setEditingPayment(null);
     setIsEditMode(false);
     setPaymentError("");
+  };
+
+  const handleDeletePayment = (paymentId) => {
+    const payment = order.payments.find((p) => p.id === paymentId);
+    setPaymentToDelete(payment);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeletePayment = async () => {
+    if (!paymentToDelete) return;
+
+    try {
+      await paymentAPI.delete(paymentToDelete.id);
+
+      const response = await orderAPI.getById(id);
+      setOrder(response.data.data);
+
+      setDeleteConfirmOpen(false);
+      setPaymentToDelete(null);
+    } catch (err) {
+      console.error("Error deleting payment:", err);
+      setError("Failed to delete payment. Please try again.");
+    }
+  };
+
+  const cancelDeletePayment = () => {
+    setDeleteConfirmOpen(false);
+    setPaymentToDelete(null);
   };
 
   if (loading) {
@@ -223,12 +253,29 @@ const OrderDetails = () => {
         </div>
       </Card>
 
-      <OrderPaymentSummary order={order} onAddPayment={handleAddPayment} onEditPayment={handleEditPayment} />
+      <OrderPaymentSummary order={order} onAddPayment={handleAddPayment} onEditPayment={handleEditPayment} onDeletePayment={handleDeletePayment} />
 
       {/* Payment Modal */}
       <Modal isOpen={paymentModalOpen} title={isEditMode ? "Edit Payment" : "Record Payment"} onClose={handlePaymentCancel} size="md">
         {paymentError && <Alert type="danger" message={paymentError} className="mb-4" />}
         <PaymentForm payment={editingPayment} order={order} onSubmit={handlePaymentSubmit} onCancel={handlePaymentCancel} isEditing={isEditMode} />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={deleteConfirmOpen} title="Delete Payment" onClose={cancelDeletePayment} size="sm">
+        <div className="p-4">
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
+            Are you sure you want to delete this payment of {paymentToDelete && formatCurrency(paymentToDelete.amount)}? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-2">
+            <Button variant="secondary" onClick={cancelDeletePayment}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeletePayment}>
+              Delete Payment
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

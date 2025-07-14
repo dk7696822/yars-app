@@ -1,10 +1,10 @@
 import PropTypes from "prop-types";
-import { FaPlus, FaEdit } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 
-const OrderPaymentSummary = ({ order, onAddPayment, onEditPayment }) => {
+const OrderPaymentSummary = ({ order, onAddPayment, onEditPayment, onDeletePayment }) => {
   if (!order) return null;
 
   const { payment_summary, payments = [] } = order;
@@ -83,17 +83,30 @@ const OrderPaymentSummary = ({ order, onAddPayment, onEditPayment }) => {
                     <td className="py-2 px-2 text-gray-900 dark:text-white">{payment.payment_method}</td>
                     <td className="py-2 px-2 text-gray-900 dark:text-white">{payment.reference_number || "—"}</td>
                     <td className="py-2 px-2">
-                      {onEditPayment && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEditPayment(payment)}
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          <FaEdit className="h-3 w-3" />
-                          Edit
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {onEditPayment && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEditPayment(payment)}
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            <FaEdit className="h-3 w-3" />
+                            Edit
+                          </Button>
+                        )}
+                        {onDeletePayment && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onDeletePayment(payment.id)}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            <FaTrash className="h-3 w-3" />
+                            Delete
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -110,6 +123,7 @@ OrderPaymentSummary.propTypes = {
   order: PropTypes.object,
   onAddPayment: PropTypes.func,
   onEditPayment: PropTypes.func,
+  onDeletePayment: PropTypes.func,
 };
 
 export default OrderPaymentSummary;
