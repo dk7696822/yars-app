@@ -699,8 +699,15 @@ const generatePDF = async (req, res) => {
       .font("Helvetica-Bold")
       .text(invoice.customer.name, leftMargin, customerY + 15);
 
+    const customerAddress = invoice.customer.metadata?.address;
+    let addressY = customerY + 30;
+    if (customerAddress) {
+      doc.fontSize(10).font("Helvetica").text(customerAddress, leftMargin, addressY, { width: 200 });
+      addressY += 30;
+    }
+
     // Add items table header
-    const tableHeaderY = customerY + 50;
+    const tableHeaderY = addressY + 20;
     doc.moveTo(leftMargin, tableHeaderY).lineTo(rightMargin, tableHeaderY).stroke();
 
     doc
