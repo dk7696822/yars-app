@@ -655,7 +655,7 @@ const generatePDF = async (req, res) => {
     doc
       .fontSize(10)
       .font("Helvetica-Bold")
-      .text("GSTIN: 29ADN2449Q3ZJ", logoX, logoY + logoHeight + 25);
+      .text("GSTIN: 29ADNPN2449Q3ZJ", logoX, logoY + logoHeight + 25);
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
@@ -667,7 +667,7 @@ const generatePDF = async (req, res) => {
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
-      .text("BIDAR - 585403", logoX, logoY + logoHeight + 70);
+      .text("BIDAR - 585402", logoX, logoY + logoHeight + 70);
 
     // Add a horizontal line below the header
     const headerBottomY = logoY + logoHeight + 95;
