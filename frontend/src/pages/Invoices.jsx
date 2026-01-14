@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaExclamationCircle, FaFileInvoiceDollar, FaFilter } from "react-icons/fa";
+import { FaPlus, FaExclamationCircle, FaFileInvoiceDollar, FaFilter, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { invoiceAPI, customerAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import InvoiceFilter from "../components/invoices/InvoiceFilter";
 import InvoiceList from "../components/invoices/InvoiceList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
+
+const INVOICES_PER_PAGE = 10;
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -18,6 +20,7 @@ const Invoices = () => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [invoiceToUpdate, setInvoiceToUpdate] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -60,9 +63,26 @@ const Invoices = () => {
     }
   };
 
+  // Calculate paginated invoices
+  const paginatedInvoices = useMemo(() => {
+    const startIndex = (currentPage - 1) * INVOICES_PER_PAGE;
+    return invoices.slice(startIndex, startIndex + INVOICES_PER_PAGE);
+  }, [invoices, currentPage]);
+
+  const totalPages = Math.ceil(invoices.length / INVOICES_PER_PAGE);
+
   const handleFilter = (filterParams) => {
     setFilters(filterParams);
+    setCurrentPage(1); // Reset to first page when filters change
     fetchInvoices(filterParams);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   const handleDeleteClick = (invoiceId) => {
@@ -134,52 +154,116 @@ const Invoices = () => {
       </div>
 
       {/* Filter section */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        {/* Ambient glow */}
+        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50 px-5 py-4">
           <h2 className="section-title flex items-center gap-2">
-            <FaFilter className="w-4 h-4 text-gray-400" />
+            <FaFilter className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             Filter Invoices
           </h2>
         </div>
-        <div className="p-4 md:p-5">
+        <div className="relative p-4 md:p-5">
           <InvoiceFilter customers={customers} onFilter={handleFilter} />
         </div>
       </div>
 
       {/* Invoices list */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
-          <h2 className="section-title">All Invoices</h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
-          </span>
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        {/* Ambient glow */}
+        <div className="hidden dark:block absolute -top-20 -left-20 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -bottom-20 -right-20 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+              <FaFileInvoiceDollar className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-gray-100">All Invoices</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="p-4 md:p-5">
+        <div className="relative p-4 md:p-5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="relative">
-                <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                <div className="h-12 w-12 rounded-full border-4 border-primary/20 dark:border-primary/30 border-t-primary animate-spin" />
               </div>
               <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading invoices...</p>
             </div>
           ) : invoices.length > 0 ? (
-            <InvoiceList
-              invoices={invoices}
-              onDelete={handleDeleteClick}
-              onStatusChange={handleStatusChangeClick}
-            />
+            <>
+              <InvoiceList
+                invoices={paginatedInvoices}
+                onDelete={handleDeleteClick}
+                onStatusChange={handleStatusChangeClick}
+              />
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 order-2 sm:order-1">
+                    Showing {((currentPage - 1) * INVOICES_PER_PAGE) + 1} - {Math.min(currentPage * INVOICES_PER_PAGE, invoices.length)} of {invoices.length} invoices
+                  </p>
+                  <div className="flex items-center gap-2 order-1 sm:order-2">
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+
+                    {/* Page numbers - hidden on mobile */}
+                    <div className="hidden sm:flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
+                            page === currentPage
+                              ? "bg-primary text-white"
+                              : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Mobile page indicator */}
+                    <span className="sm:hidden text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
+                      {currentPage} / {totalPages}
+                    </span>
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaFileInvoiceDollar className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaFileInvoiceDollar className="w-8 h-8 text-blue-500 dark:text-blue-400/60" />
               </div>
-              <h3 className="text-gray-900 dark:text-white font-medium mb-1">No invoices found</h3>
+              <h3 className="text-gray-900 dark:text-gray-100 font-medium mb-1">No invoices found</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
                 Generate your first invoice to get started.
               </p>
               <Link
                 to="/invoices/generate"
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-700"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-blue-400 hover:text-primary-700 dark:hover:text-blue-300 transition-colors"
               >
                 <FaPlus className="w-3 h-3" /> Generate Invoice
               </Link>

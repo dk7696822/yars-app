@@ -47,15 +47,22 @@ const TotalExpenseCard = ({ filters = {} }) => {
   }, [filters]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-      <div className="flex items-center space-x-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300">
+    <div className="relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-red-950/30 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-red-500/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(239,68,68,0.2)] p-5 sm:p-6 max-w-md">
+      {/* Ambient glow for dark mode */}
+      <div className="hidden dark:block absolute -top-10 -right-10 w-32 h-32 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+
+      <div className="relative flex items-center gap-4">
+        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
           {loading ? <FaSpinner className="h-6 w-6 animate-spin" /> : <FaMoneyBillWave className="h-6 w-6" />}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Expense</p>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{error ? <span className="text-red-500 text-sm">Error loading</span> : formatCurrency(totalExpense)}</h3>
-          {Object.keys(filters).length > 0 && !loading && !error && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Based on applied filters</p>}
+          <h3 className="text-2xl sm:text-3xl font-bold font-display text-gray-900 dark:text-red-400 tracking-tight">
+            {error ? <span className="text-red-500 dark:text-red-400 text-sm">Error loading</span> : formatCurrency(totalExpense)}
+          </h3>
+          {Object.keys(filters).length > 0 && !loading && !error && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Based on applied filters</p>
+          )}
         </div>
       </div>
     </div>

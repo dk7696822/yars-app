@@ -1,17 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaEdit, FaFileInvoice } from "react-icons/fa";
+import { FaArrowLeft, FaEdit, FaFileInvoice, FaExclamationCircle, FaUser, FaClipboardList, FaBox, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCalendarAlt, FaLayerGroup } from "react-icons/fa";
 import { orderAPI, paymentAPI } from "../services/api";
 import OrderPaymentSummary from "../components/payments/OrderPaymentSummary";
 import PaymentForm from "../components/payments/PaymentForm";
-import Card from "../components/common/Card";
-import Spinner from "../components/common/Spinner";
-import Alert from "../components/common/Alert";
 import Modal from "../components/common/Modal";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../components/ui/Table";
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -122,21 +118,28 @@ const OrderDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="large" />
+      <div className="page-container">
+        <div className="flex flex-col items-center justify-center py-24">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-gray-700" />
+            <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-emerald-400 animate-spin" />
+          </div>
+          <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading order details...</p>
+        </div>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="p-6">
-        <Alert type="danger" message={error || "Order not found"} />
-        <div className="mt-4">
-          <Link to="/orders" className="text-blue-500 hover:underline">
-            &larr; Back to Orders
-          </Link>
+      <div className="page-container space-y-5">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error || "Order not found"}</p>
         </div>
+        <Link to="/orders" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+          <FaArrowLeft className="w-3 h-3" /> Back to Orders
+        </Link>
       </div>
     );
   }
@@ -147,111 +150,252 @@ const OrderDetails = () => {
   }, 0);
 
   return (
-    <div className="order-details-page">
-      <div className="page-header flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Link to="/orders" className="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-            <FaArrowLeft />
+    <div className="page-container space-y-5 md:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/orders"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            <FaArrowLeft className="w-4 h-4" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Order Details</h1>
+          <div>
+            <h1 className="page-title">Order Details</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+              Order for {order.customer.name}
+            </p>
+          </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => navigate(`/orders/edit/${id}`)} className="flex items-center gap-2">
-            <FaEdit /> Edit Order
+            <FaEdit className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span> Order
           </Button>
           {!order.invoice_id && (
             <Button variant="primary" onClick={() => navigate(`/invoices/generate?order_id=${id}`)} className="flex items-center gap-2">
-              <FaFileInvoice /> Generate Invoice
+              <FaFileInvoice className="w-4 h-4" /> <span className="hidden sm:inline">Generate</span> Invoice
             </Button>
           )}
         </div>
       </div>
 
-      {error && <Alert type="danger" message={error} />}
+      {/* Error alert */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
-      <Card>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">Customer Information</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Name:</strong> {order.customer.name}
-            </p>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Phone:</strong> {order.customer.metadata?.phone || "N/A"}
-            </p>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Email:</strong> {order.customer.metadata?.email || "N/A"}
-            </p>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Address:</strong> {order.customer.metadata?.address || "N/A"}
-            </p>
+      {/* Customer & Order Info Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+        {/* Customer Information */}
+        <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+          <div className="hidden dark:block absolute -top-16 -right-16 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                <FaUser className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-display font-semibold text-gray-900 dark:text-gray-100">Customer Information</h3>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">Order Information</h3>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Order Date:</strong> {formatDate(order.order_date)}
-            </p>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Status:</strong> <Badge variant={order.status === "COMPLETED" ? "success" : order.status === "IN_PROGRESS" ? "warning" : "secondary"}>{order.status.replace("_", " ")}</Badge>
-            </p>
-            <p className="text-gray-700 dark:text-gray-300">
-              <strong>Plate Type:</strong> {order.plateType.type_name}
-            </p>
+          <div className="relative p-4 sm:p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaUser className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Name</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{order.customer.name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaPhone className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Phone</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{order.customer.metadata?.phone || <span className="text-gray-400 dark:text-gray-500">N/A</span>}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaEnvelope className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Email</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{order.customer.metadata?.email || <span className="text-gray-400 dark:text-gray-500">N/A</span>}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaMapMarkerAlt className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Address</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{order.customer.metadata?.address || <span className="text-gray-400 dark:text-gray-500">N/A</span>}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Information */}
+        <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+          <div className="hidden dark:block absolute -top-16 -left-16 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <FaClipboardList className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-display font-semibold text-gray-900 dark:text-gray-100">Order Information</h3>
+            </div>
+          </div>
+          <div className="relative p-4 sm:p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaCalendarAlt className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Order Date</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(order.order_date)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaClipboardList className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Status</p>
+                <Badge variant={order.status === "COMPLETED" ? "success" : order.status === "IN_PROGRESS" ? "warning" : "secondary"}>
+                  {order.status.replace("_", " ")}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <FaLayerGroup className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Plate Type</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{order.plateType.type_name}</p>
+              </div>
+            </div>
             {order.invoice_id && (
-              <p className="text-gray-700 dark:text-gray-300">
-                <strong>Invoice:</strong>{" "}
-                <Link to={`/invoices/${order.invoice_id}`} className="text-blue-500 hover:underline">
-                  View Invoice
-                </Link>
-              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                  <FaFileInvoice className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Invoice</p>
+                  <Link to={`/invoices/${order.invoice_id}`} className="text-sm font-medium text-primary dark:text-emerald-400 hover:text-primary-700 dark:hover:text-emerald-300 transition-colors">
+                    View Invoice →
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
         </div>
+      </div>
 
-        <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Order Items</h3>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product Size</TableHead>
-                <TableHead>Quantity (kg)</TableHead>
-                <TableHead>Rate per kg</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {order.orderProductSizes.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.productSize.size_label}</TableCell>
-                  <TableCell>{item.quantity_kg}</TableCell>
-                  <TableCell>{formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="bg-muted/30 dark:bg-gray-700/30">
-                <TableCell colSpan={3} className="font-medium">
-                  Plate Charge ({order.plateType.type_name}){order.custom_plate_charge && <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Custom)</span>}
-                </TableCell>
-                <TableCell className="text-right">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</TableCell>
-              </TableRow>
-              {order.round_off_amount && parseFloat(order.round_off_amount) !== 0 && (
-                <TableRow className="bg-orange-50 dark:bg-orange-900/20">
-                  <TableCell colSpan={3} className="font-medium text-orange-700 dark:text-orange-300">
-                    Round Off Amount
-                  </TableCell>
-                  <TableCell className="text-right text-orange-700 dark:text-orange-300">-{formatCurrency(Math.abs(parseFloat(order.round_off_amount)))}</TableCell>
-                </TableRow>
-              )}
-              <TableRow className="bg-primary/5 dark:bg-primary-900/20">
-                <TableCell colSpan={3} className="font-bold">
-                  Total Order Amount
-                </TableCell>
-                <TableCell className="text-right font-bold">{formatCurrency(order.total_amount)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+      {/* Order Items */}
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+              <FaBox className="w-4 h-4" />
+            </div>
+            <h3 className="text-base font-display font-semibold text-gray-900 dark:text-gray-100">Order Items</h3>
+          </div>
         </div>
-      </Card>
+        <div className="relative p-4 md:p-5">
+          {/* Mobile Card View for Order Items */}
+          <div className="block md:hidden space-y-3">
+            {order.orderProductSizes.map((item) => (
+              <div key={item.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/30">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <span>{item.quantity_kg} kg × {formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}/kg</span>
+                </div>
+              </div>
+            ))}
+            {/* Plate Charge */}
+            <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/30">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  Plate Charge ({order.plateType.type_name})
+                  {order.custom_plate_charge && <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(Custom)</span>}
+                </span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</span>
+              </div>
+            </div>
+            {/* Round Off */}
+            {order.round_off_amount && parseFloat(order.round_off_amount) !== 0 && (
+              <div className="bg-orange-50 dark:bg-orange-500/10 rounded-xl p-4 border border-orange-200/50 dark:border-orange-500/20">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-orange-700 dark:text-orange-400">Round Off</span>
+                  <span className="font-medium text-orange-700 dark:text-orange-400">-{formatCurrency(Math.abs(parseFloat(order.round_off_amount)))}</span>
+                </div>
+              </div>
+            )}
+            {/* Total */}
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-4 border border-emerald-200/50 dark:border-emerald-500/20">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-gray-900 dark:text-gray-100">Total Order Amount</span>
+                <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">{formatCurrency(order.total_amount)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto rounded-xl">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50/80 dark:bg-gray-800/50">
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Product Size</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Quantity (kg)</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Rate per kg</th>
+                  <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                {order.orderProductSizes.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                    <td className="p-4 align-middle font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</td>
+                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{item.quantity_kg}</td>
+                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}</td>
+                    <td className="p-4 align-middle text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</td>
+                  </tr>
+                ))}
+                <tr className="bg-gray-50/80 dark:bg-gray-700/30">
+                  <td colSpan={3} className="p-4 align-middle font-medium text-gray-700 dark:text-gray-300">
+                    Plate Charge ({order.plateType.type_name}){order.custom_plate_charge && <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Custom)</span>}
+                  </td>
+                  <td className="p-4 align-middle text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</td>
+                </tr>
+                {order.round_off_amount && parseFloat(order.round_off_amount) !== 0 && (
+                  <tr className="bg-orange-50 dark:bg-orange-500/10">
+                    <td colSpan={3} className="p-4 align-middle font-medium text-orange-700 dark:text-orange-400">
+                      Round Off Amount
+                    </td>
+                    <td className="p-4 align-middle text-right font-medium text-orange-700 dark:text-orange-400">-{formatCurrency(Math.abs(parseFloat(order.round_off_amount)))}</td>
+                  </tr>
+                )}
+                <tr className="bg-emerald-50 dark:bg-emerald-500/10">
+                  <td colSpan={3} className="p-4 align-middle font-bold text-gray-900 dark:text-gray-100">
+                    Total Order Amount
+                  </td>
+                  <td className="p-4 align-middle text-right font-bold text-lg text-emerald-600 dark:text-emerald-400">{formatCurrency(order.total_amount)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       <OrderPaymentSummary order={order} onAddPayment={handleAddPayment} onEditPayment={handleEditPayment} onDeletePayment={handleDeletePayment} />
 

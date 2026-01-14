@@ -1,83 +1,156 @@
+/* ProductSizeForm - Mobile-first responsive design */
 .product-size-form {
   background-color: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
+@media (min-width: 640px) {
   .product-size-form {
-    background-color: var(--gray-800, #1f2937);
-    color: var(--gray-200, #e5e7eb);
+    padding: 1.5rem;
   }
 }
 
-/* Support for class-based dark mode */
+/* Dark mode support */
 .dark .product-size-form {
-  background-color: var(--gray-800, #1f2937);
-  color: var(--gray-200, #e5e7eb);
+  background-color: #111827;
+  color: #e5e7eb;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+@media (min-width: 640px) {
+  .form-group label {
+    font-size: 0.9375rem;
+  }
+}
+
+/* Dark mode label */
+.dark .form-group label {
+  color: #d1d5db;
 }
 
 .form-control {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  transition: var(--transition);
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
   background-color: white;
-  color: var(--gray-900);
+  color: #111827;
+  min-height: 48px; /* Touch-friendly */
 }
 
 .form-control:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  border-color: #0d6b4f;
+  box-shadow: 0 0 0 3px rgba(13, 107, 79, 0.15);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .form-group label {
-    color: var(--gray-300, #d1d5db);
-  }
-
-  .form-control {
-    background-color: var(--gray-700, #374151);
-    border-color: var(--gray-600, #4b5563);
-    color: var(--gray-100, #f3f4f6);
-  }
-}
-
-/* Support for class-based dark mode */
-.dark .form-group label {
-  color: var(--gray-300, #d1d5db);
-}
-
+/* Dark mode form control */
 .dark .form-control {
-  background-color: var(--gray-700, #374151);
-  border-color: var(--gray-600, #4b5563);
-  color: var(--gray-100, #f3f4f6);
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
 }
 
+.dark .form-control:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Form actions - Stack on mobile, inline on desktop */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (min-width: 480px) {
+  .form-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+}
+
+.dark .form-actions {
+  border-top-color: #374151;
 }
 
 .form-actions button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  min-height: 48px; /* Touch-friendly */
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .form-actions button {
+    width: auto;
+  }
+}
+
+/* Primary button */
+.btn-primary {
+  background-color: #0d6b4f;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(13, 107, 79, 0.2);
+}
+
+.btn-primary:hover {
+  background-color: #065f46;
+  box-shadow: 0 6px 10px -2px rgba(13, 107, 79, 0.3);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+/* Dark mode buttons */
+.dark .btn-secondary {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+.dark .btn-secondary:hover {
+  background-color: #374151;
 }

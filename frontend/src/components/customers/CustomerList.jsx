@@ -1,81 +1,187 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaEnvelope, FaPhone, FaCalendarAlt, FaUser } from "react-icons/fa";
 import { formatDate } from "../../utils/formatters";
 import MobileActionDropdown from "../ui/MobileActionDropdown";
 
 const CustomerList = ({ customers, onDelete }) => {
   if (!customers || customers.length === 0) {
     return (
-      <div className="rounded-md bg-gray-100 dark:bg-gray-800 p-8 text-center">
+      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">No customers found. Create a new customer to get started.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-md">
-      <table className="w-full border-collapse bg-white dark:bg-gray-800">
-        <thead>
-          <tr>
-            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Name</th>
-            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Email</th>
-            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Phone</th>
-            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Created At</th>
-            <th className="h-12 px-4 text-right align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-          {customers.map((customer) => (
-            <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-              <td className="p-4 align-middle font-medium text-gray-900 dark:text-gray-300">{customer.name}</td>
-              <td className="p-4 align-middle text-gray-900 dark:text-gray-300">
-                {customer.metadata?.email ? (
-                  <a href={`mailto:${customer.metadata.email}`} className="text-blue-500 hover:underline">
-                    {customer.metadata.email}
-                  </a>
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400">N/A</span>
-                )}
-              </td>
-              <td className="p-4 align-middle text-gray-900 dark:text-gray-300">
-                {customer.metadata?.phone ? (
-                  <a href={`tel:${customer.metadata.phone}`} className="text-blue-500 hover:underline">
-                    {customer.metadata.phone}
-                  </a>
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400">N/A</span>
-                )}
-              </td>
-              <td className="p-4 align-middle text-gray-900 dark:text-gray-300">{formatDate(customer.created_at)}</td>
-              <td className="p-4 align-middle text-right">
+    <div className="w-full">
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-3">
+        {customers.map((customer) => (
+          <div
+            key={customer.id}
+            className="bg-white dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden"
+          >
+            {/* Card Header */}
+            <div className="p-4 border-b border-gray-100 dark:border-gray-700/50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                    <FaUser className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{customer.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                      <FaCalendarAlt className="w-3 h-3" />
+                      {formatDate(customer.created_at)}
+                    </p>
+                  </div>
+                </div>
                 <MobileActionDropdown
                   actions={[
-                    {
-                      title: "View Orders",
-                      icon: FaEye,
-                      iconColor: "text-gray-600 dark:text-gray-300",
-                      to: `/customers/${customer.id}`,
-                    },
-                    {
-                      title: "Edit",
-                      icon: FaEdit,
-                      iconColor: "text-blue-500 dark:text-blue-400",
-                      to: `/customers/edit/${customer.id}`,
-                    },
-                    {
-                      title: "Delete",
-                      icon: FaTrash,
-                      iconColor: "text-red-500 dark:text-red-400",
-                      onClick: () => onDelete(customer.id),
-                    },
+                    { title: "View Orders", icon: FaEye, iconColor: "text-gray-600 dark:text-gray-300", to: `/customers/${customer.id}` },
+                    { title: "Edit", icon: FaEdit, iconColor: "text-blue-500 dark:text-blue-400", to: `/customers/edit/${customer.id}` },
+                    { title: "Delete", icon: FaTrash, iconColor: "text-red-500 dark:text-red-400", onClick: () => onDelete(customer.id) },
                   ]}
                 />
-              </td>
+              </div>
+            </div>
+
+            {/* Card Body - Contact Info */}
+            <div className="p-4 space-y-3">
+              {/* Email */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                  <FaEnvelope className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Email</p>
+                  {customer.metadata?.email ? (
+                    <a
+                      href={`mailto:${customer.metadata.email}`}
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline truncate block"
+                    >
+                      {customer.metadata.email}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">Not provided</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                  <FaPhone className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Phone</p>
+                  {customer.metadata?.phone ? (
+                    <a
+                      href={`tel:${customer.metadata.phone}`}
+                      className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
+                    >
+                      {customer.metadata.phone}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-gray-400 dark:text-gray-500">Not provided</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Card Footer - Quick Actions */}
+            <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
+              <Link
+                to={`/customers/${customer.id}`}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <FaEye className="w-3 h-3" />
+                View Orders
+              </Link>
+              <Link
+                to={`/customers/edit/${customer.id}`}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-xs font-medium text-primary dark:text-emerald-400 hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors"
+              >
+                <FaEdit className="w-3 h-3" />
+                Edit
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto rounded-xl">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-50/80 dark:bg-gray-800/50">
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Name</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Email</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Phone</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Created At</th>
+              <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+            {customers.map((customer) => (
+              <tr key={customer.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                <td className="p-4 align-middle">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                      <FaUser className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{customer.name}</span>
+                  </div>
+                </td>
+                <td className="p-4 align-middle text-gray-700 dark:text-gray-300">
+                  {customer.metadata?.email ? (
+                    <a href={`mailto:${customer.metadata.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      {customer.metadata.email}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                  )}
+                </td>
+                <td className="p-4 align-middle text-gray-700 dark:text-gray-300">
+                  {customer.metadata?.phone ? (
+                    <a href={`tel:${customer.metadata.phone}`} className="text-emerald-600 dark:text-emerald-400 hover:underline">
+                      {customer.metadata.phone}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                  )}
+                </td>
+                <td className="p-4 align-middle text-gray-600 dark:text-gray-400">{formatDate(customer.created_at)}</td>
+                <td className="p-4 align-middle text-right">
+                  <MobileActionDropdown
+                    actions={[
+                      {
+                        title: "View Orders",
+                        icon: FaEye,
+                        iconColor: "text-gray-600 dark:text-gray-300",
+                        to: `/customers/${customer.id}`,
+                      },
+                      {
+                        title: "Edit",
+                        icon: FaEdit,
+                        iconColor: "text-blue-500 dark:text-blue-400",
+                        to: `/customers/edit/${customer.id}`,
+                      },
+                      {
+                        title: "Delete",
+                        icon: FaTrash,
+                        iconColor: "text-red-500 dark:text-red-400",
+                        onClick: () => onDelete(customer.id),
+                      },
+                    ]}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

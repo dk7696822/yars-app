@@ -39,26 +39,41 @@
 }
 
 .dark {
-  --background: 222 47% 6%;
-  --foreground: 210 40% 98%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 159 76% 35%;
+  /* Rich, deep background with subtle blue undertone */
+  --background: 224 50% 4%;
+  --foreground: 210 40% 96%;
 
-  --primary: 159 76% 35%;
+  /* Refined borders with subtle visibility */
+  --border: 220 30% 14%;
+  --input: 220 30% 12%;
+  --ring: 160 84% 39%;
+
+  /* Vibrant primary that glows in dark */
+  --primary: 160 84% 39%;
   --primary-foreground: 0 0% 100%;
 
-  --accent: 38 92% 50%;
+  /* Warm accent that pops */
+  --accent: 38 95% 54%;
   --accent-foreground: 0 0% 100%;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  /* Subtle muted tones */
+  --muted: 220 25% 11%;
+  --muted-foreground: 215 20% 55%;
 
-  --card: 222 47% 8%;
-  --card-foreground: 210 40% 98%;
+  /* Card surfaces with depth */
+  --card: 224 45% 6%;
+  --card-foreground: 210 40% 96%;
+
+  /* Elevated card surface */
+  --card-elevated: 224 40% 8%;
 
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
+
+  /* Dark mode specific colors */
+  --glow-primary: 160 84% 39%;
+  --glow-accent: 38 95% 54%;
+  --surface-hover: 220 30% 10%;
 }
 
 /* Base styles */
@@ -139,15 +154,15 @@ a {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: hsl(217 33% 12%);
+  background: hsl(224 40% 6%);
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: hsl(215 20% 35%);
+  background: hsl(220 25% 20%);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(215 20% 45%);
+  background: hsl(220 25% 28%);
 }
 
 /* Custom utility classes */
@@ -172,9 +187,51 @@ a {
 
   .dark .card-shadow {
     box-shadow:
-      0 1px 3px 0 rgba(0, 0, 0, 0.2),
-      0 4px 6px -2px rgba(0, 0, 0, 0.1),
-      0 12px 24px -4px rgba(0, 0, 0, 0.3);
+      0 0 0 1px hsl(220 30% 12%),
+      0 2px 8px -2px rgba(0, 0, 0, 0.4),
+      0 8px 24px -4px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Dark mode glow effects */
+  .dark .glow-primary {
+    box-shadow: 0 0 30px -5px hsl(160 84% 39% / 0.3);
+  }
+
+  .dark .glow-accent {
+    box-shadow: 0 0 30px -5px hsl(38 95% 54% / 0.25);
+  }
+
+  .dark .glow-sm-primary {
+    box-shadow: 0 0 15px -3px hsl(160 84% 39% / 0.25);
+  }
+
+  /* Dark surface with subtle gradient */
+  .dark-surface {
+    @apply bg-gray-900;
+  }
+
+  .dark .dark-surface {
+    background: linear-gradient(145deg, hsl(224 45% 7%) 0%, hsl(224 50% 4%) 100%);
+  }
+
+  /* Dark elevated surface */
+  .dark-elevated {
+    @apply bg-white;
+  }
+
+  .dark .dark-elevated {
+    background: linear-gradient(145deg, hsl(224 40% 9%) 0%, hsl(224 45% 6%) 100%);
+  }
+
+  /* Dark mode border glow on hover */
+  .dark .border-glow-hover:hover {
+    border-color: hsl(160 84% 39% / 0.4);
+    box-shadow: 0 0 20px -5px hsl(160 84% 39% / 0.2);
+  }
+
+  /* Luminous text in dark mode */
+  .dark .text-luminous {
+    text-shadow: 0 0 20px currentColor;
   }
 
   /* Hover lift effect */
@@ -242,26 +299,45 @@ a {
 
   /* Card hover effect */
   .card-interactive {
-    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200/60 dark:border-gray-700/60;
+    @apply bg-white rounded-xl border border-gray-200/60;
     @apply transition-all duration-300 ease-out;
   }
 
+  .dark .card-interactive {
+    background: linear-gradient(145deg, hsl(224 40% 8%) 0%, hsl(224 45% 6%) 100%);
+    border-color: hsl(220 30% 14%);
+  }
+
   .card-interactive:hover {
-    @apply border-primary/30 dark:border-primary/20;
+    @apply border-primary/30;
     box-shadow: 0 8px 30px -10px rgba(13, 107, 79, 0.15);
+  }
+
+  .dark .card-interactive:hover {
+    border-color: hsl(160 84% 39% / 0.3);
+    box-shadow: 0 0 30px -10px hsl(160 84% 39% / 0.2);
   }
 
   /* Stat card */
   .stat-card {
     @apply relative overflow-hidden rounded-xl p-5 md:p-6;
-    @apply bg-white dark:bg-gray-800;
-    @apply border border-gray-100 dark:border-gray-700/50;
+    @apply bg-white;
+    @apply border border-gray-100;
+  }
+
+  .dark .stat-card {
+    background: linear-gradient(145deg, hsl(224 40% 9%) 0%, hsl(224 50% 5%) 100%);
+    border-color: hsl(220 30% 13%);
   }
 
   .stat-card::before {
     content: '';
     @apply absolute inset-0 opacity-[0.03];
     background: radial-gradient(circle at top right, currentColor, transparent 70%);
+  }
+
+  .dark .stat-card::before {
+    @apply opacity-[0.06];
   }
 
   /* Page container */
@@ -330,4 +406,137 @@ a {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ===== DARK MODE: React DatePicker ===== */
+.dark .react-datepicker {
+  background-color: hsl(224 45% 8%);
+  border: 1px solid hsl(220 30% 18%);
+  border-radius: 0.75rem;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.dark .react-datepicker__header {
+  background: linear-gradient(180deg, hsl(224 40% 10%) 0%, hsl(224 45% 8%) 100%);
+  border-bottom: 1px solid hsl(220 30% 15%);
+  border-radius: 0.75rem 0.75rem 0 0;
+  padding-top: 12px;
+}
+
+.dark .react-datepicker__current-month,
+.dark .react-datepicker-time__header,
+.dark .react-datepicker-year-header {
+  color: hsl(210 40% 96%);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.dark .react-datepicker__day-name {
+  color: hsl(215 20% 55%);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.dark .react-datepicker__day {
+  color: hsl(210 40% 90%);
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.dark .react-datepicker__day:hover {
+  background-color: hsl(220 30% 15%);
+  color: hsl(210 40% 98%);
+}
+
+.dark .react-datepicker__day--selected,
+.dark .react-datepicker__day--keyboard-selected {
+  background-color: hsl(160 84% 39%) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.dark .react-datepicker__day--selected:hover,
+.dark .react-datepicker__day--keyboard-selected:hover {
+  background-color: hsl(160 84% 32%) !important;
+}
+
+.dark .react-datepicker__day--in-range {
+  background-color: hsl(160 84% 39% / 0.3);
+  color: hsl(160 84% 70%);
+}
+
+.dark .react-datepicker__day--in-selecting-range {
+  background-color: hsl(160 84% 39% / 0.2);
+}
+
+.dark .react-datepicker__day--today {
+  font-weight: 700;
+  color: hsl(160 84% 50%);
+}
+
+.dark .react-datepicker__day--outside-month {
+  color: hsl(220 20% 35%);
+}
+
+.dark .react-datepicker__day--disabled {
+  color: hsl(220 20% 30%);
+  cursor: not-allowed;
+}
+
+.dark .react-datepicker__navigation-icon::before {
+  border-color: hsl(215 20% 55%);
+}
+
+.dark .react-datepicker__navigation:hover *::before {
+  border-color: hsl(210 40% 96%);
+}
+
+.dark .react-datepicker__triangle {
+  display: none;
+}
+
+.dark .react-datepicker__month-container {
+  background-color: transparent;
+}
+
+.dark .react-datepicker__year-dropdown,
+.dark .react-datepicker__month-dropdown {
+  background-color: hsl(224 45% 10%);
+  border: 1px solid hsl(220 30% 18%);
+  border-radius: 0.5rem;
+}
+
+.dark .react-datepicker__year-option,
+.dark .react-datepicker__month-option {
+  color: hsl(210 40% 90%);
+}
+
+.dark .react-datepicker__year-option:hover,
+.dark .react-datepicker__month-option:hover {
+  background-color: hsl(220 30% 15%);
+}
+
+.dark .react-datepicker__day--highlighted {
+  background-color: hsl(38 95% 54% / 0.3);
+  color: hsl(38 95% 70%);
+}
+
+.dark .react-datepicker-popper {
+  z-index: 50;
+}
+
+/* DatePicker input wrapper dark mode */
+.dark .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.dark .react-datepicker__input-container input {
+  background-color: hsl(224 40% 10%);
+  border-color: hsl(220 30% 18%);
+  color: hsl(210 40% 96%);
+}
+
+.dark .react-datepicker__input-container input::placeholder {
+  color: hsl(215 20% 45%);
 }

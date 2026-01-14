@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaExclamationCircle, FaDownload, FaFilter } from "react-icons/fa";
+import { FaPlus, FaExclamationCircle, FaDownload, FaFilter, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { orderAPI, exportAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import OrderFilter from "../components/orders/OrderFilter";
 import OrderList from "../components/orders/OrderList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
+
+const ORDERS_PER_PAGE = 10;
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -15,6 +17,7 @@ const Orders = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
   const [showFilters, setShowFilters] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchOrders();
@@ -73,9 +76,26 @@ const Orders = () => {
     }
   };
 
+  // Calculate paginated orders
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
+    return orders.slice(startIndex, startIndex + ORDERS_PER_PAGE);
+  }, [orders, currentPage]);
+
+  const totalPages = Math.ceil(orders.length / ORDERS_PER_PAGE);
+
   const handleFilter = (filterParams) => {
     setFilters(filterParams);
+    setCurrentPage(1); // Reset to first page when filters change
     fetchOrders(filterParams);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   const handleDeleteOrder = (orderId) => {
@@ -182,27 +202,33 @@ const Orders = () => {
       </div>
 
       {/* Filter section */}
-      <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden transition-all duration-300 ${showFilters ? "opacity-100" : "opacity-0 h-0 sm:opacity-100 sm:h-auto"}`}>
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+      <div className={`relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300 ${showFilters ? "opacity-100" : "opacity-0 h-0 sm:opacity-100 sm:h-auto"}`}>
+        {/* Ambient glow */}
+        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50 px-5 py-4">
           <h2 className="section-title flex items-center gap-2">
-            <FaFilter className="w-4 h-4 text-gray-400" />
+            <FaFilter className="w-4 h-4 text-gray-400 dark:text-gray-500" />
             Filter Orders
           </h2>
         </div>
-        <div className="p-4 md:p-5">
+        <div className="relative p-4 md:p-5">
           <OrderFilter onFilter={handleFilter} />
         </div>
       </div>
 
       {/* Orders list */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        {/* Ambient glow */}
+        <div className="hidden dark:block absolute -top-20 -left-20 w-64 h-64 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50 px-5 py-4">
           <h2 className="section-title">All Orders</h2>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-3 py-1 rounded-full">
             {orders.length} {orders.length === 1 ? "order" : "orders"}
           </span>
         </div>
-        <div className="p-4 md:p-5">
+        <div className="relative p-4 md:p-5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="relative">
@@ -211,7 +237,57 @@ const Orders = () => {
               <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading orders...</p>
             </div>
           ) : (
-            <OrderList orders={orders} onDelete={handleDeleteOrder} />
+            <>
+              <OrderList orders={paginatedOrders} onDelete={handleDeleteOrder} allOrders={orders} />
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 order-2 sm:order-1">
+                    Showing {((currentPage - 1) * ORDERS_PER_PAGE) + 1} - {Math.min(currentPage * ORDERS_PER_PAGE, orders.length)} of {orders.length} orders
+                  </p>
+                  <div className="flex items-center gap-2 order-1 sm:order-2">
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+
+                    {/* Page numbers - hidden on mobile */}
+                    <div className="hidden sm:flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
+                            page === currentPage
+                              ? "bg-primary text-white"
+                              : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Mobile page indicator */}
+                    <span className="sm:hidden text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
+                      {currentPage} / {totalPages}
+                    </span>
+
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

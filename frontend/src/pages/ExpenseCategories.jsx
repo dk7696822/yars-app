@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaPlus, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaExclamationCircle, FaCheckCircle, FaTags, FaArrowLeft } from 'react-icons/fa';
 import { expenseCategoryAPI } from '../services/api';
 import ExpenseCategoryList from '../components/expenses/ExpenseCategoryList';
-import Card from '../components/common/Card';
-import Spinner from '../components/common/Spinner';
-import Alert from '../components/common/Alert';
 
 const ExpenseCategories = () => {
   const location = useLocation();
@@ -50,7 +47,7 @@ const ExpenseCategories = () => {
     if (searchTerm.trim() === '') {
       setFilteredCategories(categories);
     } else {
-      const filtered = categories.filter(category => 
+      const filtered = categories.filter(category =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredCategories(filtered);
@@ -64,12 +61,12 @@ const ExpenseCategories = () => {
 
     try {
       await expenseCategoryAPI.delete(id);
-      
+
       // Remove the deleted category from the state
       setCategories(categories.filter(category => category.id !== id));
-      
+
       setSuccessMessage('Category deleted successfully');
-      
+
       // Clear the success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
@@ -81,46 +78,115 @@ const ExpenseCategories = () => {
   };
 
   return (
-    <div className="expense-categories-page">
-      {error && <Alert type="danger" message={error} />}
-      {successMessage && <Alert type="success" message={successMessage} />}
-      
-      <div className="page-header">
-        <div className="search-container">
-          <div className="search-input-container">
-            <FaSearch className="search-icon" />
+    <div className="page-container space-y-5 md:space-y-6">
+      {/* Error alert */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Success alert */}
+      {successMessage && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+          <p className="text-green-700 dark:text-green-400 text-sm">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="page-title">Expense Categories</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Manage your expense categories
+          </p>
+        </div>
+        <Link
+          to="/expense-categories/new"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95"
+        >
+          <FaPlus className="h-4 w-4" /> New Category
+        </Link>
+      </div>
+
+      {/* Categories list */}
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        {/* Ambient glow */}
+        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+              <FaTags className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-gray-100">All Categories</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
+              </p>
+            </div>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-gray-500">
+              <FaSearch className="h-4 w-4" />
+            </div>
             <input
               type="text"
               placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-purple-500/30 focus:border-primary dark:focus:border-purple-500/50 transition-all"
             />
           </div>
         </div>
-        
-        <Link to="/expense-categories/new" className="btn">
-          <FaPlus /> New Category
-        </Link>
+        <div className="relative p-4 md:p-5">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-gray-700" />
+                <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-purple-400 animate-spin" />
+              </div>
+              <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading categories...</p>
+            </div>
+          ) : filteredCategories.length > 0 ? (
+            <ExpenseCategoryList
+              categories={filteredCategories}
+              onDelete={handleDeleteCategory}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaTags className="w-8 h-8 text-purple-500 dark:text-purple-400/60" />
+              </div>
+              <h3 className="text-gray-900 dark:text-gray-100 font-medium mb-1">
+                {searchTerm ? "No categories found" : "No categories yet"}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                {searchTerm ? "Try adjusting your search terms" : "Create your first category to get started."}
+              </p>
+              {!searchTerm && (
+                <Link
+                  to="/expense-categories/new"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary dark:text-purple-400 hover:text-primary-700 dark:hover:text-purple-300 transition-colors"
+                >
+                  <FaPlus className="w-3 h-3" /> Add Category
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      
-      <Card title="Expense Categories">
-        {loading ? (
-          <div className="loading-container">
-            <Spinner />
-            <p>Loading categories...</p>
-          </div>
-        ) : (
-          <ExpenseCategoryList 
-            categories={filteredCategories} 
-            onDelete={handleDeleteCategory} 
-          />
-        )}
-      </Card>
-      
-      <div className="back-link" style={{ marginTop: '1rem' }}>
-        <Link to="/expenses">← Back to Expenses</Link>
-      </div>
+
+      {/* Back link */}
+      <Link
+        to="/expenses"
+        className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+      >
+        <FaArrowLeft className="w-3 h-3" /> Back to Expenses
+      </Link>
     </div>
   );
 };
