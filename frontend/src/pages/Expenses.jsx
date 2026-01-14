@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle, FaDownload } from "react-icons/fa";
+import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle, FaDownload, FaFilter, FaMoneyBillWave } from "react-icons/fa";
 import { expenseAPI, expenseCategoryAPI, exportAPI } from "../services/api";
 import ExpenseList from "../components/expenses/ExpenseList";
 import ExpenseFilter from "../components/expenses/ExpenseFilter";
@@ -34,7 +34,6 @@ const Expenses = () => {
         setCategories(response.data.data);
       } catch (err) {
         console.error("Error fetching expense categories:", err);
-        // Don't set error here as it's not critical for the page
       }
     };
 
@@ -70,13 +69,8 @@ const Expenses = () => {
 
     try {
       await expenseAPI.delete(id);
-
-      // Remove the deleted expense from the state
       setExpenses(expenses.filter((expense) => expense.id !== id));
-
       setSuccessMessage("Expense deleted successfully");
-
-      // Clear the success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage("");
       }, 3000);
@@ -112,66 +106,98 @@ const Expenses = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="page-container space-y-5 md:space-y-6">
+      {/* Error alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-          <FaExclamationCircle className="text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
         </div>
       )}
 
+      {/* Success alert */}
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start">
-          <FaCheckCircle className="text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-          <p className="text-green-700">{successMessage}</p>
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+          <p className="text-green-700 dark:text-green-400 text-sm">{successMessage}</p>
         </div>
       )}
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Expenses</h1>
-        <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <h1 className="page-title">Expenses</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Track and manage your expenses
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={handleDownloadExcel}
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
             title="Download filtered data as Excel"
           >
-            <FaDownload className="mr-2 h-4 w-4" /> Download Excel
+            <FaDownload className="h-4 w-4" />
+            <span className="hidden sm:inline">Download</span>
           </button>
           <Link
-            to="/expenses/new"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            to="/expense-categories"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
           >
-            <FaPlus className="mr-2 h-4 w-4" /> New Expense
+            <FaListAlt className="h-4 w-4" />
+            <span className="hidden sm:inline">Categories</span>
           </Link>
           <Link
-            to="/expense-categories"
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            to="/expenses/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95"
           >
-            <FaListAlt className="mr-2 h-4 w-4" /> Manage Categories
+            <FaPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">New Expense</span>
+            <span className="sm:hidden">New</span>
           </Link>
         </div>
       </div>
 
       {/* Total Expense Card */}
-      <div className="mb-6">
-        <TotalExpenseCard filters={filters} />
-      </div>
+      <TotalExpenseCard filters={filters} />
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Expenses</h2>
+      {/* Expenses list */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h2 className="section-title flex items-center gap-2">
+            <FaFilter className="w-4 h-4 text-gray-400" />
+            Filter & View Expenses
+          </h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 md:p-5">
           <ExpenseFilter categories={categories} onFilter={handleFilter} />
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              <p className="mt-4 text-gray-500 dark:text-gray-400">Loading expenses...</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              </div>
+              <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading expenses...</p>
             </div>
-          ) : (
+          ) : expenses.length > 0 ? (
             <div className="mt-6">
               <ExpenseList expenses={expenses} onDelete={handleDeleteExpense} />
+            </div>
+          ) : (
+            <div className="text-center py-12 mt-6">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaMoneyBillWave className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-gray-900 dark:text-white font-medium mb-1">No expenses found</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                Add your first expense to start tracking.
+              </p>
+              <Link
+                to="/expenses/new"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-700"
+              >
+                <FaPlus className="w-3 h-3" /> Add Expense
+              </Link>
             </div>
           )}
         </div>

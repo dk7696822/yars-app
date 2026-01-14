@@ -1,9 +1,50 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaBoxes, FaUsers, FaMoneyBillWave, FaExclamationCircle } from "react-icons/fa";
+import { FaPlus, FaBoxes, FaUsers, FaMoneyBillWave, FaExclamationCircle, FaArrowRight, FaChartLine } from "react-icons/fa";
 import { orderAPI } from "../services/api";
 import { formatCurrency } from "../utils/formatters";
 import OrderList from "../components/orders/OrderList";
+
+const StatCard = ({ icon: Icon, title, value, subtitle, color, delay }) => {
+  const colorClasses = {
+    primary: "from-primary/10 to-primary/5 text-primary border-primary/20",
+    green: "from-green-500/10 to-green-500/5 text-green-600 dark:text-green-400 border-green-500/20",
+    amber: "from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    purple: "from-purple-500/10 to-purple-500/5 text-purple-600 dark:text-purple-400 border-purple-500/20",
+  };
+
+  const iconBgClasses = {
+    primary: "bg-primary/10 text-primary",
+    green: "bg-green-500/10 text-green-600 dark:text-green-400",
+    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  };
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${colorClasses[color]} border p-5 md:p-6 hover-lift animate-fade-in-up`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {/* Background decoration */}
+      <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-current opacity-[0.03]" />
+
+      <div className="relative flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white font-display tracking-tight">
+            {value}
+          </h3>
+          {subtitle && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">{subtitle}</p>
+          )}
+        </div>
+        <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${iconBgClasses[color]}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
@@ -46,18 +87,12 @@ const Dashboard = () => {
 
         // Calculate remaining receivable
         const totalReceivable = allOrders.reduce((sum, order) => {
-          // Always use remaining_balance from payment_summary if available
-          // This is the most accurate as it accounts for all payments
           if (order.payment_summary) {
             return sum + parseFloat(order.payment_summary.remaining_balance || 0);
-          }
-          // Fall back to totalReceivable - total_paid if we have both
-          else if (order.totalReceivable !== undefined && order.payments) {
+          } else if (order.totalReceivable !== undefined && order.payments) {
             const totalPaid = order.payments.reduce((paidSum, payment) => paidSum + parseFloat(payment.amount || 0), 0);
             return sum + Math.max(0, parseFloat(order.totalReceivable || 0) - totalPaid);
-          }
-          // Last resort: just use total_amount minus advance_received
-          else {
+          } else {
             const advanceReceived = parseFloat(order.advance_received || 0);
             return sum + parseFloat(order.total_amount || 0) - advanceReceived;
           }
@@ -95,121 +130,127 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        <p className="mt-4 text-gray-500">Loading dashboard data...</p>
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <div className="relative">
+          <div className="h-14 w-14 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-6 w-6 rounded-full bg-primary/10" />
+          </div>
+        </div>
+        <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="page-container space-y-6 md:space-y-8">
+      {/* Error alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-          <FaExclamationCircle className="text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
         </div>
       )}
 
+      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Overview of your business metrics
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/orders/new"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-95"
           >
-            <FaPlus className="mr-2 h-4 w-4" /> New Order
+            <FaPlus className="h-4 w-4" /> New Order
           </Link>
           <Link
             to="/customers/new"
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all active:scale-95"
           >
-            <FaPlus className="mr-2 h-4 w-4" /> New Customer
+            <FaPlus className="h-4 w-4" /> New Customer
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
-              <FaBoxes className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalOrders}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300">
-              <FaUsers className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.totalCustomers}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300">
-              <FaMoneyBillWave className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Balance</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(stats.totalReceivable)}</h3>
-            </div>
-          </div>
-        </div>
+      {/* Stats grid - 3 cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <StatCard
+          icon={FaBoxes}
+          title="Total Orders"
+          value={stats.totalOrders}
+          subtitle="All time orders"
+          color="primary"
+          delay={0}
+        />
+        <StatCard
+          icon={FaUsers}
+          title="Total Customers"
+          value={stats.totalCustomers}
+          subtitle="Unique customers"
+          color="green"
+          delay={75}
+        />
+        <StatCard
+          icon={FaMoneyBillWave}
+          title="Outstanding Balance"
+          value={formatCurrency(stats.totalReceivable)}
+          subtitle="Amount pending"
+          color="amber"
+          delay={150}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300">
-              <FaMoneyBillWave className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Business Value</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(stats.totalBusinessValue)}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6 ring-1 ring-black ring-opacity-5">
-          <div className="flex items-center space-x-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300">
-              <FaMoneyBillWave className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Received</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(stats.totalReceived)}</h3>
-            </div>
-          </div>
-        </div>
+      {/* Stats grid - 2 cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <StatCard
+          icon={FaChartLine}
+          title="Total Business Value"
+          value={formatCurrency(stats.totalBusinessValue)}
+          subtitle="Lifetime revenue"
+          color="purple"
+          delay={225}
+        />
+        <StatCard
+          icon={FaMoneyBillWave}
+          title="Total Received"
+          value={formatCurrency(stats.totalReceived)}
+          subtitle="Payments collected"
+          color="green"
+          delay={300}
+        />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Orders</h2>
+      {/* Recent orders section */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden animate-fade-in-up" style={{ animationDelay: '375ms' }}>
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 md:px-6 py-4">
+          <h2 className="section-title">Recent Orders</h2>
+          <Link
+            to="/orders"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+          >
+            View All <FaArrowRight className="w-3 h-3" />
+          </Link>
         </div>
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {recentOrders.length > 0 ? (
-            <>
-              <OrderList orders={recentOrders} onDelete={handleDeleteOrder} />
-              <div className="mt-6 text-center">
-                <Link to="/orders" className="text-primary hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 hover:underline font-medium">
-                  View All Orders
-                </Link>
-              </div>
-            </>
+            <OrderList orders={recentOrders} onDelete={handleDeleteOrder} />
           ) : (
-            <div className="rounded-md bg-gray-100 dark:bg-gray-700 p-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No orders found. Create your first order to get started.</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaBoxes className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-gray-900 dark:text-white font-medium mb-1">No orders yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Create your first order to get started.</p>
+              <Link
+                to="/orders/new"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-700"
+              >
+                <FaPlus className="w-3 h-3" /> Create Order
+              </Link>
             </div>
           )}
         </div>

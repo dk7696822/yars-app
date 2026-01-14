@@ -6,23 +6,23 @@ const Button = forwardRef(({ className, variant = "default", size = "default", a
   const childProps = asChild ? { ...props.children.props } : {};
 
   const baseClasses =
-    "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
 
   const variantClasses = {
-    default: "bg-primary text-white hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700",
-    destructive: "bg-destructive text-white hover:bg-destructive-600 dark:bg-destructive-600 dark:hover:bg-destructive-700",
-    outline: "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-200",
-    secondary: "bg-secondary text-white hover:bg-secondary-600 dark:bg-secondary-600 dark:hover:bg-secondary-700",
-    ghost: "hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200",
-    link: "text-primary dark:text-primary-400 hover:underline",
-    success: "bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800",
-    primary: "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
+    default: "bg-primary text-white hover:bg-primary-700 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25",
+    destructive: "bg-destructive text-white hover:bg-destructive-600 shadow-md shadow-destructive/20 hover:shadow-lg hover:shadow-destructive/25",
+    outline: "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-200",
+    secondary: "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700",
+    ghost: "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+    link: "text-primary dark:text-primary-400 hover:underline underline-offset-4",
+    success: "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-600/20 hover:shadow-lg hover:shadow-green-600/25",
+    primary: "bg-primary text-white hover:bg-primary-700 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25",
   };
 
   const sizeClasses = {
-    default: "h-10 px-4 py-2",
-    sm: "h-9 rounded-md px-3 py-1.5 text-xs",
-    lg: "h-11 rounded-md px-8 py-2.5",
+    default: "h-11 px-5 py-2.5",
+    sm: "h-9 rounded-lg px-3.5 py-2 text-xs",
+    lg: "h-12 rounded-xl px-8 py-3 text-base",
     icon: "h-10 w-10 p-0",
   };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaExclamationCircle, FaDownload } from "react-icons/fa";
+import { FaPlus, FaExclamationCircle, FaDownload, FaFilter } from "react-icons/fa";
 import { orderAPI, exportAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import OrderFilter from "../components/orders/OrderFilter";
@@ -14,6 +14,7 @@ const Orders = () => {
   const [filters, setFilters] = useState({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const [showFilters, setShowFilters] = useState(true);
 
   useEffect(() => {
     fetchOrders();
@@ -136,51 +137,78 @@ const Orders = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6">
+    <div className="page-container space-y-5 md:space-y-6">
+      {/* Error alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-          <FaExclamationCircle className="text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
         </div>
       )}
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
-        <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <h1 className="page-title">Orders</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Manage and track all your orders
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 sm:hidden"
+          >
+            <FaFilter className="h-4 w-4" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </button>
           <button
             onClick={handleDownloadExcel}
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
             title="Download filtered data as Excel"
           >
-            <FaDownload className="mr-2 h-4 w-4" /> Download Excel
+            <FaDownload className="h-4 w-4" />
+            <span className="hidden sm:inline">Download Excel</span>
           </button>
           <Link
             to="/orders/new"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95"
           >
-            <FaPlus className="mr-2 h-4 w-4" /> New Order
+            <FaPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">New Order</span>
+            <span className="sm:hidden">New</span>
           </Link>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Filter Orders</h2>
+      {/* Filter section */}
+      <div className={`bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden transition-all duration-300 ${showFilters ? "opacity-100" : "opacity-0 h-0 sm:opacity-100 sm:h-auto"}`}>
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h2 className="section-title flex items-center gap-2">
+            <FaFilter className="w-4 h-4 text-gray-400" />
+            Filter Orders
+          </h2>
         </div>
-        <div className="p-4 sm:p-6">
+        <div className="p-4 md:p-5">
           <OrderFilter onFilter={handleFilter} />
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden ring-1 ring-black ring-opacity-5">
-        <div className="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Orders</h2>
+      {/* Orders list */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 shadow-soft overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 px-5 py-4">
+          <h2 className="section-title">All Orders</h2>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {orders.length} {orders.length === 1 ? "order" : "orders"}
+          </span>
         </div>
-        <div className="p-4 sm:p-6">
+        <div className="p-4 md:p-5">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              <p className="mt-4 text-gray-500 dark:text-gray-400">Loading orders...</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              </div>
+              <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading orders...</p>
             </div>
           ) : (
             <OrderList orders={orders} onDelete={handleDeleteOrder} />
