@@ -28,12 +28,15 @@ import EditExpenseCategory from "./pages/EditExpenseCategory";
 import Invoices from "./pages/Invoices";
 import GenerateInvoice from "./pages/GenerateInvoice";
 import InvoiceDetails from "./pages/InvoiceDetails";
+import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import "./assets/styles/index.css";
 import "./styles/button-override.css";
 import "./styles/datepicker-override.css";
 import "./styles/datepicker-dark.css";
 import "./styles/select-override.css";
+import "./styles/history-animations.css";
+import "./styles/page-animations.css";
 
 function App() {
   return (
@@ -90,6 +93,8 @@ function App() {
                   <Route path="generate" element={<GenerateInvoice />} />
                   <Route path=":id" element={<InvoiceDetails />} />
                 </Route>
+
+                <Route path="history" element={<History />} />
 
                 <Route path="*" element={<NotFound />} />
               </Route>

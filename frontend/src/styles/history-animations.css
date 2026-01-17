@@ -1,0 +1,558 @@
+/* History Page Animations
+   Refined, professional aesthetic with depth in dark mode
+   Mobile-first, touch-friendly interactions
+*/
+
+/* ============================================
+   BASE KEYFRAME ANIMATIONS
+   ============================================ */
+
+/* Fade and slide up - primary entry animation */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade and slide down - for filter panel */
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale fade - for icons and badges */
+@keyframes scaleFade {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Subtle pulse for loading states */
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Shimmer effect for skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Glow pulse for dark mode emphasis */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.35);
+  }
+}
+
+/* Float animation for empty state */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Ripple effect for touch feedback */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   HISTORY PAGE ANIMATIONS
+   ============================================ */
+
+/* Page header animation */
+.history-page-header {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+}
+
+/* Filter section - animation only on initial load */
+.history-filter-section {
+  animation: fadeSlideDown 0.4s ease-out forwards;
+  animation-delay: 0.1s;
+  overflow: visible !important;
+}
+
+/* Ensure proper z-index stacking */
+.history-filter-section {
+  position: relative;
+  z-index: 20;
+}
+
+/* Activity log section */
+.history-list-section {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* ============================================
+   LIST ITEM STAGGERED ANIMATIONS
+   ============================================ */
+
+.history-item {
+  opacity: 0;
+  animation: fadeSlideUp 0.4s ease-out forwards;
+}
+
+/* Staggered delays for first 10 items */
+.history-item:nth-child(1) { animation-delay: 0.05s; }
+.history-item:nth-child(2) { animation-delay: 0.1s; }
+.history-item:nth-child(3) { animation-delay: 0.15s; }
+.history-item:nth-child(4) { animation-delay: 0.2s; }
+.history-item:nth-child(5) { animation-delay: 0.25s; }
+.history-item:nth-child(6) { animation-delay: 0.3s; }
+.history-item:nth-child(7) { animation-delay: 0.35s; }
+.history-item:nth-child(8) { animation-delay: 0.4s; }
+.history-item:nth-child(9) { animation-delay: 0.45s; }
+.history-item:nth-child(10) { animation-delay: 0.5s; }
+.history-item:nth-child(n+11) { animation-delay: 0.55s; }
+
+/* ============================================
+   DARK MODE DEPTH & GLOW EFFECTS
+   ============================================ */
+
+/* Card depth in dark mode */
+.dark .history-card {
+  background: rgba(31, 41, 55, 0.95);
+  border-color: rgba(75, 85, 99, 0.4);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Hover glow for items in dark mode */
+.dark .history-item:hover {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    0 8px 25px -5px rgba(0, 0, 0, 0.4),
+    0 0 20px -5px rgba(16, 185, 129, 0.15);
+}
+
+/* Payment success glow */
+.dark .history-item-payment-create {
+  position: relative;
+}
+
+.dark .history-item-payment-create::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* Delete item subtle red tint */
+.dark .history-item-delete::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(239, 68, 68, 0.03) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+/* ============================================
+   ICON ANIMATIONS
+   ============================================ */
+
+.history-icon-wrapper {
+  animation: scaleFade 0.3s ease-out forwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-item:hover .history-icon-wrapper {
+  transform: scale(1.05);
+}
+
+.dark .history-item:hover .history-icon-wrapper {
+  box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+/* Payment icon pulse on hover */
+.history-icon-payment {
+  transition: color 0.2s ease;
+}
+
+.history-item:hover .history-icon-payment {
+  color: #10b981;
+}
+
+/* ============================================
+   BADGE ANIMATIONS
+   ============================================ */
+
+.history-badge {
+  animation: scaleFade 0.25s ease-out forwards;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.history-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Action badge specific styles */
+.history-badge-create {
+  animation-delay: 0.1s;
+}
+
+.history-badge-type {
+  animation-delay: 0.15s;
+}
+
+/* ============================================
+   METRICS PANEL ANIMATIONS
+   ============================================ */
+
+.history-metrics {
+  animation: fadeSlideUp 0.3s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.history-metrics-row {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.history-metrics-row:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.dark .history-metrics-row:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Arrow animation on hover */
+.history-arrow {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.history-metrics-row:hover .history-arrow {
+  transform: translateX(2px);
+  color: #10b981;
+}
+
+/* Value change emphasis */
+.history-value-positive {
+  transition: text-shadow 0.2s ease;
+}
+
+.dark .history-value-positive:hover {
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.history-value-negative {
+  transition: text-shadow 0.2s ease;
+}
+
+.dark .history-value-negative:hover {
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+/* ============================================
+   FILTER PANEL TRANSITIONS
+   ============================================ */
+
+.history-filter-form {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Filter fields - removed animations to prevent z-index issues */
+.history-filter-field {
+  /* Stacking handled inline for dropdown visibility */
+}
+
+.history-filter-actions {
+  /* Actions section */
+}
+
+/* ============================================
+   BUTTON INTERACTIONS
+   ============================================ */
+
+.history-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-btn:active {
+  transform: scale(0.97);
+}
+
+/* Touch ripple effect */
+.history-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.history-btn:active::after {
+  animation: ripple 0.4s ease-out;
+}
+
+/* Primary button glow in dark mode */
+.dark .history-btn-primary {
+  box-shadow: 0 4px 14px -3px rgba(16, 185, 129, 0.4);
+}
+
+.dark .history-btn-primary:hover {
+  box-shadow: 0 6px 20px -3px rgba(16, 185, 129, 0.5);
+}
+
+/* ============================================
+   SKELETON LOADING STATES
+   ============================================ */
+
+.history-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 231, 235, 0.6) 0%,
+    rgba(229, 231, 235, 0.9) 50%,
+    rgba(229, 231, 235, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.dark .history-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(55, 65, 81, 0.4) 0%,
+    rgba(55, 65, 81, 0.7) 50%,
+    rgba(55, 65, 81, 0.4) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.history-skeleton-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(249, 250, 251, 0.5);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  animation: subtlePulse 1.5s ease-in-out infinite;
+}
+
+.dark .history-skeleton-item {
+  background: rgba(31, 41, 55, 0.3);
+  border-color: rgba(55, 65, 81, 0.3);
+}
+
+.history-skeleton-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.history-skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.history-skeleton-line-short {
+  width: 40%;
+}
+
+.history-skeleton-line-medium {
+  width: 65%;
+}
+
+.history-skeleton-line-long {
+  width: 85%;
+}
+
+/* Staggered skeleton animation */
+.history-skeleton-item:nth-child(1) { animation-delay: 0s; }
+.history-skeleton-item:nth-child(2) { animation-delay: 0.1s; }
+.history-skeleton-item:nth-child(3) { animation-delay: 0.2s; }
+.history-skeleton-item:nth-child(4) { animation-delay: 0.3s; }
+.history-skeleton-item:nth-child(5) { animation-delay: 0.4s; }
+
+/* ============================================
+   EMPTY STATE ANIMATIONS
+   ============================================ */
+
+.history-empty-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+.history-empty-text {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* ============================================
+   PAGINATION ANIMATIONS
+   ============================================ */
+
+.history-pagination {
+  animation: fadeSlideUp 0.4s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.history-pagination-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-pagination-btn:not(:disabled):hover {
+  transform: scale(1.05);
+}
+
+.history-pagination-btn:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+.dark .history-pagination-btn:not(:disabled):hover {
+  box-shadow: 0 0 15px -5px rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================
+   MOBILE-SPECIFIC OPTIMIZATIONS
+   ============================================ */
+
+@media (max-width: 640px) {
+  /* Faster animations on mobile */
+  .history-item {
+    animation-duration: 0.3s;
+  }
+
+  /* Reduced stagger for mobile */
+  .history-item:nth-child(n+6) {
+    animation-delay: 0.3s;
+  }
+
+  /* Touch-friendly tap states */
+  .history-item {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .history-item:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Swipe hint for metrics */
+  .history-metrics {
+    position: relative;
+  }
+
+  .history-metrics::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to left, rgba(249, 250, 251, 0.8), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .dark .history-metrics::after {
+    background: linear-gradient(to left, rgba(31, 41, 55, 0.8), transparent);
+  }
+
+  .history-metrics.has-overflow::after {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   REDUCED MOTION PREFERENCES
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .history-item,
+  .history-filter-field,
+  .history-badge,
+  .history-icon-wrapper,
+  .history-metrics,
+  .history-pagination,
+  .history-skeleton,
+  .history-empty-icon {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .history-btn:active::after {
+    animation: none;
+  }
+}
+
+/* ============================================
+   FOCUS STATES FOR ACCESSIBILITY
+   ============================================ */
+
+.history-btn:focus-visible,
+.history-item:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.dark .history-btn:focus-visible,
+.dark .history-item:focus-visible {
+  outline-color: #34d399;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}

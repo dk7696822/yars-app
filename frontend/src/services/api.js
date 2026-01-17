@@ -97,4 +97,11 @@ export const exportAPI = {
   },
 };
 
+// Audit Log API
+export const auditLogAPI = {
+  getAll: (params) => api.get("/audit-logs", { params }),
+  getById: (id) => api.get(`/audit-logs/${id}`),
+  getEntityHistory: (entityType, entityId) => api.get(`/audit-logs/entity/${entityType}/${entityId}`),
+};
+
 export default api;

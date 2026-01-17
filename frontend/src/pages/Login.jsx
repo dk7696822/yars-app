@@ -48,13 +48,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800">
+    <div className="login-page min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient orbs */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-600/10 rounded-full blur-3xl" />
+        <div className="login-orb login-orb-1 absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl" />
+        <div className="login-orb login-orb-2 absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        <div className="login-orb login-orb-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-600/10 rounded-full blur-3xl" />
 
         {/* Subtle grid pattern */}
         <div
@@ -67,14 +67,14 @@ const Login = () => {
       </div>
 
       {/* Login card */}
-      <div className="relative z-10 w-full max-w-md px-4 animate-fade-in-up">
-        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+      <div className="relative z-10 w-full max-w-md px-4">
+        <div className="login-card bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           {/* Header with gradient accent */}
           <div className="relative px-8 pt-10 pb-6">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-500 to-accent" />
 
             {/* Logo/Brand */}
-            <div className="flex flex-col items-center mb-2">
+            <div className="login-logo flex flex-col items-center mb-2">
               <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-700 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 mb-4">
                 <span className="text-3xl font-bold text-white font-display">Y</span>
               </div>
@@ -96,11 +96,11 @@ const Login = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
+              <div className="login-field space-y-2">
                 <label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Username
                 </label>
-                <div className="relative group">
+                <div className="login-input-wrapper relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                     <FaUser className="w-4 h-4" />
                   </div>
@@ -116,11 +116,11 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="login-field space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Password
                 </label>
-                <div className="relative group">
+                <div className="login-input-wrapper relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                     <FaLock className="w-4 h-4" />
                   </div>
@@ -146,7 +146,7 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                className="login-button w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                 disabled={loading}
               >
                 {loading ? (

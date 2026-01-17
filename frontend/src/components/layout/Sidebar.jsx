@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaBoxes, FaUsers, FaMoneyBillWave, FaLayerGroup, FaRuler, FaFileInvoiceDollar, FaTimes } from "react-icons/fa";
+import { FaHome, FaBoxes, FaUsers, FaMoneyBillWave, FaLayerGroup, FaRuler, FaFileInvoiceDollar, FaTimes, FaHistory } from "react-icons/fa";
 import PropTypes from "prop-types";
 
 const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
@@ -11,6 +11,7 @@ const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
     { to: "/product-sizes", icon: FaRuler, label: "Product Sizes" },
     { to: "/expenses", icon: FaMoneyBillWave, label: "Expenses" },
     { to: "/invoices", icon: FaFileInvoiceDollar, label: "Invoices" },
+    { to: "/history", icon: FaHistory, label: "History" },
   ];
 
   const navLinkClasses = ({ isActive }) =>

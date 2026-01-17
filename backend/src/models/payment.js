@@ -102,6 +102,137 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "payments",
       timestamps: true,
       underscored: true,
+      hooks: {
+        beforeCreate: async (payment, options) => {
+          // Calculate BEFORE metrics (before this payment is added)
+          if (payment.order_id) {
+            const { calculateOrderMetrics } = require("../services/auditService");
+            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+          }
+        },
+
+        afterCreate: async (payment, options) => {
+          const { createAuditLog, extractPaymentAuditData, calculateOrderMetrics } = require("../services/auditService");
+          const { AuditLog, Customer } = sequelize.models;
+
+          // Get customer name
+          let customerName = null;
+          if (payment.customer_id) {
+            const customer = await Customer.findByPk(payment.customer_id);
+            customerName = customer?.name;
+          }
+
+          // Calculate AFTER metrics
+          let afterMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
+          if (payment.order_id) {
+            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+          }
+
+          await createAuditLog(AuditLog, {
+            entityType: "PAYMENT",
+            entityId: payment.id,
+            action: "CREATE",
+            newValues: extractPaymentAuditData(payment),
+            metadata: {
+              customer_name: customerName,
+              order_id: payment.order_id,
+              invoice_id: payment.invoice_id,
+              amount: parseFloat(payment.amount),
+              payment_type: payment.payment_type,
+              before_metrics: payment._beforeMetrics || null,
+              after_metrics: afterMetrics,
+            },
+            transaction: options.transaction,
+          });
+        },
+
+        beforeUpdate: async (payment, options) => {
+          // Store previous values for comparison
+          payment._previousValues = { ...payment._previousDataValues };
+
+          // Calculate BEFORE metrics
+          if (payment.order_id) {
+            const { calculateOrderMetrics } = require("../services/auditService");
+            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+          }
+        },
+
+        afterUpdate: async (payment, options) => {
+          const { createAuditLog, extractPaymentAuditData, calculateOrderMetrics } = require("../services/auditService");
+          const { AuditLog, Customer } = sequelize.models;
+
+          // Get customer name
+          let customerName = null;
+          if (payment.customer_id) {
+            const customer = await Customer.findByPk(payment.customer_id);
+            customerName = customer?.name;
+          }
+
+          // Calculate AFTER metrics
+          let afterMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
+          if (payment.order_id) {
+            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+          }
+
+          await createAuditLog(AuditLog, {
+            entityType: "PAYMENT",
+            entityId: payment.id,
+            action: "UPDATE",
+            oldValues: extractPaymentAuditData(payment._previousValues),
+            newValues: extractPaymentAuditData(payment),
+            metadata: {
+              customer_name: customerName,
+              order_id: payment.order_id,
+              invoice_id: payment.invoice_id,
+              before_metrics: payment._beforeMetrics || null,
+              after_metrics: afterMetrics,
+            },
+            transaction: options.transaction,
+          });
+        },
+
+        beforeDestroy: async (payment, options) => {
+          const { createAuditLog, extractPaymentAuditData, calculateOrderMetrics } = require("../services/auditService");
+          const { AuditLog, Customer } = sequelize.models;
+
+          // Get customer name
+          let customerName = null;
+          if (payment.customer_id) {
+            const customer = await Customer.findByPk(payment.customer_id);
+            customerName = customer?.name;
+          }
+
+          // Calculate BEFORE metrics (this is what it looks like before deletion)
+          let beforeMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
+          if (payment.order_id) {
+            beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+          }
+
+          // Calculate what AFTER metrics will be (outstanding will increase by payment amount)
+          const afterMetrics = {
+            total_amount: beforeMetrics.total_amount,
+            total_received: parseFloat((beforeMetrics.total_received - parseFloat(payment.amount)).toFixed(2)),
+            outstanding: parseFloat((beforeMetrics.outstanding + parseFloat(payment.amount)).toFixed(2)),
+          };
+
+          await createAuditLog(AuditLog, {
+            entityType: "PAYMENT",
+            entityId: payment.id,
+            action: "DELETE",
+            oldValues: extractPaymentAuditData(payment),
+            metadata: {
+              customer_name: customerName,
+              order_id: payment.order_id,
+              invoice_id: payment.invoice_id,
+              amount: parseFloat(payment.amount),
+              payment_type: payment.payment_type,
+              before_metrics: beforeMetrics,
+              after_metrics: afterMetrics,
+            },
+            transaction: options.transaction,
+          });
+        },
+      },
     }
   );
 

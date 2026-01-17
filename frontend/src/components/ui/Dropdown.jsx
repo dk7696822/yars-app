@@ -79,7 +79,7 @@ const Dropdown = ({
       
       {isOpen && (
         <ul
-          className="absolute z-10 w-full mt-1 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60"
+          className="absolute z-50 w-full mt-1 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60"
           role="listbox"
           id={`${id}-options`}
         >

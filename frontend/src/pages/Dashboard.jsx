@@ -19,7 +19,7 @@ const GridPattern = ({ className = "" }) => (
 
 // Hero Stat Card - Primary metric with constrained width
 const HeroStatCard = ({ icon: Icon, title, value, subtitle, trend }) => (
-  <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary-600 to-primary-800 p-5 sm:p-6 text-white animate-fade-in-up group max-w-md shadow-xl shadow-primary/20 dark:shadow-primary/30">
+  <div className="dashboard-hero-card relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary-600 to-primary-800 p-5 sm:p-6 text-white group max-w-md shadow-xl shadow-primary/20 dark:shadow-primary/30">
     {/* Background pattern */}
     <div className="absolute inset-0 opacity-10">
       <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -103,8 +103,7 @@ const StatCard = ({ icon: Icon, title, value, subtitle, variant = "default", del
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl sm:rounded-2xl ${v.bg} ${v.darkBg} border ${v.border} p-4 sm:p-5 hover-lift animate-fade-in-up ${v.glow} transition-all duration-300`}
-      style={{ animationDelay: `${delay}ms` }}
+      className={`dashboard-stat-card relative overflow-hidden rounded-xl sm:rounded-2xl ${v.bg} ${v.darkBg} border ${v.border} p-4 sm:p-5 hover-lift ${v.glow} transition-all duration-300`}
     >
       {/* Subtle gradient overlay for dark mode */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent dark:from-white/[0.04] pointer-events-none" />
@@ -163,7 +162,7 @@ const CompactStat = ({ icon: Icon, title, value, color = "primary" }) => {
   const c = colors[color];
 
   return (
-    <div className={`flex-shrink-0 w-[150px] sm:w-[160px] bg-white dark:bg-gradient-to-br dark:from-gray-800/95 dark:to-gray-900/95 rounded-xl border ${c.border} p-3.5 ${c.glow} transition-all`}>
+    <div className={`dashboard-compact-stat flex-shrink-0 w-[150px] sm:w-[160px] bg-white dark:bg-gradient-to-br dark:from-gray-800/95 dark:to-gray-900/95 rounded-xl border ${c.border} p-3.5 ${c.glow} transition-all`}>
       <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${c.icon} mb-2`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -178,7 +177,7 @@ const QuickAction = ({ to, icon: Icon, label, primary = false }) => (
   <Link
     to={to}
     className={`
-      inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold
+      dashboard-quick-action inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold
       transition-all duration-200 active:scale-95 min-h-[48px] flex-1 sm:flex-none
       ${primary
         ? "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:bg-primary-700"
@@ -220,7 +219,7 @@ const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
   const c = colorClasses[color];
 
   return (
-    <div className={`flex flex-col ${c.bg} ${c.border} border rounded-xl p-3 sm:p-4 ${c.glow} transition-all`}>
+    <div className={`dashboard-summary-pill flex flex-col ${c.bg} ${c.border} border rounded-xl p-3 sm:p-4 ${c.glow} transition-all`}>
       <div className="flex items-center gap-2 mb-2">
         <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${c.icon}`}>
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -366,7 +365,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="dashboard-page px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Error alert */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3 sm:p-4 flex items-start gap-3 animate-fade-in">
@@ -382,7 +381,7 @@ const Dashboard = () => {
       </div>
 
       {/* Desktop Header */}
-      <div className="hidden sm:block relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-800/50 dark:via-gray-900 dark:to-gray-950 border border-gray-200/60 dark:border-gray-700/40 p-5 lg:p-8 animate-fade-in dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)]">
+      <div className="dashboard-header hidden sm:block relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-800/50 dark:via-gray-900 dark:to-gray-950 border border-gray-200/60 dark:border-gray-700/40 p-5 lg:p-8 dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)]">
         <GridPattern className="text-gray-900 dark:text-gray-400" />
         {/* Ambient glow for dark mode */}
         <div className="hidden dark:block absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -488,7 +487,7 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Orders Section */}
-      <div className="relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-gray-800/70 dark:to-gray-900/90 rounded-xl sm:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.6)] animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+      <div className="dashboard-orders-section relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-gray-800/70 dark:to-gray-900/90 rounded-xl sm:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-soft">
         {/* Ambient light for dark mode */}
         <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -557,7 +556,7 @@ const Dashboard = () => {
                     <button
                       onClick={goToPrevPage}
                       disabled={currentPage === 1}
-                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -582,7 +581,7 @@ const Dashboard = () => {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -592,18 +591,20 @@ const Dashboard = () => {
             </>
           ) : (
             <div className="text-center py-10 sm:py-14">
-              <div className="relative inline-flex items-center justify-center mb-4 sm:mb-6">
+              <div className="dashboard-empty-icon relative inline-flex items-center justify-center mb-4 sm:mb-6">
                 <div className="absolute w-20 h-20 rounded-full bg-primary/5 dark:bg-emerald-500/10 animate-pulse" />
                 <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-800/80 rounded-2xl flex items-center justify-center border border-gray-200/50 dark:border-gray-700/50">
                   <FaBoxes className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-500" />
                 </div>
               </div>
-              <h3 className="text-lg sm:text-xl font-display font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                No orders yet
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-5 max-w-xs mx-auto px-4">
-                Create your first order to start tracking business transactions.
-              </p>
+              <div className="dashboard-empty-text">
+                <h3 className="text-lg sm:text-xl font-display font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  No orders yet
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-5 max-w-xs mx-auto px-4">
+                  Create your first order to start tracking business transactions.
+                </p>
+              </div>
               <Link
                 to="/orders/new"
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-white font-semibold text-sm shadow-lg shadow-primary/25 dark:shadow-primary/40 hover:bg-primary-700 transition-all active:scale-95"
