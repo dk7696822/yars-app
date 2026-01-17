@@ -37,6 +37,7 @@ import "./styles/datepicker-dark.css";
 import "./styles/select-override.css";
 import "./styles/history-animations.css";
 import "./styles/page-animations.css";
+import "./styles/dark-theme.css";
 
 function App() {
   return (

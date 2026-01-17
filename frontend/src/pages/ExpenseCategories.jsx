@@ -112,25 +112,25 @@ const ExpenseCategories = () => {
       </div>
 
       {/* Categories list */}
-      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
         {/* Ambient glow */}
         <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-emerald-500/3 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-5 py-4">
+        <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-emerald-900/20 px-4 sm:px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
               <FaTags className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-gray-100">All Categories</h2>
-              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-emerald-50">All Categories</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-emerald-100/60">
                 {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
               </p>
             </div>
           </div>
           <div className="relative w-full sm:w-72">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-gray-500">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400 dark:text-emerald-500/50">
               <FaSearch className="h-4 w-4" />
             </div>
             <input
@@ -138,7 +138,7 @@ const ExpenseCategories = () => {
               placeholder="Search categories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-purple-500/30 focus:border-primary dark:focus:border-purple-500/50 transition-all"
+              className="w-full h-11 pl-11 pr-4 rounded-xl border border-gray-200 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50 placeholder:text-gray-400 dark:placeholder:text-emerald-100/40 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-emerald-500/30 focus:border-primary dark:focus:border-emerald-500/50 transition-all"
             />
           </div>
         </div>
@@ -146,10 +146,10 @@ const ExpenseCategories = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="relative">
-                <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-gray-700" />
+                <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-emerald-900/30" />
                 <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-purple-400 animate-spin" />
               </div>
-              <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading categories...</p>
+              <p className="mt-4 text-gray-500 dark:text-emerald-100/60 text-sm">Loading categories...</p>
             </div>
           ) : filteredCategories.length > 0 ? (
             <ExpenseCategoryList

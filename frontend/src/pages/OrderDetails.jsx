@@ -121,10 +121,10 @@ const OrderDetails = () => {
       <div className="page-container">
         <div className="flex flex-col items-center justify-center py-24">
           <div className="relative">
-            <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-gray-700" />
+            <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-emerald-900/30" />
             <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-emerald-400 animate-spin" />
           </div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading order details...</p>
+          <p className="mt-4 text-gray-500 dark:text-emerald-100/60 text-sm">Loading order details...</p>
         </div>
       </div>
     );
@@ -156,7 +156,7 @@ const OrderDetails = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/orders"
-            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] text-gray-600 dark:text-emerald-100/70 hover:bg-gray-50 dark:hover:bg-emerald-500/10 transition-all"
           >
             <FaArrowLeft className="w-4 h-4" />
           </Link>
@@ -190,9 +190,9 @@ const OrderDetails = () => {
       {/* Customer & Order Info Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
         {/* Customer Information */}
-        <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
           <div className="hidden dark:block absolute -top-16 -right-16 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-emerald-900/20">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
                 <FaUser className="w-4 h-4" />
@@ -202,7 +202,7 @@ const OrderDetails = () => {
           </div>
           <div className="relative p-4 sm:p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaUser className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -211,7 +211,7 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaPhone className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -220,7 +220,7 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaEnvelope className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -229,7 +229,7 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaMapMarkerAlt className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -241,9 +241,9 @@ const OrderDetails = () => {
         </div>
 
         {/* Order Information */}
-        <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
           <div className="hidden dark:block absolute -top-16 -left-16 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-emerald-900/20">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                 <FaClipboardList className="w-4 h-4" />
@@ -253,7 +253,7 @@ const OrderDetails = () => {
           </div>
           <div className="relative p-4 sm:p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaCalendarAlt className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -262,7 +262,7 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaClipboardList className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -273,7 +273,7 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                 <FaLayerGroup className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </div>
               <div className="min-w-0 flex-1">
@@ -283,7 +283,7 @@ const OrderDetails = () => {
             </div>
             {order.invoice_id && (
               <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a2320] flex items-center justify-center">
                   <FaFileInvoice className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -299,9 +299,9 @@ const OrderDetails = () => {
       </div>
 
       {/* Order Items */}
-      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
         <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700/50">
+        <div className="relative p-4 sm:p-5 border-b border-gray-100 dark:border-emerald-900/20">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
               <FaBox className="w-4 h-4" />
@@ -313,7 +313,7 @@ const OrderDetails = () => {
           {/* Mobile Card View for Order Items */}
           <div className="block md:hidden space-y-3">
             {order.orderProductSizes.map((item) => (
-              <div key={item.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/30">
+              <div key={item.id} className="bg-gray-50 dark:bg-[#161d1a] rounded-xl p-4 border border-gray-200/50 dark:border-emerald-900/20">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</span>
@@ -324,7 +324,7 @@ const OrderDetails = () => {
               </div>
             ))}
             {/* Plate Charge */}
-            <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200/50 dark:border-gray-700/30">
+            <div className="bg-gray-100 dark:bg-[#1a2320] rounded-xl p-4 border border-gray-200/50 dark:border-emerald-900/20">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-gray-700 dark:text-gray-300">
                   Plate Charge ({order.plateType.type_name})
@@ -355,23 +355,23 @@ const OrderDetails = () => {
           <div className="hidden md:block overflow-x-auto rounded-xl">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50/80 dark:bg-gray-800/50">
-                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Product Size</th>
-                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Quantity (kg)</th>
-                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Rate per kg</th>
-                  <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Amount</th>
+                <tr className="bg-gray-50/80 dark:bg-[#161d1a]">
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Product Size</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Quantity (kg)</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Rate per kg</th>
+                  <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+              <tbody className="divide-y divide-gray-100 dark:divide-emerald-900/20">
                 {order.orderProductSizes.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-emerald-500/5 transition-colors">
                     <td className="p-4 align-middle font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</td>
                     <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{item.quantity_kg}</td>
                     <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}</td>
                     <td className="p-4 align-middle text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</td>
                   </tr>
                 ))}
-                <tr className="bg-gray-50/80 dark:bg-gray-700/30">
+                <tr className="bg-gray-50/80 dark:bg-[#161d1a]">
                   <td colSpan={3} className="p-4 align-middle font-medium text-gray-700 dark:text-gray-300">
                     Plate Charge ({order.plateType.type_name}){order.custom_plate_charge && <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Custom)</span>}
                   </td>

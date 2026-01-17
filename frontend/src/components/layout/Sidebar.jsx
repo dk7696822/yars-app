@@ -17,8 +17,8 @@ const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
   const navLinkClasses = ({ isActive }) =>
     `group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
       isActive
-        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400 shadow-sm"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-gray-200"
+        ? "bg-primary/10 text-primary dark:bg-emerald-500/15 dark:text-emerald-400 shadow-sm dark:shadow-emerald-500/5"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-emerald-500/10 hover:text-gray-900 dark:hover:text-emerald-300"
     }`;
 
   const handleNavClick = () => {
@@ -45,14 +45,14 @@ const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
           lg:translate-x-0
           fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
           h-full flex flex-col
-          bg-white dark:bg-gray-900
-          border-r border-gray-200/80 dark:border-gray-800
+          bg-white dark:bg-[#0a0f0d]
+          border-r border-gray-200/80 dark:border-emerald-900/20
           transition-all duration-300 ease-out
           shadow-xl lg:shadow-none
         `}
       >
         {/* Header */}
-        <div className={`${isCollapsed ? "px-4 py-5" : "px-6 py-6"} border-b border-gray-100 dark:border-gray-800 transition-all duration-300`}>
+        <div className={`${isCollapsed ? "px-4 py-5" : "px-6 py-6"} border-b border-gray-100 dark:border-emerald-900/20 transition-all duration-300`}>
           <div className="flex items-center justify-between">
             {isCollapsed ? (
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-700 rounded-xl flex items-center justify-center shadow-md shadow-primary/20 mx-auto">
@@ -104,10 +104,10 @@ const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">System Active</span>
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-emerald-900/20">
+            <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-emerald-500/5 rounded-xl border border-transparent dark:border-emerald-500/10">
+              <div className="w-2 h-2 rounded-full bg-primary dark:bg-emerald-400 animate-pulse dark:shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+              <span className="text-xs text-gray-500 dark:text-emerald-300/70">System Active</span>
             </div>
             <p className="text-[10px] text-gray-400 dark:text-gray-600 text-center mt-3">
               &copy; {new Date().getFullYear()} YARS

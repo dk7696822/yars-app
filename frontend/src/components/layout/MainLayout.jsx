@@ -40,7 +40,7 @@ const MainLayout = () => {
   }, [isMobileOpen]);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <div className="main-layout flex h-screen bg-gray-50 dark:bg-[#0d1210] overflow-hidden">
       {/* Desktop sidebar - part of flex layout */}
       <div className="hidden lg:block flex-shrink-0">
         <Sidebar

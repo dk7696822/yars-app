@@ -7,7 +7,7 @@ const NotFound = () => {
       <div className="text-center max-w-md">
         {/* 404 Text with gradient */}
         <div className="relative mb-6">
-          <h1 className="text-[150px] md:text-[180px] font-bold text-gray-100 dark:text-gray-800 font-display leading-none select-none">
+          <h1 className="text-[150px] md:text-[180px] font-bold text-gray-100 dark:text-emerald-900/30 font-display leading-none select-none">
             404
           </h1>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -21,7 +21,7 @@ const NotFound = () => {
         <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white font-display mb-3">
           Page Not Found
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">
+        <p className="text-gray-500 dark:text-emerald-100/60 mb-8">
           The page you are looking for doesn't exist or has been moved to another location.
         </p>
 
@@ -36,7 +36,7 @@ const NotFound = () => {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] px-6 py-3 text-sm font-medium text-gray-700 dark:text-emerald-50 hover:bg-gray-50 dark:hover:bg-emerald-500/10 transition-all active:scale-95"
           >
             <FaArrowLeft className="w-4 h-4" />
             Go Back

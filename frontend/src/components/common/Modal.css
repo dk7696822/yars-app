@@ -23,9 +23,10 @@
 }
 
 .dark .modal-container {
-  background-color: #1f2937;
-  color: white;
-  border: 1px solid #374151;
+  background-color: #111916;
+  color: #ecfdf5;
+  border: 1px solid rgba(6, 78, 59, 0.2);
+  box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.15);
 }
 
 .modal-header {
@@ -37,7 +38,7 @@
 }
 
 .dark .modal-header {
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid rgba(6, 78, 59, 0.2);
 }
 
 .modal-title {
@@ -70,12 +71,12 @@
 }
 
 .dark .modal-close-button {
-  color: #9ca3af;
+  color: rgba(236, 253, 245, 0.6);
 }
 
 .dark .modal-close-button:hover {
-  background-color: #374151;
-  color: white;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #ecfdf5;
 }
 
 .modal-content {

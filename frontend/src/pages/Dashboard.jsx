@@ -67,33 +67,33 @@ const StatCard = ({ icon: Icon, title, value, subtitle, variant = "default", del
   const variants = {
     default: {
       bg: "bg-white",
-      darkBg: "dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-gray-900/90",
-      iconBg: "bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300",
-      border: "border-gray-200/60 dark:border-gray-700/50",
-      accent: "text-gray-900 dark:text-gray-100",
-      glow: "dark:shadow-[0_0_25px_-10px_rgba(100,116,139,0.3)]",
+      darkBg: "dark:bg-[#161d1a]",
+      iconBg: "bg-gray-100 dark:bg-emerald-500/10 text-gray-600 dark:text-emerald-300",
+      border: "border-gray-200/60 dark:border-emerald-900/30",
+      accent: "text-gray-900 dark:text-emerald-50",
+      glow: "dark:shadow-[0_0_25px_-10px_rgba(16,185,129,0.2)]",
     },
     success: {
       bg: "bg-white",
-      darkBg: "dark:bg-gradient-to-br dark:from-emerald-950/50 dark:to-gray-900/90",
-      iconBg: "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400",
-      border: "border-emerald-200/50 dark:border-emerald-500/30",
+      darkBg: "dark:bg-[#0f1a16]",
+      iconBg: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-200/50 dark:border-emerald-500/25",
       accent: "text-emerald-700 dark:text-emerald-300",
       glow: "dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.4)]",
     },
     warning: {
       bg: "bg-white",
-      darkBg: "dark:bg-gradient-to-br dark:from-amber-950/50 dark:to-gray-900/90",
-      iconBg: "bg-amber-100 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400",
-      border: "border-amber-200/50 dark:border-amber-500/30",
+      darkBg: "dark:bg-[#1a1710]",
+      iconBg: "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400",
+      border: "border-amber-200/50 dark:border-amber-500/25",
       accent: "text-amber-700 dark:text-amber-300",
       glow: "dark:shadow-[0_0_30px_-10px_rgba(245,158,11,0.4)]",
     },
     purple: {
       bg: "bg-white",
-      darkBg: "dark:bg-gradient-to-br dark:from-violet-950/50 dark:to-gray-900/90",
-      iconBg: "bg-violet-100 dark:bg-violet-500/25 text-violet-600 dark:text-violet-400",
-      border: "border-violet-200/50 dark:border-violet-500/30",
+      darkBg: "dark:bg-[#151419]",
+      iconBg: "bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400",
+      border: "border-violet-200/50 dark:border-violet-500/25",
       accent: "text-violet-700 dark:text-violet-300",
       glow: "dark:shadow-[0_0_30px_-10px_rgba(139,92,246,0.4)]",
     },
@@ -134,26 +134,26 @@ const StatCard = ({ icon: Icon, title, value, subtitle, variant = "default", del
 const CompactStat = ({ icon: Icon, title, value, color = "primary" }) => {
   const colors = {
     primary: {
-      icon: "bg-primary/15 dark:bg-primary/25 text-primary dark:text-emerald-400",
-      border: "border-primary/20 dark:border-primary/30",
+      icon: "bg-primary/15 dark:bg-emerald-500/20 text-primary dark:text-emerald-400",
+      border: "border-primary/20 dark:border-emerald-900/30",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(16,185,129,0.5)]",
       value: "text-gray-900 dark:text-emerald-300",
     },
     green: {
-      icon: "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400",
-      border: "border-emerald-200/50 dark:border-emerald-500/30",
+      icon: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-200/50 dark:border-emerald-500/25",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(16,185,129,0.5)]",
       value: "text-gray-900 dark:text-emerald-300",
     },
     purple: {
-      icon: "bg-violet-100 dark:bg-violet-500/25 text-violet-600 dark:text-violet-400",
-      border: "border-violet-200/50 dark:border-violet-500/30",
+      icon: "bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400",
+      border: "border-violet-200/50 dark:border-violet-500/25",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(139,92,246,0.5)]",
       value: "text-gray-900 dark:text-violet-300",
     },
     amber: {
-      icon: "bg-amber-100 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400",
-      border: "border-amber-200/50 dark:border-amber-500/30",
+      icon: "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400",
+      border: "border-amber-200/50 dark:border-amber-500/25",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(245,158,11,0.5)]",
       value: "text-gray-900 dark:text-amber-300",
     },
@@ -162,11 +162,11 @@ const CompactStat = ({ icon: Icon, title, value, color = "primary" }) => {
   const c = colors[color];
 
   return (
-    <div className={`dashboard-compact-stat flex-shrink-0 w-[150px] sm:w-[160px] bg-white dark:bg-gradient-to-br dark:from-gray-800/95 dark:to-gray-900/95 rounded-xl border ${c.border} p-3.5 ${c.glow} transition-all`}>
+    <div className={`dashboard-compact-stat flex-shrink-0 w-[150px] sm:w-[160px] bg-white dark:bg-[#161d1a] rounded-xl border ${c.border} p-3.5 ${c.glow} transition-all`}>
       <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${c.icon} mb-2`}>
         <Icon className="w-4 h-4" />
       </div>
-      <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">{title}</p>
+      <p className="text-[10px] font-semibold text-gray-500 dark:text-emerald-100/60 uppercase tracking-wider mb-1">{title}</p>
       <p className={`text-sm font-bold ${c.value} font-display`}>{value}</p>
     </div>
   );
@@ -181,7 +181,7 @@ const QuickAction = ({ to, icon: Icon, label, primary = false }) => (
       transition-all duration-200 active:scale-95 min-h-[48px] flex-1 sm:flex-none
       ${primary
         ? "bg-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:bg-primary-700"
-        : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+        : "bg-white dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/30 text-gray-700 dark:text-emerald-100 hover:bg-gray-50 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
       }
     `}
   >
@@ -194,23 +194,23 @@ const QuickAction = ({ to, icon: Icon, label, primary = false }) => (
 const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
   const colorClasses = {
     blue: {
-      bg: "bg-blue-50 dark:bg-gradient-to-br dark:from-blue-950/60 dark:to-gray-900/80",
-      icon: "bg-blue-100 dark:bg-blue-500/25 text-blue-600 dark:text-blue-400",
-      border: "border-blue-200/50 dark:border-blue-500/30",
+      bg: "bg-blue-50 dark:bg-[#111920]",
+      icon: "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400",
+      border: "border-blue-200/50 dark:border-blue-500/25",
       text: "text-blue-700 dark:text-blue-300",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(59,130,246,0.4)]",
     },
     green: {
-      bg: "bg-emerald-50 dark:bg-gradient-to-br dark:from-emerald-950/60 dark:to-gray-900/80",
-      icon: "bg-emerald-100 dark:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400",
-      border: "border-emerald-200/50 dark:border-emerald-500/30",
+      bg: "bg-emerald-50 dark:bg-[#0f1a16]",
+      icon: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-200/50 dark:border-emerald-500/25",
       text: "text-emerald-700 dark:text-emerald-300",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(16,185,129,0.4)]",
     },
     amber: {
-      bg: "bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-gray-900/80",
-      icon: "bg-amber-100 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400",
-      border: "border-amber-200/50 dark:border-amber-500/30",
+      bg: "bg-amber-50 dark:bg-[#1a1710]",
+      icon: "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400",
+      border: "border-amber-200/50 dark:border-amber-500/25",
       text: "text-amber-700 dark:text-amber-300",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(245,158,11,0.4)]",
     },
@@ -224,7 +224,7 @@ const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
         <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${c.icon}`}>
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </div>
-        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</span>
+        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-emerald-100/60">{label}</span>
       </div>
       <p className={`text-lg sm:text-xl font-bold font-display ${c.text} break-all leading-tight`}>{value}</p>
     </div>
@@ -381,10 +381,10 @@ const Dashboard = () => {
       </div>
 
       {/* Desktop Header */}
-      <div className="dashboard-header hidden sm:block relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-800/50 dark:via-gray-900 dark:to-gray-950 border border-gray-200/60 dark:border-gray-700/40 p-5 lg:p-8 dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)]">
-        <GridPattern className="text-gray-900 dark:text-gray-400" />
+      <div className="dashboard-header hidden sm:block relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-[#111916] dark:via-[#0d1210] dark:to-[#0a0f0d] border border-gray-200/60 dark:border-emerald-900/20 p-5 lg:p-8 dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)]">
+        <GridPattern className="text-gray-900 dark:text-emerald-500/30" />
         {/* Ambient glow for dark mode */}
-        <div className="hidden dark:block absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="hidden dark:block absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
           <div>
@@ -487,13 +487,13 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Orders Section */}
-      <div className="dashboard-orders-section relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-gray-800/70 dark:to-gray-900/90 rounded-xl sm:rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-soft">
+      <div className="dashboard-orders-section relative overflow-hidden bg-white dark:bg-[#111916] rounded-xl sm:rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)]">
         {/* Ambient light for dark mode */}
         <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-emerald-500/3 rounded-full blur-3xl pointer-events-none" />
 
         {/* Section Header */}
-        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-5 py-3 sm:py-4">
+        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-emerald-900/20 px-4 sm:px-5 py-3 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400">
               <FaBoxes className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -516,7 +516,7 @@ const Dashboard = () => {
 
         {/* Orders Summary Bar */}
         {allOrders.length > 0 && (
-          <div className="relative border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-5 py-4 dark:bg-gray-800/30">
+          <div className="relative border-b border-gray-100 dark:border-emerald-900/20 px-4 sm:px-5 py-4 dark:bg-[#0d1210]/50">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <SummaryStatPill
                 icon={FaWeight}
@@ -548,15 +548,15 @@ const Dashboard = () => {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-emerald-900/20">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-emerald-100/60">
                     Page {currentPage} of {totalPages}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={goToPrevPage}
                       disabled={currentPage === 1}
-                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] text-gray-600 dark:text-emerald-100/70 hover:bg-gray-50 dark:hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -570,7 +570,7 @@ const Dashboard = () => {
                           className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${
                             page === currentPage
                               ? "bg-primary text-white"
-                              : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              : "bg-white dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/30 text-gray-600 dark:text-emerald-100/70 hover:bg-gray-50 dark:hover:bg-emerald-500/10"
                           }`}
                         >
                           {page}
@@ -581,7 +581,7 @@ const Dashboard = () => {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="dashboard-pagination-btn inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-gray-200 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] text-gray-600 dark:text-emerald-100/70 hover:bg-gray-50 dark:hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                       <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                     </button>
@@ -593,15 +593,15 @@ const Dashboard = () => {
             <div className="text-center py-10 sm:py-14">
               <div className="dashboard-empty-icon relative inline-flex items-center justify-center mb-4 sm:mb-6">
                 <div className="absolute w-20 h-20 rounded-full bg-primary/5 dark:bg-emerald-500/10 animate-pulse" />
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-800/80 rounded-2xl flex items-center justify-center border border-gray-200/50 dark:border-gray-700/50">
-                  <FaBoxes className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-500" />
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-[#161d1a] rounded-2xl flex items-center justify-center border border-gray-200/50 dark:border-emerald-900/30">
+                  <FaBoxes className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-emerald-500/50" />
                 </div>
               </div>
               <div className="dashboard-empty-text">
-                <h3 className="text-lg sm:text-xl font-display font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                <h3 className="text-lg sm:text-xl font-display font-semibold text-gray-900 dark:text-emerald-50 mb-2">
                   No orders yet
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-5 max-w-xs mx-auto px-4">
+                <p className="text-gray-500 dark:text-emerald-100/50 text-sm mb-5 max-w-xs mx-auto px-4">
                   Create your first order to start tracking business transactions.
                 </p>
               </div>

@@ -68,7 +68,7 @@ const Login = () => {
 
       {/* Login card */}
       <div className="relative z-10 w-full max-w-md px-4">
-        <div className="login-card bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+        <div className="login-card bg-white/95 dark:bg-[#0d1210]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-emerald-900/20 overflow-hidden">
           {/* Header with gradient accent */}
           <div className="relative px-8 pt-10 pb-6">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-500 to-accent" />
@@ -81,7 +81,7 @@ const Login = () => {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight">
                 Welcome to YARS
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              <p className="text-gray-500 dark:text-emerald-100/60 text-sm mt-1">
                 Non Woven Bags Management System
               </p>
             </div>
@@ -97,7 +97,7 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="login-field space-y-2">
-                <label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-emerald-100/80">
                   Username
                 </label>
                 <div className="login-input-wrapper relative group">
@@ -111,13 +111,13 @@ const Login = () => {
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter your username"
                     disabled={loading}
-                    className="pl-11 h-12 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-800 transition-colors"
+                    className="pl-11 h-12 bg-gray-50 dark:bg-[#161d1a]/50 border-gray-200 dark:border-emerald-900/30 focus:bg-white dark:focus:bg-[#161d1a] transition-colors"
                   />
                 </div>
               </div>
 
               <div className="login-field space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-emerald-100/80">
                   Password
                 </label>
                 <div className="login-input-wrapper relative group">
@@ -131,11 +131,11 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     disabled={loading}
-                    className="pl-11 pr-12 h-12 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-800 transition-colors"
+                    className="pl-11 pr-12 h-12 bg-gray-50 dark:bg-[#161d1a]/50 border-gray-200 dark:border-emerald-900/30 focus:bg-white dark:focus:bg-[#161d1a] transition-colors"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 dark:hover:text-emerald-100/80 focus:outline-none transition-colors"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex="-1"
                   >

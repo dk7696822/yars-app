@@ -64,10 +64,10 @@ const GenerateInvoice = () => {
       <div className="page-container">
         <div className="flex flex-col items-center justify-center py-20">
           <div className="relative">
-            <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-gray-700" />
-            <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-indigo-400 animate-spin" />
+            <div className="h-12 w-12 rounded-full border-4 border-gray-200 dark:border-emerald-900/30" />
+            <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-transparent border-t-primary dark:border-t-emerald-400 animate-spin" />
           </div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400 text-sm">Loading data...</p>
+          <p className="mt-4 text-gray-500 dark:text-emerald-100/60 text-sm">Loading data...</p>
         </div>
       </div>
     );
@@ -98,19 +98,19 @@ const GenerateInvoice = () => {
       )}
 
       {/* Form Card */}
-      <div className="relative bg-white dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/80 rounded-2xl border border-gray-200/60 dark:border-gray-700/40 shadow-soft dark:shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
         {/* Ambient glow */}
-        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="hidden dark:block absolute -bottom-20 -left-20 w-48 h-48 bg-emerald-500/3 rounded-full blur-3xl pointer-events-none" />
 
         {/* Card Header */}
-        <div className="relative flex items-center gap-3 border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-6 py-4">
+        <div className="relative flex items-center gap-3 border-b border-gray-100 dark:border-emerald-900/20 px-4 sm:px-6 py-4">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
             <FaFileInvoiceDollar className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-display font-semibold text-gray-900 dark:text-gray-100">Invoice Details</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Select customer and orders to invoice</p>
+            <h2 className="text-lg font-display font-semibold text-gray-900 dark:text-emerald-50">Invoice Details</h2>
+            <p className="text-xs text-gray-500 dark:text-emerald-100/60">Select customer and orders to invoice</p>
           </div>
         </div>
 

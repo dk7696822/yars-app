@@ -1,0 +1,318 @@
+/* YARS Dark Theme - "Deep Forest"
+   A sophisticated dark mode with subtle green undertones
+   that connect to the primary brand color for warmth and cohesion.
+
+   Design Philosophy:
+   - Not pure black/gray - subtle warmth through green undertones
+   - Layered elevation through color, not just shadows
+   - Accent glows for interactive elements
+   - Subtle gradients for depth without being distracting
+*/
+
+/* ============================================
+   DARK MODE COLOR PALETTE
+   ============================================ */
+
+.dark {
+  /* Base backgrounds - Deep slate with green undertone */
+  --color-base-deepest: #0a0f0d;      /* Deepest - almost black with green */
+  --color-base-deep: #0d1210;          /* Main app background */
+  --color-base: #111916;               /* Standard background */
+  --color-surface: #161d1a;            /* Card backgrounds */
+  --color-surface-raised: #1a2320;     /* Elevated surfaces */
+  --color-surface-overlay: #1e2926;    /* Modals, dropdowns */
+
+  /* Border colors - subtle with green tint */
+  --color-border-subtle: rgba(16, 185, 129, 0.08);
+  --color-border-default: rgba(16, 185, 129, 0.12);
+  --color-border-strong: rgba(16, 185, 129, 0.2);
+
+  /* Text colors */
+  --color-text-primary: #f0fdf4;       /* Primary text - slight green tint */
+  --color-text-secondary: #a7c4b8;     /* Secondary text */
+  --color-text-muted: #6b8f7d;         /* Muted/placeholder text */
+
+  /* Accent glows */
+  --glow-primary: 0 0 20px -5px rgba(16, 185, 129, 0.4);
+  --glow-primary-strong: 0 0 30px -5px rgba(16, 185, 129, 0.6);
+  --glow-success: 0 0 20px -5px rgba(34, 197, 94, 0.4);
+  --glow-warning: 0 0 20px -5px rgba(245, 158, 11, 0.4);
+  --glow-danger: 0 0 20px -5px rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================
+   MAIN LAYOUT BACKGROUNDS
+   ============================================ */
+
+/* App container / Main layout */
+.dark .app-container,
+.dark .main-layout,
+.dark body {
+  background: var(--color-base-deep);
+  /* Subtle radial gradient for depth */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(16, 185, 129, 0.02) 0%, transparent 40%);
+}
+
+/* Sidebar */
+.dark .sidebar,
+.dark [class*="sidebar"] {
+  background: var(--color-base-deepest);
+  border-color: var(--color-border-subtle);
+}
+
+/* Page content area */
+.dark .page-container,
+.dark .content-area {
+  background: transparent;
+}
+
+/* ============================================
+   CARD SYSTEM - LAYERED ELEVATION
+   ============================================ */
+
+/* Base card */
+.dark .card,
+.dark [class*="card"]:not([class*="hero"]) {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-default);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.02);
+}
+
+/* Card hover - subtle glow */
+.dark .card:hover,
+.dark [class*="card"]:hover:not([class*="hero"]) {
+  border-color: var(--color-border-strong);
+  box-shadow:
+    0 8px 25px -5px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Elevated card (modals, dropdowns) */
+.dark .card-elevated,
+.dark .modal,
+.dark .dropdown-menu,
+.dark [class*="dropdown"] ul {
+  background: var(--color-surface-overlay);
+  border: 1px solid var(--color-border-strong);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(16, 185, 129, 0.08);
+}
+
+/* ============================================
+   SECTION HEADERS & DIVIDERS
+   ============================================ */
+
+.dark .section-header,
+.dark [class*="section-title"] {
+  color: var(--color-text-primary);
+}
+
+.dark hr,
+.dark .divider,
+.dark [class*="border-b"],
+.dark [class*="border-t"] {
+  border-color: var(--color-border-subtle);
+}
+
+/* ============================================
+   INTERACTIVE ELEMENTS
+   ============================================ */
+
+/* Buttons - Primary */
+.dark .btn-primary,
+.dark [class*="bg-primary"]:not([class*="bg-primary/"]) {
+  box-shadow: var(--glow-primary);
+}
+
+.dark .btn-primary:hover,
+.dark [class*="bg-primary"]:hover:not([class*="bg-primary/"]) {
+  box-shadow: var(--glow-primary-strong);
+}
+
+/* Input fields */
+.dark input,
+.dark textarea,
+.dark select,
+.dark .input {
+  background: var(--color-surface);
+  border-color: var(--color-border-default);
+  color: var(--color-text-primary);
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus,
+.dark .input:focus {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow:
+    0 0 0 3px rgba(16, 185, 129, 0.1),
+    var(--glow-primary);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ============================================
+   TABLE STYLING
+   ============================================ */
+
+.dark table {
+  background: var(--color-surface);
+}
+
+.dark thead {
+  background: var(--color-surface-raised);
+}
+
+.dark th {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-subtle);
+}
+
+.dark td {
+  border-color: var(--color-border-subtle);
+}
+
+.dark tbody tr:hover {
+  background: var(--color-surface-raised);
+}
+
+/* ============================================
+   STAT CARDS & METRICS
+   ============================================ */
+
+/* Success metrics (received, completed) */
+.dark .stat-success,
+.dark [class*="emerald"],
+.dark [class*="green"] {
+  --card-glow: var(--glow-success);
+}
+
+/* Warning metrics (pending, outstanding) */
+.dark .stat-warning,
+.dark [class*="amber"],
+.dark [class*="yellow"] {
+  --card-glow: var(--glow-warning);
+}
+
+/* ============================================
+   SUBTLE NOISE TEXTURE (Optional)
+   ============================================ */
+
+.dark .with-texture::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-base);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+/* ============================================
+   SPECIFIC COMPONENT OVERRIDES
+   ============================================ */
+
+/* Dashboard hero card - keep gradient but add glow */
+.dark .dashboard-hero-card,
+.dark [class*="hero-card"] {
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 60px -15px rgba(16, 185, 129, 0.3);
+}
+
+/* History page cards */
+.dark .history-card {
+  background: var(--color-surface);
+  border-color: var(--color-border-default);
+}
+
+/* Sidebar nav items */
+.dark .nav-item:hover,
+.dark [class*="nav-link"]:hover {
+  background: var(--color-surface);
+}
+
+.dark .nav-item.active,
+.dark [class*="nav-link"].active {
+  background: rgba(16, 185, 129, 0.1);
+  border-left: 2px solid #10b981;
+}
+
+/* Badges */
+.dark .badge {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border-default);
+}
+
+/* Empty states */
+.dark .empty-state {
+  color: var(--color-text-muted);
+}
+
+.dark .empty-state-icon {
+  background: var(--color-surface);
+  border-color: var(--color-border-subtle);
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+.dark .skeleton,
+.dark [class*="skeleton"] {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-surface-raised) 50%,
+    var(--color-surface) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ============================================
+   TRANSITIONS
+   ============================================ */
+
+/* Smooth dark mode transition */
+.dark * {
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-out;
+}
+
+/* Disable transition on page load to prevent flash */
+.dark.no-transition * {
+  transition: none !important;
+}

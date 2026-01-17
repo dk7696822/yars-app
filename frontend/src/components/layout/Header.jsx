@@ -42,7 +42,7 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
   };
 
   return (
-    <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800/60">
+    <header className="sticky top-0 z-10 bg-white/80 dark:bg-[#0d1210]/90 backdrop-blur-xl border-b border-gray-200/60 dark:border-emerald-900/20">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         {/* Left section */}
         <div className="flex items-center gap-3">
@@ -83,18 +83,18 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
             <ThemeToggle />
 
             {/* User info - hidden on mobile */}
-            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/20 dark:from-primary/20 dark:to-primary/30 text-primary rounded-lg">
+            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-gray-50 dark:bg-emerald-500/5 rounded-xl border border-transparent dark:border-emerald-500/10">
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary/10 to-primary/20 dark:from-emerald-500/20 dark:to-emerald-500/10 text-primary dark:text-emerald-400 rounded-lg">
                 <FaUser className="w-3.5 h-3.5" />
               </div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[100px] truncate">
+              <span className="text-sm font-medium text-gray-700 dark:text-emerald-100 max-w-[100px] truncate">
                 {user.username}
               </span>
             </div>
 
             {/* Logout button */}
             <button
-              className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all active:scale-95"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#161d1a] rounded-xl hover:bg-gray-200 dark:hover:bg-emerald-500/10 hover:text-gray-900 dark:hover:text-emerald-300 border border-transparent dark:border-emerald-900/30 transition-all active:scale-95"
               onClick={handleLogout}
               title="Logout"
             >
