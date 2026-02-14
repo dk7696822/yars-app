@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { FaEdit, FaEye, FaTrash, FaChevronDown, FaChevronUp, FaBoxes, FaMoneyBillWave, FaBalanceScale } from "react-icons/fa";
 import { formatCurrency, formatDate } from "../../utils/formatters";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooter } from "../ui/Table";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../ui/Table";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import ActionButton from "../ui/action-button";
@@ -328,53 +328,49 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
               </>
             ))}
           </TableBody>
-          {showSummary && (
-            <TableFooter>
-              <TableRow className="bg-gray-50 dark:bg-gray-800/30">
-                <TableCell colSpan={8} className="p-0">
-                  <div className="p-3 sm:p-4">
-                    <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Orders Summary</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                      {/* Quantity Card */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-gradient-to-br dark:from-blue-950/40 dark:to-gray-900/60 rounded-xl border border-blue-200/50 dark:border-blue-500/20 p-3 sm:p-4 dark:shadow-[0_0_20px_-8px_rgba(59,130,246,0.3)] transition-shadow">
-                        <div className="flex-shrink-0 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
-                          <FaBoxes className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Quantity</p>
-                          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-blue-300 font-display">{summary.totalKg} kg</h3>
-                        </div>
-                      </div>
-
-                      {/* Amount Card */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-gradient-to-br dark:from-emerald-950/40 dark:to-gray-900/60 rounded-xl border border-emerald-200/50 dark:border-emerald-500/20 p-3 sm:p-4 dark:shadow-[0_0_20px_-8px_rgba(16,185,129,0.3)] transition-shadow">
-                        <div className="flex-shrink-0 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                          <FaMoneyBillWave className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Amount</p>
-                          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-emerald-300 font-display truncate">{formatCurrency(summary.totalAmount)}</h3>
-                        </div>
-                      </div>
-
-                      {/* Receivable Card */}
-                      <div className="flex items-center gap-3 bg-white dark:bg-gradient-to-br dark:from-amber-950/40 dark:to-gray-900/60 rounded-xl border border-amber-200/50 dark:border-amber-500/20 p-3 sm:p-4 dark:shadow-[0_0_20px_-8px_rgba(245,158,11,0.3)] transition-shadow">
-                        <div className="flex-shrink-0 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                          <FaBalanceScale className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Receivable</p>
-                          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-amber-300 font-display truncate">{formatCurrency(summary.totalReceivable)}</h3>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableFooter>
-          )}
         </Table>
       </div>
+
+      {/* Orders Summary - visible on both mobile and desktop */}
+      {showSummary && ordersForSummary.length > 0 && (
+        <div className="mt-4 p-4 bg-white dark:bg-[#111916] rounded-xl border border-gray-200/60 dark:border-emerald-900/20">
+          <h4 className="text-sm font-semibold text-gray-700 dark:text-emerald-100/80 mb-3">Orders Summary</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Quantity Card */}
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#0d1411] rounded-xl border border-gray-200/60 dark:border-emerald-900/30 p-3 sm:p-4">
+              <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <FaBoxes className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Quantity</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-emerald-100 font-display">{summary.totalKg} kg</h3>
+              </div>
+            </div>
+
+            {/* Amount Card */}
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#0d1411] rounded-xl border border-gray-200/60 dark:border-emerald-900/30 p-3 sm:p-4">
+              <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <FaMoneyBillWave className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Amount</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-emerald-100 font-display truncate">{formatCurrency(summary.totalAmount)}</h3>
+              </div>
+            </div>
+
+            {/* Receivable Card */}
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#0d1411] rounded-xl border border-gray-200/60 dark:border-emerald-900/30 p-3 sm:p-4">
+              <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <FaBalanceScale className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Receivable</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-amber-300 font-display truncate">{formatCurrency(summary.totalReceivable)}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
