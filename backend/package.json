@@ -17,7 +17,8 @@
     "testEnvironment": "node",
     "testMatch": ["**/tests/**/*.test.js"],
     "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
-    "testTimeout": 20000
+    "testTimeout": 20000,
+    "maxWorkers": 1
   },
   "keywords": [],
   "author": "",
