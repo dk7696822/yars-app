@@ -42,6 +42,10 @@ const createItemAttribute = async (req, res) => {
 
     return success(res, 201, "Item attribute created successfully", attribute);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "An attribute with this name already exists");
+    }
     console.error("Error creating item attribute:", err);
     return error(res, 500, "Failed to create item attribute", err.message);
   }
@@ -99,6 +103,10 @@ const updateItemAttribute = async (req, res) => {
 
     return success(res, 200, "Item attribute updated successfully", attribute);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "Another attribute with this name already exists");
+    }
     console.error("Error updating item attribute:", err);
     return error(res, 500, "Failed to update item attribute", err.message);
   }
@@ -173,6 +181,10 @@ const createItemAttributeValue = async (req, res) => {
 
     return success(res, 201, "Attribute value created successfully", created);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, `"${String(req.body.value).trim()}" already exists under this attribute`);
+    }
     console.error("Error creating attribute value:", err);
     return error(res, 500, "Failed to create attribute value", err.message);
   }
@@ -212,6 +224,10 @@ const updateItemAttributeValue = async (req, res) => {
 
     return success(res, 200, "Attribute value updated successfully", attributeValue);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "Another value with this name already exists under this attribute");
+    }
     console.error("Error updating attribute value:", err);
     return error(res, 500, "Failed to update attribute value", err.message);
   }

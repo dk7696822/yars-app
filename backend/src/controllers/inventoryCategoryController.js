@@ -27,6 +27,10 @@ const createInventoryCategory = async (req, res) => {
 
     return success(res, 201, "Inventory category created successfully", category);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "A category with this name already exists");
+    }
     console.error("Error creating inventory category:", err);
     return error(res, 500, "Failed to create inventory category", err.message);
   }
@@ -97,6 +101,10 @@ const updateInventoryCategory = async (req, res) => {
 
     return success(res, 200, "Inventory category updated successfully", category);
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "Another category with this name already exists");
+    }
     console.error("Error updating inventory category:", err);
     return error(res, 500, "Failed to update inventory category", err.message);
   }
