@@ -8,13 +8,28 @@ const {
   InventoryItemAttributeValue,
   StockBatch,
   PurchaseOrderItem,
+  PurchaseOrder,
   sequelize,
 } = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
-const { Op } = require("sequelize");
+const { Op, fn, col, where } = require("sequelize");
 
 const VALID_UNITS = ["KG", "PCS", "METRE", "ROLL", "LITRE"];
+
+/**
+ * Case-insensitive EQUALITY check for a live item already using this code —
+ * never iLike, whose %/_ are wildcards. Belt: the partial unique index
+ * backstops this; the pre-check just turns it into a friendly 400.
+ */
+const itemCodeTaken = async (itemCode, excludeId = null) => {
+  const whereClause = {
+    is_archived: false,
+    [Op.and]: [where(fn("lower", col("item_code")), String(itemCode).toLowerCase())],
+  };
+  if (excludeId) whereClause.id = { [Op.ne]: excludeId };
+  return (await InventoryItem.count({ where: whereClause })) > 0;
+};
 
 const ITEM_INCLUDES = [
   { model: InventoryCategory, as: "category", attributes: ["id", "name"] },
@@ -93,12 +108,20 @@ const createInventoryItem = async (req, res) => {
       return error(res, 400, `Unit must be one of: ${VALID_UNITS.join(", ")}`);
     }
 
+    if (attribute_value_ids !== undefined && !Array.isArray(attribute_value_ids)) {
+      return error(res, 400, "attribute_value_ids must be an array");
+    }
+
     const category = await InventoryCategory.findOne({
       where: { id: category_id, is_archived: false },
     });
 
     if (!category) {
       return error(res, 400, "Invalid inventory category");
+    }
+
+    if (item_code && (await itemCodeTaken(item_code))) {
+      return error(res, 400, "Item code already exists");
     }
 
     let attributeValues = [];
@@ -142,6 +165,10 @@ const createInventoryItem = async (req, res) => {
 
     return success(res, 201, "Inventory item created successfully", withAttributes(created));
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "Item code already exists");
+    }
     console.error("Error creating inventory item:", err);
     return error(res, 500, "Failed to create inventory item", err.message);
   }
@@ -239,6 +266,14 @@ const updateInventoryItem = async (req, res) => {
       return error(res, 400, `Unit must be one of: ${VALID_UNITS.join(", ")}`);
     }
 
+    if (attribute_value_ids !== undefined && !Array.isArray(attribute_value_ids)) {
+      return error(res, 400, "attribute_value_ids must be an array");
+    }
+
+    if (item_code && (await itemCodeTaken(item_code, item.id))) {
+      return error(res, 400, "Item code already exists");
+    }
+
     if (category_id) {
       const category = await InventoryCategory.findOne({
         where: { id: category_id, is_archived: false },
@@ -259,15 +294,16 @@ const updateInventoryItem = async (req, res) => {
     }
 
     await sequelize.transaction(async (transaction) => {
+      // `undefined` leaves a field alone; an explicit null CLEARS the nullable ones.
       await item.update(
         {
           name: name ?? item.name,
-          item_code: item_code ?? item.item_code,
+          item_code: item_code !== undefined ? item_code : item.item_code,
           category_id: category_id ?? item.category_id,
           unit: unit ?? item.unit,
           reorder_level: reorder_level ?? item.reorder_level,
-          reorder_target: reorder_target ?? item.reorder_target,
-          notes: notes ?? item.notes,
+          reorder_target: reorder_target !== undefined ? reorder_target : item.reorder_target,
+          notes: notes !== undefined ? notes : item.notes,
         },
         { transaction }
       );
@@ -292,6 +328,10 @@ const updateInventoryItem = async (req, res) => {
 
     return success(res, 200, "Inventory item updated successfully", withAttributes(updated));
   } catch (err) {
+    // Braces for the race the pre-check can miss.
+    if (err.name === "SequelizeUniqueConstraintError") {
+      return error(res, 400, "Item code already exists");
+    }
     console.error("Error updating inventory item:", err);
     return error(res, 500, "Failed to update inventory item", err.message);
   }
@@ -309,25 +349,36 @@ const deleteInventoryItem = async (req, res) => {
 
     // Refuse to archive an item that still physically exists in stock — that
     // would silently make the stock value wrong.
-    const batches = await StockBatch.findAll({
+    // Check-then-act race tolerated: single-user app, worst case is a stale refusal.
+    const stockedBatches = await StockBatch.count({
       where: { item_id: id, quantity_remaining: { [Op.gt]: 0 } },
     });
 
-    if (batches.length > 0) {
-      return error(res, 400, "Cannot delete this item as it still has stock on hand");
+    if (stockedBatches > 0) {
+      return error(res, 409, "Cannot delete this item as it still has stock on hand");
     }
 
     // Comparing two COLUMNS, not a column to a value. Op.lt with col() does not
     // do this reliably in Sequelize 6 — use an explicit literal.
+    // Only LIVE, non-cancelled POs count — an abandoned PO must not block
+    // deletion forever.
     const openPoLines = await PurchaseOrderItem.count({
       where: {
         item_id: id,
-        [Op.and]: [sequelize.literal("quantity_received < quantity_ordered")],
+        [Op.and]: [sequelize.literal(`"PurchaseOrderItem".quantity_received < "PurchaseOrderItem".quantity_ordered`)],
       },
+      include: [
+        {
+          model: PurchaseOrder,
+          as: "purchaseOrder",
+          required: true,
+          where: { is_archived: false, status: { [Op.ne]: "CANCELLED" } },
+        },
+      ],
     });
 
     if (openPoLines > 0) {
-      return error(res, 400, "Cannot delete this item as it is on an open purchase order");
+      return error(res, 409, "Cannot delete this item as it is on an open purchase order");
     }
 
     await item.update({ is_archived: true });

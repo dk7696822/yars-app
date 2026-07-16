@@ -7,12 +7,14 @@ const { Op } = require("sequelize");
 
 const createSupplier = async (req, res) => {
   try {
-    const { name, phone, email, gst_number, address } = req.body;
+    const { phone, email, gst_number, address } = req.body;
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : req.body.name;
 
     if (!name) {
       return error(res, 400, "Supplier name is required");
     }
 
+    // No duplicate-name check on purpose: real suppliers can share a name.
     const supplier = await Supplier.create({
       name,
       phone: phone || null,
@@ -98,7 +100,8 @@ const getSupplierById = async (req, res) => {
 
 const updateSupplier = async (req, res) => {
   try {
-    const { name, phone, email, gst_number, address } = req.body;
+    const { phone, email, gst_number, address } = req.body;
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : req.body.name;
 
     const supplier = await Supplier.findOne({
       where: { id: req.params.id, is_archived: false },
@@ -112,12 +115,13 @@ const updateSupplier = async (req, res) => {
       return error(res, 400, "Supplier name is required");
     }
 
+    // `undefined` leaves a field alone; an explicit null CLEARS it.
     await supplier.update({
       name,
-      phone: phone ?? supplier.phone,
-      email: email ?? supplier.email,
-      gst_number: gst_number ?? supplier.gst_number,
-      address: address ?? supplier.address,
+      phone: phone !== undefined ? phone : supplier.phone,
+      email: email !== undefined ? email : supplier.email,
+      gst_number: gst_number !== undefined ? gst_number : supplier.gst_number,
+      address: address !== undefined ? address : supplier.address,
     });
 
     return success(res, 200, "Supplier updated successfully", supplier);
@@ -137,13 +141,14 @@ const deleteSupplier = async (req, res) => {
       return error(res, 404, "Supplier not found");
     }
 
+    // Check-then-act race tolerated: single-user app, worst case is a stale refusal.
     const poCount = await PurchaseOrder.count({ where: { supplier_id: id, is_archived: false } });
     const receiptCount = await GoodsReceipt.count({ where: { supplier_id: id, is_archived: false } });
 
     if (poCount > 0 || receiptCount > 0) {
       return error(
         res,
-        400,
+        409,
         "Cannot delete this supplier as it is being used by purchase orders or goods receipts"
       );
     }

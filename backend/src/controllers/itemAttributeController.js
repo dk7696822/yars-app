@@ -7,7 +7,10 @@ const {
   InventoryItem,
 } = require("../models");
 const { success, error } = require("../utils/response");
-const { Op } = require("sequelize");
+const { Op, fn, col, where } = require("sequelize");
+
+/** Case-insensitive EQUALITY on a column — never iLike, whose %/_ are wildcards. */
+const equalsInsensitive = (column, text) => where(fn("lower", col(column)), text.toLowerCase());
 
 /** Count non-archived items still using any of these value ids. */
 const countItemsUsingValues = async (valueIds) => {
@@ -28,7 +31,7 @@ const createItemAttribute = async (req, res) => {
     }
 
     const existing = await ItemAttribute.findOne({
-      where: { name: { [Op.iLike]: name.trim() }, is_archived: false },
+      where: { [Op.and]: [equalsInsensitive("name", name.trim())], is_archived: false },
     });
 
     if (existing) {
@@ -85,7 +88,7 @@ const updateItemAttribute = async (req, res) => {
     }
 
     const duplicate = await ItemAttribute.findOne({
-      where: { name: { [Op.iLike]: name.trim() }, id: { [Op.ne]: id }, is_archived: false },
+      where: { [Op.and]: [equalsInsensitive("name", name.trim())], id: { [Op.ne]: id }, is_archived: false },
     });
 
     if (duplicate) {
@@ -113,6 +116,7 @@ const deleteItemAttribute = async (req, res) => {
 
     // Refuse while any live item still carries one of this attribute's values —
     // deleting it would silently strip meaning from those items.
+    // Check-then-act race tolerated: single-user app, worst case is a stale refusal.
     const values = await ItemAttributeValue.findAll({
       where: { attribute_id: id },
       attributes: ["id"],
@@ -120,7 +124,7 @@ const deleteItemAttribute = async (req, res) => {
     const inUse = await countItemsUsingValues(values.map((value) => value.id));
 
     if (inUse > 0) {
-      return error(res, 400, "Cannot delete this attribute as it is being used by inventory items");
+      return error(res, 409, "Cannot delete this attribute as it is being used by inventory items");
     }
 
     // Soft-delete the values along with their attribute, so nothing orphaned
@@ -151,7 +155,11 @@ const createItemAttributeValue = async (req, res) => {
     }
 
     const existing = await ItemAttributeValue.findOne({
-      where: { attribute_id: id, value: { [Op.iLike]: String(value).trim() }, is_archived: false },
+      where: {
+        attribute_id: id,
+        [Op.and]: [equalsInsensitive("value", String(value).trim())],
+        is_archived: false,
+      },
     });
 
     if (existing) {
@@ -190,7 +198,7 @@ const updateItemAttributeValue = async (req, res) => {
     const duplicate = await ItemAttributeValue.findOne({
       where: {
         attribute_id: attributeValue.attribute_id,
-        value: { [Op.iLike]: String(value).trim() },
+        [Op.and]: [equalsInsensitive("value", String(value).trim())],
         id: { [Op.ne]: valueId },
         is_archived: false,
       },
@@ -221,10 +229,11 @@ const deleteItemAttributeValue = async (req, res) => {
       return error(res, 404, "Attribute value not found");
     }
 
+    // Check-then-act race tolerated: single-user app, worst case is a stale refusal.
     const inUse = await countItemsUsingValues([valueId]);
 
     if (inUse > 0) {
-      return error(res, 400, "Cannot delete this value as it is being used by inventory items");
+      return error(res, 409, "Cannot delete this value as it is being used by inventory items");
     }
 
     await attributeValue.update({ is_archived: true });

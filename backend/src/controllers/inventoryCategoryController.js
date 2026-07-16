@@ -2,18 +2,21 @@
 
 const { InventoryCategory, InventoryItem } = require("../models");
 const { success, error } = require("../utils/response");
-const { Op } = require("sequelize");
+const { Op, fn, col, where } = require("sequelize");
+
+/** Case-insensitive EQUALITY on name — never iLike, whose %/_ are wildcards. */
+const nameEquals = (name) => where(fn("lower", col("name")), name.toLowerCase());
 
 const createInventoryCategory = async (req, res) => {
   try {
-    const { name } = req.body;
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : req.body.name;
 
     if (!name) {
       return error(res, 400, "Category name is required");
     }
 
     const existing = await InventoryCategory.findOne({
-      where: { name: { [Op.iLike]: name }, is_archived: false },
+      where: { [Op.and]: [nameEquals(name)], is_archived: false },
     });
 
     if (existing) {
@@ -70,7 +73,7 @@ const getInventoryCategoryById = async (req, res) => {
 const updateInventoryCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const name = typeof req.body.name === "string" ? req.body.name.trim() : req.body.name;
 
     if (!name) {
       return error(res, 400, "Category name is required");
@@ -83,7 +86,7 @@ const updateInventoryCategory = async (req, res) => {
     }
 
     const duplicate = await InventoryCategory.findOne({
-      where: { name: { [Op.iLike]: name }, id: { [Op.ne]: id }, is_archived: false },
+      where: { [Op.and]: [nameEquals(name)], id: { [Op.ne]: id }, is_archived: false },
     });
 
     if (duplicate) {
@@ -110,12 +113,13 @@ const deleteInventoryCategory = async (req, res) => {
     }
 
     // Never orphan an item by deleting its category.
+    // Check-then-act race tolerated: single-user app, worst case is a stale refusal.
     const itemCount = await InventoryItem.count({
       where: { category_id: id, is_archived: false },
     });
 
     if (itemCount > 0) {
-      return error(res, 400, "Cannot delete this category as it is being used by inventory items");
+      return error(res, 409, "Cannot delete this category as it is being used by inventory items");
     }
 
     await category.update({ is_archived: true });
