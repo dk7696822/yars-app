@@ -29,6 +29,7 @@ Finished bags are made to order and ship out; they are not stocked and are out o
 | Suppliers | Proper master table | Per-supplier history and outstanding deliveries |
 | Units | Fixed enum per item | Physical, finite, code reasons about it; free text fragments data |
 | Categories | User-managed CRUD table | Business taxonomy, must change without a migration |
+| Item variations (cut, GSM, colour) | User-managed attributes + values | Hardcoded columns can't keep up with the factory's vocabulary; user extends from the UI. Unit stays a fixed enum because it drives stock math |
 | Stock balance | Batch remainders + movement ledger | FIFO needs batches anyway; ledger gives audit + reconciliation |
 
 ### Why material purchases leave the Expenses module
@@ -54,7 +55,7 @@ no way to tell which number is right. Instead:
 
 ## 3. Data model
 
-Eight new tables. Follows existing YARS conventions throughout: Sequelize models, UUID primary
+Eleven new tables. Follows existing YARS conventions throughout: Sequelize models, UUID primary
 keys, `underscored: true`, snake_case table names, `is_archived` soft deletes, timestamps.
 
 ### Masters
@@ -72,11 +73,42 @@ keys, `underscored: true`, snake_case table names, `is_archived` soft deletes, t
 - `id`, `name` (TEXT, not empty), `item_code` (TEXT, unique, nullable)
 - `category_id` (UUID, FK → inventory_categories)
 - `unit` (ENUM: `KG`, `PCS`, `METRE`, `ROLL`, `LITRE`)
-- `gsm` (INTEGER, nullable — fabric only), `color` (TEXT, nullable — fabric only)
 - `reorder_level` (DECIMAL(10,2), default 0) — at or below this, the item reads as low stock
 - `reorder_target` (DECIMAL(10,2), nullable) — top back up to this; suggested qty = target − in_stock.
   **If null, the suggested qty falls back to `reorder_level − in_stock`.**
 - `notes` (TEXT, nullable), `is_archived` (bool), timestamps
+
+### Item attributes
+
+Raw materials vary — by cut type (D Cut, W Cut, U Cut, Loop Handle), by GSM, by colour, by whatever
+the next supplier invents. Hardcoded columns cannot keep up, so item variations follow the same
+philosophy as categories: **user-managed definitions and values, chosen via dropdowns on the item,
+full CRUD, nothing baked into code.** `unit` stays a fixed enum because units drive stock math;
+attributes are purely descriptive.
+
+**`item_attributes`**
+- `id`, `name` (TEXT, unique, not empty), `is_archived`, timestamps.
+- Seeded with: Cut, GSM, Color.
+
+**`item_attribute_values`**
+- `id`, `attribute_id` (FK → item_attributes, RESTRICT), `value` (TEXT, not empty), `is_archived`, timestamps.
+- UNIQUE(`attribute_id`, `value`); index on `attribute_id`.
+- Seeded: Cut → D Cut, W Cut, U Cut, Loop Handle; GSM → 60, 70, 80, 90, 100; Color → none
+  (colours are business-specific — the user adds their own).
+
+**`inventory_item_attribute_values`** — the link table.
+- `id`, `item_id` (FK → inventory_items, CASCADE), `attribute_id` (FK → item_attributes, RESTRICT),
+  `attribute_value_id` (FK → item_attribute_values, RESTRICT), timestamps.
+- **UNIQUE(`item_id`, `attribute_id`)** — an item holds at most **one** value per attribute.
+  `attribute_id` is deliberately denormalised into the link row precisely so that constraint can
+  live in the database rather than in application code. The controller still validates that the
+  chosen value actually belongs to the claimed attribute.
+
+Deleting an attribute or a value is soft, and is **refused while any non-archived item still uses
+it** — the same guard as categories.
+
+This replaces the earlier idea of `gsm` and `color` columns on the item: they become seeded "GSM"
+and "Color" attributes instead. One mechanism, user-extensible, no duplicates.
 
 ### Procurement
 
@@ -221,6 +253,9 @@ Mounted in `backend/src/routes/index.js` beside the existing routers. Uses the e
 
 ```
 /api/inventory-categories   GET, POST, GET/:id, PUT/:id, DELETE/:id
+/api/item-attributes        GET (attributes with values nested), POST, PUT/:id, DELETE/:id
+                            POST /:id/values      → add a value to an attribute
+                            PUT /values/:valueId, DELETE /values/:valueId
 /api/suppliers              GET, POST, GET/:id, PUT/:id, DELETE/:id
 /api/inventory-items        GET, POST, GET/:id, PUT/:id, DELETE/:id
 /api/purchase-orders        GET, POST, GET/:id, PUT/:id, DELETE/:id
@@ -241,15 +276,15 @@ movement ledger, which grows without bound. All Inventory list endpoints take `p
 totalPages } }`.
 
 Filters per endpoint:
-- **Stock:** search by name/code, filter by category, low-stock-only toggle, sort by name / stock / value
-- **Items:** search, category, archived
+- **Stock:** search by name/code, filter by category, filter by attribute value, low-stock-only toggle, sort by name / stock / value
+- **Items:** search, category, attribute value, archived
 - **Purchase orders:** search by PO number/supplier, supplier, status, date range
 - **Movements:** item, movement type, date range
 - **Issues:** date range, type, order tag
 
 ## 6. Frontend
 
-New **Inventory** section in `Sidebar.jsx`, five pages. **Mobile-first — the factory user works on a
+New **Inventory** section in `Sidebar.jsx`, six pages. **Mobile-first — the factory user works on a
 phone on the shop floor.** Desktop is a secondary concern: the layouts should not break on it, but
 mobile drives the design. Reuses existing `ResponsiveTable`, `MobileActionDropdown`, `Modal`,
 `ConfirmationModal`, `Spinner`, and the established Tailwind/dark-theme system.
@@ -257,9 +292,10 @@ mobile drives the design. Reuses existing `ResponsiveTable`, `MobileActionDropdo
 **Stock** (landing page, the one used most)
 - Headline stats: total stock value, items below reorder level, value received this month, value
   consumed this month.
-- Item list: name, category, unit, **in stock**, **on order**, **stock value**, reorder level,
-  status pill. Items at or below reorder level show **Low stock** with a suggested purchase qty.
-- Search + category filter + low-stock-only toggle, all server-side.
+- Item list: name, category, unit, attribute chips (e.g. *W Cut · 60*), **in stock**, **on order**,
+  **stock value**, reorder level, status pill. Items at or below reorder level show **Low stock**
+  with a suggested purchase qty.
+- Search + category filter + attribute-value filter + low-stock-only toggle, all server-side.
 - Cards on mobile, table on desktop.
 
 **Item detail** — current stock and value; open FIFO batches (received date, supplier, rate, qty
@@ -285,8 +321,13 @@ purchased.
 
 **Categories** — simple CRUD list, cloned from the Expense Categories page.
 
+**Item attributes** — accordion list of attributes, each expanding to its values; add / rename /
+delete inline at both levels, with the in-use delete guards surfaced. The item create/edit forms
+render **one dropdown per non-archived attribute** (each optional, with a "—" empty choice) in
+place of hardcoded GSM/colour inputs. Reached from the Inventory Items page, beside Categories.
+
 **Excel export** — stock, movements, and purchases, following the existing `exportController` xlsx
-pattern.
+pattern. The Stock sheet carries a single flattened **Attributes** column (`Cut: W Cut; GSM: 60`).
 
 **Not building:** a separate Inventory dashboard page. The stats live on the Stock page, where the
 user already is. A tile on the main Dashboard can come later.
