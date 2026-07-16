@@ -1899,7 +1899,8 @@ module.exports = (sequelize, DataTypes) => {
       attribute_value_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: { model: "item_attribute_values", key: "id" },
+        // No plain references clause: the migration enforces this via the COMPOSITE
+        // FK (attribute_value_id, attribute_id) → item_attribute_values(id, attribute_id).
       },
       created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
       updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
