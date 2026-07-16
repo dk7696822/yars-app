@@ -17,7 +17,11 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: () => uuidv4(),
       },
       entity_type: {
-        type: DataTypes.ENUM("PAYMENT", "ORDER"),
+        // Must stay in sync with the DB enum — migration 20260711000010 added
+        // the three inventory document types. Sequelize validates ENUM values
+        // client-side, so a value missing here would be rejected before it
+        // ever reached Postgres.
+        type: DataTypes.ENUM("PAYMENT", "ORDER", "PURCHASE_ORDER", "GOODS_RECEIPT", "STOCK_ISSUE"),
         allowNull: false,
       },
       entity_id: {

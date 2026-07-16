@@ -3,6 +3,7 @@
 const { Op } = require("sequelize");
 const db = require("../models");
 const { generateDocumentNumber } = require("./documentNumber");
+const { createAuditLog } = require("./auditService");
 
 /**
  * Stock Service
@@ -117,7 +118,7 @@ const receiveStock = async ({
     throw new Error("A goods receipt must have at least one item");
   }
 
-  return db.sequelize.transaction(async (transaction) => {
+  const receipt = await db.sequelize.transaction(async (transaction) => {
     const year = yearFromDateString(receipt_date);
     const receiptNumber = await generateDocumentNumber(
       db.GoodsReceipt,
@@ -206,6 +207,33 @@ const receiveStock = async ({
       transaction,
     });
   });
+
+  // Audit AFTER the transaction commits — an audit row for a rolled-back
+  // receipt would be a lie. createAuditLog swallows its own errors by design;
+  // logging must never break the operation it records.
+  await createAuditLog(db.AuditLog, {
+    entityType: "GOODS_RECEIPT",
+    entityId: receipt.id,
+    action: "CREATE",
+    newValues: {
+      receipt_number: receipt.receipt_number,
+      receipt_date,
+      supplier_id,
+      purchase_order_id,
+    },
+    metadata: {
+      item_count: items.length,
+      total_value: roundCents(
+        items.reduce(
+          (sum, line) =>
+            sum + quantizeQuantity(line.quantity_received) * quantizeRate(line.rate),
+          0
+        )
+      ),
+    },
+  });
+
+  return receipt;
 };
 
 /**
@@ -337,7 +365,7 @@ const issueStockInternal = async ({
     throw new Error("A stock issue must have at least one item");
   }
 
-  return db.sequelize.transaction(async (transaction) => {
+  const createdIssue = await db.sequelize.transaction(async (transaction) => {
     const year = yearFromDateString(issue_date);
     const issueNumber = await generateDocumentNumber(
       db.StockIssue,
@@ -434,6 +462,28 @@ const issueStockInternal = async ({
       transaction,
     });
   });
+
+  // Audit AFTER commit — a rolled-back issue (e.g. insufficient stock) must
+  // leave no audit trace. Covers ISSUE, WASTAGE, and ADJUSTMENT_OUT (which
+  // adjustStock routes through here).
+  await createAuditLog(db.AuditLog, {
+    entityType: "STOCK_ISSUE",
+    entityId: createdIssue.id,
+    action: issue_type === "ADJUSTMENT_IN" || issue_type === "ADJUSTMENT_OUT" ? "UPDATE" : "CREATE",
+    newValues: {
+      issue_number: createdIssue.issue_number,
+      issue_date,
+      issue_type,
+      order_id: order_id || null,
+    },
+    metadata: {
+      issue_type,
+      reason: reason || null,
+      item_count: items.length,
+    },
+  });
+
+  return createdIssue;
 };
 
 /** Public issue entry point: production consumption and pure wastage only. */
@@ -482,10 +532,11 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
 
   // Outward adjustments are just an issue with a different movement type.
   if (issue_type === "ADJUSTMENT_OUT") {
+    // issueStockInternal writes the audit row for this path.
     return issueStockInternal({ issue_date, issue_type, reason, notes, items });
   }
 
-  return db.sequelize.transaction(async (transaction) => {
+  const createdIssue = await db.sequelize.transaction(async (transaction) => {
     const year = yearFromDateString(issue_date);
     const issueNumber = await generateDocumentNumber(
       db.StockIssue,
@@ -588,6 +639,26 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
       transaction,
     });
   });
+
+  // Audit AFTER commit — see issueStockInternal.
+  await createAuditLog(db.AuditLog, {
+    entityType: "STOCK_ISSUE",
+    entityId: createdIssue.id,
+    action: "UPDATE",
+    newValues: {
+      issue_number: createdIssue.issue_number,
+      issue_date,
+      issue_type,
+      order_id: null,
+    },
+    metadata: {
+      issue_type,
+      reason: reason || null,
+      item_count: items.length,
+    },
+  });
+
+  return createdIssue;
 };
 
 module.exports = {

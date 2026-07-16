@@ -148,6 +148,39 @@ const HistoryList = ({ logs }) => {
     );
   };
 
+  // Inventory documents (purchase orders, goods receipts, stock issues) carry
+  // their document number in new_values and a small metadata block.
+  const renderInventoryDetails = (log) => {
+    const documentNumber =
+      log.new_values?.po_number || log.new_values?.receipt_number || log.new_values?.issue_number;
+
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {documentNumber && (
+          <Badge variant="secondary" className="history-badge">{documentNumber}</Badge>
+        )}
+        {log.metadata?.issue_type && (
+          <Badge variant="outline" className="history-badge">{log.metadata.issue_type}</Badge>
+        )}
+        {log.metadata?.item_count != null && (
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {log.metadata.item_count} item{log.metadata.item_count === 1 ? "" : "s"}
+          </span>
+        )}
+        {log.metadata?.total_value != null && (
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            {formatCurrency(log.metadata.total_value)}
+          </span>
+        )}
+        {log.metadata?.reason && (
+          <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+            {log.metadata.reason}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   const renderOrderDetails = (log) => {
     const { metadata, action } = log;
 
@@ -242,7 +275,11 @@ const HistoryList = ({ logs }) => {
             )}
 
             {/* Entity-specific details */}
-            {log.entity_type === "PAYMENT" ? renderPaymentDetails(log) : renderOrderDetails(log)}
+            {log.entity_type === "PAYMENT"
+              ? renderPaymentDetails(log)
+              : ["PURCHASE_ORDER", "GOODS_RECEIPT", "STOCK_ISSUE"].includes(log.entity_type)
+                ? renderInventoryDetails(log)
+                : renderOrderDetails(log)}
           </div>
         </div>
       ))}

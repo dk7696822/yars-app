@@ -7,8 +7,10 @@ const {
   Supplier,
   GoodsReceipt,
   GoodsReceiptItem,
+  AuditLog,
   sequelize,
 } = require("../models");
+const { createAuditLog } = require("../services/auditService");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
 const { generateDocumentNumber } = require("../services/documentNumber");
@@ -124,6 +126,28 @@ const createPurchaseOrder = async (req, res) => {
       }
 
       return po;
+    });
+
+    // Audit AFTER the transaction commits — an audit row for a rolled-back PO
+    // would be a lie. createAuditLog swallows its own errors by design.
+    await createAuditLog(AuditLog, {
+      entityType: "PURCHASE_ORDER",
+      entityId: purchaseOrder.id,
+      action: "CREATE",
+      newValues: {
+        po_number: purchaseOrder.po_number,
+        supplier_id,
+        order_date,
+        expected_date: expected_date || null,
+      },
+      metadata: {
+        supplier_name: supplier.name,
+        item_count: items.length,
+        total_value: items.reduce(
+          (sum, line) => sum + parseFloat(line.quantity_ordered) * parseFloat(line.rate),
+          0
+        ),
+      },
     });
 
     const created = await PurchaseOrder.findByPk(purchaseOrder.id, { include: PO_INCLUDES });

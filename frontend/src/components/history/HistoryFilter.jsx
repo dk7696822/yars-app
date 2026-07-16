@@ -68,6 +68,9 @@ const HistoryFilter = ({ onFilter }) => {
                 { value: "", label: "All Types" },
                 { value: "PAYMENT", label: "Payment" },
                 { value: "ORDER", label: "Order" },
+                { value: "PURCHASE_ORDER", label: "Purchase Order" },
+                { value: "GOODS_RECEIPT", label: "Goods Receipt" },
+                { value: "STOCK_ISSUE", label: "Stock Issue" },
               ]}
             />
           </div>
