@@ -41,6 +41,18 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "order_id",
         as: "payments",
       });
+
+      // Inventory consumption tagged to this order. One-directional:
+      // Order logic never reads or depends on Inventory.
+      Order.hasMany(models.StockMovement, {
+        foreignKey: "order_id",
+        as: "stockMovements",
+      });
+
+      Order.hasMany(models.StockIssue, {
+        foreignKey: "order_id",
+        as: "stockIssues",
+      });
     }
   }
 
