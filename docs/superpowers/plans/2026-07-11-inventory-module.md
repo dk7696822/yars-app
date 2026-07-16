@@ -7432,14 +7432,24 @@ pg_dump "postgresql://postgres:<password>@db.tnrwottbdozuvdcmugve.supabase.co:54
 ```
 Do not proceed until the dump file exists and is non-empty. Every migration in this module is additive (new tables, plus new values on one enum), so the risk is low — but "low" is not "zero", and this is the business's only copy of its data.
 
-- [ ] **Step 2: Migrate production**
+- [ ] **Step 2: Confirm production has never seen an earlier draft of these migrations**
+
+The 20260711 migration files were edited in place during review (partial unique indexes, wider decimals, sequence_number, composite FK). If any long-lived database ran an EARLIER version of them, SequelizeMeta would report "already up to date" while silently keeping the old constraints. Verify production has no record of them:
+
+```bash
+psql "postgresql://postgres:<password>@db.tnrwottbdozuvdcmugve.supabase.co:5432/postgres" \
+  -c "SELECT name FROM \"SequelizeMeta\" WHERE name LIKE '20260711%';"
+```
+Expected: **zero rows.** If any appear, STOP — production ran a draft migration and needs a corrective migration instead (drop old constraints, create partial indexes); do not proceed with this step list.
+
+- [ ] **Step 3: Migrate production**
 
 ```bash
 cd backend && NODE_ENV=production npm run migrate
 ```
 Watch for the `audit_logs` enum migration specifically — it is the one that behaves differently in Postgres. If it fails with *"ALTER TYPE ... cannot run inside a transaction block"*, that migration is being wrapped in a transaction; fix it and re-run.
 
-- [ ] **Step 3: Seed the default categories and attributes**
+- [ ] **Step 4: Seed the default categories and attributes**
 
 ```bash
 cd backend && NODE_ENV=production npx sequelize db:seed --seed 20260711000001-inventory-categories.js
@@ -7447,7 +7457,7 @@ cd backend && NODE_ENV=production npx sequelize db:seed --seed 20260711000002-it
 ```
 Seed **only these two files**. Running `db:seed:all` would re-run the existing seeders and duplicate the expense categories, plate types, and product sizes already in production.
 
-- [ ] **Step 4: Deploy the backend to Cloud Run**
+- [ ] **Step 5: Deploy the backend to Cloud Run**
 
 The backend runs on Cloud Run in `asia-south1` (`yars-backend-848592267490.asia-south1.run.app`), built from `backend/Dockerfile`. Deploy with whatever command was used previously — check shell history or the GCP console for the existing service's build trigger. Then confirm:
 
@@ -7457,14 +7467,14 @@ curl -s https://yars-backend-848592267490.asia-south1.run.app/api/stock/summary
 ```
 Expected: health returns `{"status":"OK",...}`, and the stock summary returns zeroes (no inventory data yet). If the summary 500s, the migrations did not reach production.
 
-- [ ] **Step 5: Deploy the frontend to Firebase**
+- [ ] **Step 6: Deploy the frontend to Firebase**
 
 ```bash
 cd frontend && npm run build && npx firebase deploy --only hosting
 ```
 Target project is `yars-dashboard` (`frontend/.firebaserc`). Then open `https://yars-dashboard.web.app/stock` **on an actual phone** and confirm the Stock page and the issue form work on real hardware — a 390px browser window is not the same as a thumb on a real screen.
 
-- [ ] **Step 6: Seed the real data with the user**
+- [ ] **Step 7: Seed the real data with the user**
 
 The module is worthless until the real items exist. Sit with the user and enter:
 - The business's actual colours as values under the seeded **Color** attribute (it ships empty on purpose), plus any missing Cut or GSM values.
@@ -7473,7 +7483,7 @@ The module is worthless until the real items exist. Sit with the user and enter:
 - The real suppliers.
 - An opening stock figure per item — enter these as **`ADJUSTMENT_IN`** with the reason *"Opening stock"*, so day one has a real starting position and an honest audit trail.
 
-- [ ] **Step 7: Commit and merge**
+- [ ] **Step 8: Commit and merge**
 
 ```bash
 git add -A
