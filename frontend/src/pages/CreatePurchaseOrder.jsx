@@ -81,7 +81,7 @@ const CreatePurchaseOrder = () => {
         notes: notes || null,
         items: validLines.map((line) => ({
           item_id: line.item_id,
-          quantity: parseFloat(line.quantity),
+          quantity_ordered: parseFloat(line.quantity),
           rate: parseFloat(line.rate),
         })),
       });
