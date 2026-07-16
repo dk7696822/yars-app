@@ -73,8 +73,8 @@ keys, `underscored: true`, snake_case table names, `is_archived` soft deletes, t
 - `id`, `name` (TEXT, not empty), `item_code` (TEXT, unique, nullable)
 - `category_id` (UUID, FK → inventory_categories)
 - `unit` (ENUM: `KG`, `PCS`, `METRE`, `ROLL`, `LITRE`)
-- `reorder_level` (DECIMAL(10,2), default 0) — at or below this, the item reads as low stock
-- `reorder_target` (DECIMAL(10,2), nullable) — top back up to this; suggested qty = target − in_stock.
+- `reorder_level` (DECIMAL(12,3), default 0) — at or below this, the item reads as low stock
+- `reorder_target` (DECIMAL(12,3), nullable) — top back up to this; suggested qty = target − in_stock.
   **If null, the suggested qty falls back to `reorder_level − in_stock`.**
 - `notes` (TEXT, nullable), `is_archived` (bool), timestamps
 
@@ -100,9 +100,13 @@ attributes are purely descriptive.
 - `id`, `item_id` (FK → inventory_items, CASCADE), `attribute_id` (FK → item_attributes, RESTRICT),
   `attribute_value_id` (FK → item_attribute_values, RESTRICT), timestamps.
 - **UNIQUE(`item_id`, `attribute_id`)** — an item holds at most **one** value per attribute.
-  `attribute_id` is deliberately denormalised into the link row precisely so that constraint can
-  live in the database rather than in application code. The controller still validates that the
-  chosen value actually belongs to the claimed attribute.
+- **Composite FK** `(attribute_value_id, attribute_id)` → `item_attribute_values(id, attribute_id)`
+  (backed by a UNIQUE on that pair in the values table) — a value can never be paired with an
+  attribute it does not belong to.
+  `attribute_id` is deliberately denormalised into the link row precisely so both rules can live in
+  the database rather than in application code. The controller re-checks them only to produce
+  friendly errors — and enforces the one rule the schema cannot express: an item may not be linked
+  to an **archived** value.
 
 Deleting an attribute or a value is soft, and is **refused while any non-archived item still uses
 it** — the same guard as categories.
@@ -120,8 +124,8 @@ and "Color" attributes instead. One mechanism, user-extensible, no duplicates.
 
 **`purchase_order_items`**
 - `id`, `purchase_order_id` (FK), `item_id` (FK)
-- `quantity_ordered` (DECIMAL(10,2), > 0), `rate` (DECIMAL(10,2), ≥ 0)
-- `quantity_received` (DECIMAL(10,2), default 0) — rolling total across receipts
+- `quantity_ordered` (DECIMAL(12,3), > 0), `rate` (DECIMAL(14,2), ≥ 0)
+- `quantity_received` (DECIMAL(12,3), default 0) — rolling total across receipts
 - timestamps
 
 **This pair answers "how much we ordered vs how much we received"**, including partial deliveries.
@@ -134,8 +138,8 @@ and "Color" attributes instead. One mechanism, user-extensible, no duplicates.
 
 **`goods_receipt_items`**
 - `id`, `goods_receipt_id` (FK), `purchase_order_item_id` (FK, nullable), `item_id` (FK)
-- `quantity_received` (DECIMAL(10,2), > 0)
-- `rate` (DECIMAL(10,2), ≥ 0) — the rate **actually charged**; the receipt is the truth, not the PO
+- `quantity_received` (DECIMAL(12,3), > 0)
+- `rate` (DECIMAL(14,2), ≥ 0) — the rate **actually charged**; the receipt is the truth, not the PO
 - timestamps
 
 ### Stock
@@ -143,19 +147,21 @@ and "Color" attributes instead. One mechanism, user-extensible, no duplicates.
 **`stock_batches`** — the FIFO lots. One row per goods-receipt line.
 - `id`, `item_id` (FK), `goods_receipt_item_id` (FK)
 - `received_date` (DATEONLY)
-- `quantity_received` (DECIMAL(10,2)), `quantity_remaining` (DECIMAL(10,2), ≥ 0)
-- `rate` (DECIMAL(10,2))
+- `quantity_received` (DECIMAL(12,3)), `quantity_remaining` (DECIMAL(12,3), ≥ 0, and ≤ `quantity_received` — both CHECK-enforced)
+- `rate` (DECIMAL(14,2))
+- `sequence_number` (BIGINT identity, DB-generated) — deterministic FIFO tiebreaker; `received_date`
+  is a DATEONLY, so same-day batches would otherwise have no stable order
 - timestamps
-- Index on `(item_id, received_date)` — every FIFO walk hits this.
+- Index on `(item_id, received_date, sequence_number)` — every FIFO walk hits this.
 
 Derived: **stock on hand** = `SUM(quantity_remaining)`; **stock value** = `SUM(quantity_remaining × rate)`.
 
 **`stock_movements`** — append-only ledger. Never updated, never deleted.
 - `id`, `item_id` (FK)
 - `movement_type` (ENUM: `RECEIPT`, `ISSUE`, `WASTAGE`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`)
-- `quantity` (DECIMAL(10,2), signed: positive in, negative out)
+- `quantity` (DECIMAL(12,3), signed: positive in, negative out)
 - `stock_batch_id` (FK, nullable — null for `ADJUSTMENT_IN`, which creates its own batch)
-- `unit_cost` (DECIMAL(10,2)), `total_cost` (DECIMAL(10,2))
+- `unit_cost` (DECIMAL(14,2)), `total_cost` (DECIMAL(14,2))
 - `reference_type` (ENUM: `GOODS_RECEIPT`, `STOCK_ISSUE`, `STOCK_ADJUSTMENT`), `reference_id` (UUID)
 - `order_id` (UUID, FK → orders, **nullable**) — optional tag linking consumption to a customer
   order. Nullable and one-directional: Orders remain completely unaware of Inventory.
@@ -168,8 +174,8 @@ Derived: **stock on hand** = `SUM(quantity_remaining)`; **stock value** = `SUM(q
   `order_id` (FK, nullable), `reason` (TEXT — **required** for adjustments), `notes`,
   `is_archived`, timestamps
 - `stock_issue_items`: `id`, `stock_issue_id` (FK), `item_id` (FK),
-  `quantity` (DECIMAL(10,2), > 0), `total_cost` (DECIMAL(10,2) — computed FIFO cost),
-  `wastage_quantity` (DECIMAL(10,2), default 0), `wastage_cost` (DECIMAL(10,2), default 0),
+  `quantity` (DECIMAL(12,3), > 0), `total_cost` (DECIMAL(14,2) — computed FIFO cost),
+  `wastage_quantity` (DECIMAL(12,3), default 0), `wastage_cost` (DECIMAL(14,2), default 0),
   timestamps
 
 **Wastage rides along on a normal issue line.** A production line of `quantity` 500 with
@@ -213,7 +219,8 @@ Over-receiving against a PO line (more than ordered) is **allowed but flagged in
 do over-deliver, and blocking it would just push the user to fudge the numbers.
 
 ### `issueStock(issue)` — also handles wastage
-1. **Lock** the item's open batches (`SELECT ... FOR UPDATE`, ordered by `received_date` ASC) so two
+1. **Lock** the item's open batches (`SELECT ... FOR UPDATE`, ordered by `received_date` ASC,
+   `sequence_number` ASC — the identity column breaks ties between same-day batches) so two
    concurrent issues cannot spend the same batch twice.
 2. Validate: available stock ≥ **`quantity` + `wastage_quantity`** for the line. **If not, abort the
    whole transaction** with a clear error naming the item, the requested qty, and the available qty.

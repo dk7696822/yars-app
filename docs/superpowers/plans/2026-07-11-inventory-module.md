@@ -26,7 +26,7 @@ You are working in `/Users/admin/Desktop/yars-app`. **Only touch `backend/` and 
 
 **Migration filenames use a `YYYYMMDDHHMMSS`-style prefix.** Existing inventory migrations must sort *after* all existing ones. Use the `20260711...` prefixes exactly as given below.
 
-**Money/quantity types:** every quantity and rate is `DECIMAL(10,2)`. Sequelize returns DECIMAL as a **string** from Postgres. Always `parseFloat()` before arithmetic. This is the single most likely source of bugs in this module — `"300" + "200"` is `"300200"`.
+**Money/quantity types:** every quantity is `DECIMAL(12,3)` and every money value (rates, costs) is `DECIMAL(14,2)`. Sequelize returns DECIMAL as a **string** from Postgres. Always `parseFloat()` before arithmetic. This is the single most likely source of bugs in this module — `"300" + "200"` is `"300200"`.
 
 ---
 
@@ -233,6 +233,8 @@ git commit -m "test(backend): jest harness with throwaway postgres for inventory
 
 Eleven migrations. Run them all at the end of the phase, against the **test** DB only. Production migration happens at rollout, not now.
 
+> **Note — schema hardened post-review (commit `51feed1`).** The code blocks below are the committed files, which incorporate four review findings: the attribute link table uses a **composite FK** `(attribute_value_id, attribute_id) → item_attribute_values(id, attribute_id)` so an attribute/value mismatch is impossible at the DB level; `stock_batches` gained a `sequence_number` identity column as a deterministic **FIFO tiebreaker** for same-day batches (and a second CHECK, `quantity_remaining <= quantity_received`); quantities widened to **DECIMAL(12,3)** and money to **DECIMAL(14,2)** everywhere; and both seeders are **idempotent**, with `down()` deleting only the rows they seeded. Later phases (models, `stockService` ordering) must match.
+
 ### Task 1.1: Categories, suppliers, items
 
 **Files:**
@@ -310,8 +312,8 @@ module.exports = {
         onDelete: "RESTRICT",
       },
       unit: { type: Sequelize.ENUM("KG", "PCS", "METRE", "ROLL", "LITRE"), allowNull: false },
-      reorder_level: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      reorder_target: { type: Sequelize.DECIMAL(10, 2), allowNull: true },
+      reorder_level: { type: Sequelize.DECIMAL(12, 3), allowNull: false, defaultValue: 0 },
+      reorder_target: { type: Sequelize.DECIMAL(12, 3), allowNull: true },
       notes: { type: Sequelize.TEXT, allowNull: true },
       is_archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
@@ -412,9 +414,9 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
-      quantity_ordered: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      rate: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      quantity_received: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      quantity_ordered: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      rate: { type: Sequelize.DECIMAL(14, 2), allowNull: false },
+      quantity_received: { type: Sequelize.DECIMAL(12, 3), allowNull: false, defaultValue: 0 },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
@@ -487,8 +489,8 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
-      quantity_received: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      rate: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      quantity_received: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      rate: { type: Sequelize.DECIMAL(14, 2), allowNull: false },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
@@ -497,6 +499,7 @@ module.exports = {
     await queryInterface.addIndex("goods_receipts", ["purchase_order_id"]);
     await queryInterface.addIndex("goods_receipt_items", ["goods_receipt_id"]);
     await queryInterface.addIndex("goods_receipt_items", ["item_id"]);
+    await queryInterface.addIndex("goods_receipt_items", ["purchase_order_item_id"]);
   },
 
   async down(queryInterface) {
@@ -546,21 +549,39 @@ module.exports = {
         onDelete: "SET NULL",
       },
       received_date: { type: Sequelize.DATEONLY, allowNull: false },
-      quantity_received: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      quantity_remaining: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      rate: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      quantity_received: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      quantity_remaining: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      rate: { type: Sequelize.DECIMAL(14, 2), allowNull: false },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
 
-    // Every FIFO walk hits this index: open batches for an item, oldest first.
-    await queryInterface.addIndex("stock_batches", ["item_id", "received_date"]);
+    // Monotonic tiebreaker for FIFO ordering: received_date (DATEONLY) and
+    // created_at (transaction-fixed) can collide for same-day batches, and
+    // UUIDs are random, so neither can break ties deterministically.
+    await queryInterface.sequelize.query(`
+      ALTER TABLE stock_batches
+      ADD COLUMN sequence_number BIGINT GENERATED BY DEFAULT AS IDENTITY NOT NULL;
+    `);
+
+    // Every FIFO walk hits this index: open batches for an item, oldest first,
+    // ties broken by insertion order.
+    await queryInterface.addIndex("stock_batches", ["item_id", "received_date", "sequence_number"]);
+
+    await queryInterface.addIndex("stock_batches", ["goods_receipt_item_id"]);
 
     // Stock can never go negative. Enforce it in the database, not just in JS.
     await queryInterface.sequelize.query(`
       ALTER TABLE stock_batches
       ADD CONSTRAINT stock_batches_qty_remaining_non_negative
       CHECK (quantity_remaining >= 0);
+    `);
+
+    // Nor can a batch's remaining quantity exceed what it received.
+    await queryInterface.sequelize.query(`
+      ALTER TABLE stock_batches
+      ADD CONSTRAINT stock_batches_qty_remaining_le_received
+      CHECK (quantity_remaining <= quantity_received);
     `);
   },
 
@@ -570,7 +591,7 @@ module.exports = {
 };
 ```
 
-The CHECK constraint is the safety net. Even if a future bug slips past the service's validation, Postgres refuses to write negative stock and the transaction rolls back.
+The CHECK constraints are the safety net. Even if a future bug slips past the service's validation, Postgres refuses to write negative stock (or a remainder larger than the batch ever held) and the transaction rolls back. And `sequence_number` is what makes the FIFO walk deterministic when two batches share a `received_date` — every batch query in Phase 3 orders by `received_date ASC, sequence_number ASC`.
 
 - [ ] **Step 2: `20260711000008-create-stock-issues.js`** (header **and** items)
 
@@ -619,10 +640,10 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
-      quantity: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      total_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      wastage_quantity: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      wastage_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      quantity: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      total_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
+      wastage_quantity: { type: Sequelize.DECIMAL(12, 3), allowNull: false, defaultValue: 0 },
+      wastage_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
@@ -664,7 +685,7 @@ module.exports = {
         allowNull: false,
       },
       // Signed: positive = into stock, negative = out of stock.
-      quantity: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      quantity: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
       stock_batch_id: {
         type: Sequelize.UUID,
         allowNull: true,
@@ -672,8 +693,8 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
-      unit_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      total_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      unit_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
+      total_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       reference_type: {
         type: Sequelize.ENUM("GOODS_RECEIPT", "STOCK_ISSUE", "STOCK_ADJUSTMENT"),
         allowNull: false,
@@ -695,6 +716,7 @@ module.exports = {
     await queryInterface.addIndex("stock_movements", ["reference_type", "reference_id"]);
     await queryInterface.addIndex("stock_movements", ["movement_type"]);
     await queryInterface.addIndex("stock_movements", ["order_id"]);
+    await queryInterface.addIndex("stock_movements", ["stock_batch_id"]);
   },
 
   async down(queryInterface) {
@@ -760,12 +782,12 @@ docker exec yars-test-db psql -U yars -d yars_test -c "\dt"
 ```
 Expected: `inventory_categories`, `suppliers`, `inventory_items`, `purchase_orders`, `purchase_order_items`, `goods_receipts`, `goods_receipt_items`, `stock_batches`, `stock_issues`, `stock_issue_items`, `stock_movements` all present alongside the existing tables.
 
-And verify the CHECK constraint is real:
+And verify the CHECK constraints are real:
 ```bash
 docker exec yars-test-db psql -U yars -d yars_test -c \
-  "SELECT conname FROM pg_constraint WHERE conname = 'stock_batches_qty_remaining_non_negative';"
+  "SELECT conname FROM pg_constraint WHERE conname IN ('stock_batches_qty_remaining_non_negative', 'stock_batches_qty_remaining_le_received');"
 ```
-Expected: one row.
+Expected: two rows.
 
 - [ ] **Step 6: Commit**
 
@@ -799,17 +821,20 @@ module.exports = {
         is_archived: false,
         created_at: now,
         updated_at: now,
-      }))
+      })),
+      { ignoreDuplicates: true }
     );
   },
 
-  async down(queryInterface) {
-    await queryInterface.bulkDelete("inventory_categories", null, {});
+  async down(queryInterface, Sequelize) {
+    await queryInterface.bulkDelete("inventory_categories", {
+      name: { [Sequelize.Op.in]: ["Fabric", "Handle", "Thread", "Ink", "Packing"] },
+    });
   },
 };
 ```
 
-These are only defaults. The user can add, rename, and remove categories from the UI — that is the whole point of making categories a table rather than an enum.
+These are only defaults. The user can add, rename, and remove categories from the UI — that is the whole point of making categories a table rather than an enum. `ignoreDuplicates` makes re-running at rollout safe, and `down()` deletes only the five seeded names — never a blanket wipe of categories the user created after go-live.
 
 - [ ] **Step 2: Commit**
 
@@ -827,7 +852,7 @@ Item variations follow the same philosophy as categories: **user-managed, nothin
 
 - `item_attributes` — the definitions ("Cut", "GSM", "Color", whatever the user adds next).
 - `item_attribute_values` — the choices under each ("D Cut", "W Cut", "60", "90", …).
-- `inventory_item_attribute_values` — which value each item has, at most **one per attribute**. `attribute_id` is deliberately denormalised into this row precisely so that rule can live in the database as `UNIQUE(item_id, attribute_id)` rather than in application code. The controller (Task 4.4) still validates that the chosen value actually belongs to the claimed attribute.
+- `inventory_item_attribute_values` — which value each item has, at most **one per attribute**. `attribute_id` is deliberately denormalised into this row so *two* rules can live in the database rather than in application code: `UNIQUE(item_id, attribute_id)` (one value per attribute), and the **composite FK** `(attribute_value_id, attribute_id) → item_attribute_values(id, attribute_id)`, which makes it impossible to pair an attribute with a value that belongs to a different attribute. The controller (Task 4.4) still validates the same things first, purely to produce friendly errors — and enforces the one rule the schema cannot: no linking to an archived value.
 
 - [ ] **Step 1: `20260711000011-create-item-attributes.js`**
 
@@ -867,6 +892,13 @@ module.exports = {
       type: "unique",
       name: "item_attribute_values_attribute_id_value_unique",
     });
+    // Composite-FK target: lets inventory_item_attribute_values enforce that a
+    // chosen value actually belongs to the claimed attribute (see below).
+    await queryInterface.addConstraint("item_attribute_values", {
+      fields: ["id", "attribute_id"],
+      type: "unique",
+      name: "item_attribute_values_id_attribute_id_unique",
+    });
 
     await queryInterface.createTable("inventory_item_attribute_values", {
       id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
@@ -884,12 +916,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
+      // No plain FK here: the value must be tied to attribute_id via the
+      // composite FK below, otherwise "Cut" could be paired with a GSM value.
       attribute_value_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "item_attribute_values", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
       },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
@@ -903,6 +934,18 @@ module.exports = {
       fields: ["item_id", "attribute_id"],
       type: "unique",
       name: "inventory_item_attribute_values_item_id_attribute_id_unique",
+    });
+    // Composite FK: attribute_value_id must belong to attribute_id.
+    await queryInterface.addConstraint("inventory_item_attribute_values", {
+      fields: ["attribute_value_id", "attribute_id"],
+      type: "foreign key",
+      name: "inventory_item_attribute_values_value_attribute_fk",
+      references: {
+        table: "item_attribute_values",
+        fields: ["id", "attribute_id"],
+      },
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     });
   },
 
@@ -926,12 +969,12 @@ docker exec yars-test-db psql -U yars -d yars_test -c "\dt" | grep item_attribut
 ```
 Expected: `item_attributes`, `item_attribute_values`, `inventory_item_attribute_values` all present.
 
-And verify the one-value-per-attribute constraint is real:
+And verify both hard rules are real — one value per attribute, and no attribute/value mismatch:
 ```bash
 docker exec yars-test-db psql -U yars -d yars_test -c \
-  "SELECT conname FROM pg_constraint WHERE conname = 'inventory_item_attribute_values_item_id_attribute_id_unique';"
+  "SELECT conname FROM pg_constraint WHERE conname IN ('inventory_item_attribute_values_item_id_attribute_id_unique', 'inventory_item_attribute_values_value_attribute_fk');"
 ```
-Expected: one row.
+Expected: two rows.
 
 - [ ] **Step 3: Commit**
 
@@ -951,23 +994,33 @@ git commit -m "feat(inventory): migrations for user-managed item attributes"
 "use strict";
 const { v4: uuidv4 } = require("uuid");
 
+// Color ships with no values on purpose: colours are business-specific,
+// and a wrong default is worse than an empty dropdown the user fills once.
+const DEFAULTS = {
+  Cut: ["D Cut", "W Cut", "U Cut", "Loop Handle"],
+  GSM: ["60", "70", "80", "90", "100"],
+  Color: [],
+};
+const DEFAULT_NAMES = Object.keys(DEFAULTS);
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface) {
+  async up(queryInterface, Sequelize) {
+    // Guard against re-running at rollout: if any of the seeded attribute
+    // names already exist, assume this seeder already ran and skip entirely.
+    const existing = await queryInterface.sequelize.query(
+      `SELECT name FROM item_attributes WHERE name IN (:names)`,
+      { replacements: { names: DEFAULT_NAMES }, type: Sequelize.QueryTypes.SELECT }
+    );
+    if (existing.length > 0) {
+      return;
+    }
+
     const now = new Date();
-
-    // Color ships with no values on purpose: colours are business-specific,
-    // and a wrong default is worse than an empty dropdown the user fills once.
-    const defaults = {
-      Cut: ["D Cut", "W Cut", "U Cut", "Loop Handle"],
-      GSM: ["60", "70", "80", "90", "100"],
-      Color: [],
-    };
-
     const attributes = [];
     const values = [];
 
-    for (const [name, attributeValues] of Object.entries(defaults)) {
+    for (const [name, attributeValues] of Object.entries(DEFAULTS)) {
       const attributeId = uuidv4();
       attributes.push({ id: attributeId, name, is_archived: false, created_at: now, updated_at: now });
 
@@ -983,19 +1036,43 @@ module.exports = {
       }
     }
 
-    await queryInterface.bulkInsert("item_attributes", attributes);
-    await queryInterface.bulkInsert("item_attribute_values", values);
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.bulkInsert("item_attributes", attributes, { transaction });
+      await queryInterface.bulkInsert("item_attribute_values", values, { transaction });
+    });
   },
 
-  async down(queryInterface) {
-    await queryInterface.bulkDelete("inventory_item_attribute_values", null, {});
-    await queryInterface.bulkDelete("item_attribute_values", null, {});
-    await queryInterface.bulkDelete("item_attributes", null, {});
+  async down(queryInterface, Sequelize) {
+    // Only remove the seeded attributes (and their values, via the attribute_id
+    // FK) — never a blanket wipe, which would destroy user-created attributes
+    // after go-live. If a seeded attribute is still referenced by an item
+    // (inventory_item_attribute_values), the RESTRICT FK correctly blocks this.
+    const seeded = await queryInterface.sequelize.query(
+      `SELECT id FROM item_attributes WHERE name IN (:names)`,
+      { replacements: { names: DEFAULT_NAMES }, type: Sequelize.QueryTypes.SELECT }
+    );
+    const seededIds = seeded.map((row) => row.id);
+    if (seededIds.length === 0) {
+      return;
+    }
+
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.bulkDelete(
+        "item_attribute_values",
+        { attribute_id: { [Sequelize.Op.in]: seededIds } },
+        { transaction }
+      );
+      await queryInterface.bulkDelete(
+        "item_attributes",
+        { id: { [Sequelize.Op.in]: seededIds } },
+        { transaction }
+      );
+    });
   },
 };
 ```
 
-Like the categories, these are only defaults — the user renames, extends, and deletes them from the UI. That is the point of the whole mechanism.
+Like the categories, these are only defaults — the user renames, extends, and deletes them from the UI. That is the point of the whole mechanism. The existence guard makes re-running at rollout a no-op, and `down()` touches only the seeded rows.
 
 - [ ] **Step 2: Commit**
 
@@ -1132,13 +1209,13 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       reorder_level: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
         defaultValue: 0,
         validate: { isDecimal: true, min: 0 },
       },
       reorder_target: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: true,
         validate: { isDecimal: true, min: 0 },
       },
@@ -1251,17 +1328,17 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "inventory_items", key: "id" },
       },
       quantity_ordered: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
-        validate: { isDecimal: true, min: 0.01 },
+        validate: { isDecimal: true, min: 0.001 },
       },
       rate: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(14, 2),
         allowNull: false,
         validate: { isDecimal: true, min: 0 },
       },
       quantity_received: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
         defaultValue: 0,
         validate: { isDecimal: true, min: 0 },
@@ -1368,12 +1445,12 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "inventory_items", key: "id" },
       },
       quantity_received: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
-        validate: { isDecimal: true, min: 0.01 },
+        validate: { isDecimal: true, min: 0.001 },
       },
       rate: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(14, 2),
         allowNull: false,
         validate: { isDecimal: true, min: 0 },
       },
@@ -1437,19 +1514,27 @@ module.exports = (sequelize, DataTypes) => {
       },
       received_date: { type: DataTypes.DATEONLY, allowNull: false },
       quantity_received: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
         validate: { isDecimal: true, min: 0 },
       },
       quantity_remaining: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
         validate: { isDecimal: true, min: 0 },
       },
       rate: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(14, 2),
         allowNull: false,
         validate: { isDecimal: true, min: 0 },
+      },
+      // FIFO tiebreaker for same-day batches. The DB identity column generates
+      // it; autoIncrement makes Sequelize omit it on INSERT. Read-only from the
+      // app's perspective — never set or update it in application code.
+      sequence_number: {
+        type: DataTypes.BIGINT,
+        allowNull: false,
+        autoIncrement: true,
       },
       created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
       updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
@@ -1498,14 +1583,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       // Signed: positive into stock, negative out of stock.
-      quantity: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+      quantity: { type: DataTypes.DECIMAL(12, 3), allowNull: false },
       stock_batch_id: {
         type: DataTypes.UUID,
         allowNull: true,
         references: { model: "stock_batches", key: "id" },
       },
-      unit_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      total_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      unit_cost: { type: DataTypes.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
+      total_cost: { type: DataTypes.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       reference_type: {
         type: DataTypes.ENUM("GOODS_RECEIPT", "STOCK_ISSUE", "STOCK_ADJUSTMENT"),
         allowNull: false,
@@ -1612,18 +1697,18 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "inventory_items", key: "id" },
       },
       quantity: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
-        validate: { isDecimal: true, min: 0.01 },
+        validate: { isDecimal: true, min: 0.001 },
       },
-      total_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      total_cost: { type: DataTypes.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       wastage_quantity: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 3),
         allowNull: false,
         defaultValue: 0,
         validate: { isDecimal: true, min: 0 },
       },
-      wastage_cost: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      wastage_cost: { type: DataTypes.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
       updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     },
@@ -2595,7 +2680,7 @@ describe("issueStock", () => {
 
     const batches = await db.StockBatch.findAll({
       where: { item_id: item.id },
-      order: [["received_date", "ASC"]],
+      order: [["received_date", "ASC"], ["sequence_number", "ASC"]],
     });
     expect(parseFloat(batches[0].quantity_remaining)).toBe(0);
     expect(parseFloat(batches[1].quantity_remaining)).toBe(400);
@@ -2767,7 +2852,7 @@ const consumeFifo = async (
     where: { item_id: item.id, quantity_remaining: { [Op.gt]: 0 } },
     order: [
       ["received_date", "ASC"],
-      ["created_at", "ASC"], // deterministic tie-break for same-day batches
+      ["sequence_number", "ASC"], // deterministic tie-break for same-day batches (DB identity column)
     ],
     transaction,
     lock: transaction.LOCK.UPDATE,
@@ -3153,7 +3238,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
         where: { item_id: item.id },
         order: [
           ["received_date", "DESC"],
-          ["created_at", "DESC"],
+          ["sequence_number", "DESC"],
         ],
         transaction,
       });
@@ -3944,11 +4029,14 @@ const withAttributes = (item) => {
 /**
  * Validate a set of attribute_value_ids: every value must exist and be
  * non-archived, and no two values may belong to the same attribute — an item
- * holds at most ONE value per attribute. The DB unique constraint on the link
- * table is the backstop; this produces the friendly error. Because the link
- * row carries a denormalised attribute_id, the values are loaded here so the
- * link rows are written with the attribute the value ACTUALLY belongs to —
- * a client cannot claim "W Cut" is a GSM.
+ * holds at most ONE value per attribute.
+ *
+ * The database backstops two of these rules (the UNIQUE(item_id, attribute_id)
+ * constraint, and the composite FK that makes an attribute/value mismatch
+ * impossible) — this function exists to turn those into friendly 400s instead
+ * of constraint errors. The archived check is different: **the schema cannot
+ * express "no linking to an archived value", so this filter is the ONLY
+ * enforcement.** Do not remove the `is_archived: false` conditions.
  *
  * @returns the loaded ItemAttributeValue rows (with their attribute)
  * @throws Error with a user-facing message on any violation
@@ -5092,6 +5180,8 @@ module.exports = {
 
 **There is deliberately no delete.** Reversing a receipt would mean un-creating batches that may already be partly consumed — an unwinding problem with no correct answer. The user corrects a mistaken receipt with an `ADJUSTMENT_OUT`, which leaves an honest trail.
 
+This is more than a UX choice — it is a data-integrity rule: **nothing may ever hard-delete a `goods_receipt` or `stock_issue` row.** `stock_movements.reference_id` is a polymorphic reference with no FK behind it (it points at receipts, issues, or adjustments depending on `reference_type`), so a hard delete would leave ledger rows dangling with no document to explain them. Soft-delete (`is_archived`) is the only permitted removal, ever — including in future admin tooling and one-off scripts.
+
 - [ ] **Step 2: Routes**
 
 `backend/src/routes/goodsReceiptRoutes.js`:
@@ -5294,6 +5384,8 @@ router.get("/:id", controller.getStockIssueById);
 
 module.exports = router;
 ```
+
+No delete route, and none may ever be added as a hard delete: `stock_movements.reference_id` points at issues polymorphically with no FK, so hard-deleting a `stock_issue` would strand its ledger rows (same rule as goods receipts — see Task 5.2).
 
 - [ ] **Step 3: Commit**
 
@@ -5561,7 +5653,7 @@ const getItemStock = async (req, res) => {
 
     const batches = await StockBatch.findAll({
       where: { item_id: itemId, quantity_remaining: { [Op.gt]: 0 } },
-      order: [["received_date", "ASC"], ["created_at", "ASC"]],
+      order: [["received_date", "ASC"], ["sequence_number", "ASC"]],
       include: [
         {
           association: "goodsReceiptItem",
