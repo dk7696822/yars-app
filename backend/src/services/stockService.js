@@ -413,10 +413,120 @@ const getLockedStockOnHand = async (itemId, transaction) => {
   return batches.reduce((total, batch) => total + parseFloat(batch.quantity_remaining), 0);
 };
 
+/**
+ * Stock corrections: stock-take differences and damage.
+ *
+ *   ADJUSTMENT_OUT — consumes FIFO, exactly like an issue.
+ *   ADJUSTMENT_IN  — creates a NEW batch, rated at the item's most recent batch
+ *                    rate (or 0 if the item has never been received).
+ *
+ * `reason` is mandatory. An unexplained stock correction is worthless six
+ * months later, when someone is trying to work out where the material went.
+ */
+const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items }) => {
+  if (!["ADJUSTMENT_IN", "ADJUSTMENT_OUT"].includes(issue_type)) {
+    throw new Error("Adjustment type must be ADJUSTMENT_IN or ADJUSTMENT_OUT");
+  }
+  if (!reason || !reason.trim()) {
+    throw new Error("A reason is required for a stock adjustment");
+  }
+  if (!items || items.length === 0) {
+    throw new Error("A stock adjustment must have at least one item");
+  }
+
+  // Outward adjustments are just an issue with a different movement type.
+  if (issue_type === "ADJUSTMENT_OUT") {
+    return issueStockInternal({ issue_date, issue_type, reason, notes, items });
+  }
+
+  return db.sequelize.transaction(async (transaction) => {
+    const year = new Date(issue_date).getFullYear();
+    const issueNumber = await generateDocumentNumber(
+      db.StockIssue,
+      "issue_number",
+      "ISS",
+      year,
+      transaction
+    );
+
+    const issue = await db.StockIssue.create(
+      { issue_number: issueNumber, issue_date, issue_type, reason, notes },
+      { transaction }
+    );
+
+    for (const line of items) {
+      const quantity = parseFloat(line.quantity);
+      if (!(quantity > 0)) {
+        throw new Error("Adjustment quantity must be greater than zero");
+      }
+
+      const item = await db.InventoryItem.findByPk(line.item_id, { transaction });
+      if (!item) {
+        throw new Error(`Inventory item not found: ${line.item_id}`);
+      }
+
+      // Value the found stock at the newest known rate for this item.
+      const newest = await db.StockBatch.findOne({
+        where: { item_id: item.id },
+        order: [
+          ["received_date", "DESC"],
+          ["sequence_number", "DESC"],
+        ],
+        transaction,
+      });
+      const rate = newest ? parseFloat(newest.rate) : 0;
+
+      const batch = await db.StockBatch.create(
+        {
+          item_id: item.id,
+          goods_receipt_item_id: null, // no receipt — this stock was found, not bought
+          received_date: issue_date,
+          quantity_received: quantity,
+          quantity_remaining: quantity,
+          rate,
+        },
+        { transaction }
+      );
+
+      await db.StockMovement.create(
+        {
+          item_id: item.id,
+          movement_type: "ADJUSTMENT_IN",
+          quantity, // positive: into stock
+          stock_batch_id: batch.id,
+          unit_cost: rate,
+          total_cost: quantity * rate,
+          reference_type: "STOCK_ADJUSTMENT",
+          reference_id: issue.id,
+          movement_date: issue_date,
+          notes: reason,
+        },
+        { transaction }
+      );
+
+      await db.StockIssueItem.create(
+        {
+          stock_issue_id: issue.id,
+          item_id: item.id,
+          quantity,
+          total_cost: quantity * rate,
+        },
+        { transaction }
+      );
+    }
+
+    return db.StockIssue.findByPk(issue.id, {
+      include: [{ model: db.StockIssueItem, as: "items" }],
+      transaction,
+    });
+  });
+};
+
 module.exports = {
   InsufficientStockError,
   getStockOnHand,
   receiveStock,
   recomputePurchaseOrderStatus,
   issueStock,
+  adjustStock,
 };
