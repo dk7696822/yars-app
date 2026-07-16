@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaBoxes, FaUsers, FaMoneyBillWave, FaLayerGroup, FaRuler, FaFileInvoiceDollar, FaTimes, FaHistory } from "react-icons/fa";
+import { FaHome, FaBoxes, FaUsers, FaMoneyBillWave, FaLayerGroup, FaRuler, FaFileInvoiceDollar, FaTimes, FaHistory, FaWarehouse, FaTruck, FaClipboardList, FaDolly, FaTags } from "react-icons/fa";
 import PropTypes from "prop-types";
 
 const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
@@ -10,6 +10,11 @@ const Sidebar = ({ isCollapsed = false, isMobileOpen = false, onToggle }) => {
     { to: "/plate-types", icon: FaLayerGroup, label: "Plate Types" },
     { to: "/product-sizes", icon: FaRuler, label: "Product Sizes" },
     { to: "/expenses", icon: FaMoneyBillWave, label: "Expenses" },
+    { to: "/stock", icon: FaWarehouse, label: "Stock" },
+    { to: "/stock-issues", icon: FaDolly, label: "Stock Issues" },
+    { to: "/purchase-orders", icon: FaClipboardList, label: "Purchase Orders" },
+    { to: "/inventory-items", icon: FaTags, label: "Inventory Items" },
+    { to: "/suppliers", icon: FaTruck, label: "Suppliers" },
     { to: "/invoices", icon: FaFileInvoiceDollar, label: "Invoices" },
     { to: "/history", icon: FaHistory, label: "History" },
   ];

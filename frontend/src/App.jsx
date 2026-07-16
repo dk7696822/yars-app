@@ -29,6 +29,23 @@ import Invoices from "./pages/Invoices";
 import GenerateInvoice from "./pages/GenerateInvoice";
 import InvoiceDetails from "./pages/InvoiceDetails";
 import History from "./pages/History";
+import Stock from "./pages/Stock";
+import StockItemDetail from "./pages/StockItemDetail";
+import InventoryItems from "./pages/InventoryItems";
+import CreateInventoryItem from "./pages/CreateInventoryItem";
+import EditInventoryItem from "./pages/EditInventoryItem";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
+import PurchaseOrderDetail from "./pages/PurchaseOrderDetail";
+import ReceivePurchaseOrder from "./pages/ReceivePurchaseOrder";
+import StockIssues from "./pages/StockIssues";
+import CreateStockIssue from "./pages/CreateStockIssue";
+import Suppliers from "./pages/Suppliers";
+import CreateSupplier from "./pages/CreateSupplier";
+import EditSupplier from "./pages/EditSupplier";
+import SupplierDetail from "./pages/SupplierDetail";
+import InventoryCategories from "./pages/InventoryCategories";
+import ItemAttributes from "./pages/ItemAttributes";
 import NotFound from "./pages/NotFound";
 import "./assets/styles/index.css";
 import "./styles/button-override.css";
@@ -96,6 +113,39 @@ function App() {
                 </Route>
 
                 <Route path="history" element={<History />} />
+
+                <Route path="stock">
+                  <Route index element={<Stock />} />
+                  <Route path=":itemId" element={<StockItemDetail />} />
+                </Route>
+
+                <Route path="inventory-items">
+                  <Route index element={<InventoryItems />} />
+                  <Route path="new" element={<CreateInventoryItem />} />
+                  <Route path="edit/:id" element={<EditInventoryItem />} />
+                </Route>
+
+                <Route path="purchase-orders">
+                  <Route index element={<PurchaseOrders />} />
+                  <Route path="new" element={<CreatePurchaseOrder />} />
+                  <Route path=":id" element={<PurchaseOrderDetail />} />
+                  <Route path=":id/receive" element={<ReceivePurchaseOrder />} />
+                </Route>
+
+                <Route path="stock-issues">
+                  <Route index element={<StockIssues />} />
+                  <Route path="new" element={<CreateStockIssue />} />
+                </Route>
+
+                <Route path="suppliers">
+                  <Route index element={<Suppliers />} />
+                  <Route path="new" element={<CreateSupplier />} />
+                  <Route path="edit/:id" element={<EditSupplier />} />
+                  <Route path=":id" element={<SupplierDetail />} />
+                </Route>
+
+                <Route path="inventory-categories" element={<InventoryCategories />} />
+                <Route path="item-attributes" element={<ItemAttributes />} />
 
                 <Route path="*" element={<NotFound />} />
               </Route>
