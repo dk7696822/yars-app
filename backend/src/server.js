@@ -1,6 +1,13 @@
 "use strict";
 
-require("dotenv").config();
+// Mirror src/config/database.js: in test mode, load .env.test so the server
+// can only aim at the local throwaway database. Without this, the plain .env
+// (production Supabase) loads first and wins — dotenv never overrides vars
+// that are already set — so "NODE_ENV=test node src/server.js" would silently
+// connect to production.
+require("dotenv").config(
+  process.env.NODE_ENV === "test" ? { path: __dirname + "/../.env.test" } : {}
+);
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
