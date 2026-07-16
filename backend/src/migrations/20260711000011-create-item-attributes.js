@@ -5,11 +5,18 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable("item_attributes", {
       id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
-      name: { type: Sequelize.TEXT, allowNull: false, unique: true },
+      name: { type: Sequelize.TEXT, allowNull: false },
       is_archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
+
+    // Partial unique index: only LIVE attributes must have distinct names —
+    // an archived "GSM" must not block creating a fresh "GSM".
+    await queryInterface.sequelize.query(
+      `CREATE UNIQUE INDEX "item_attributes_name_active_unique"
+         ON "item_attributes" ("name") WHERE is_archived = false;`
+    );
 
     await queryInterface.createTable("item_attribute_values", {
       id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
@@ -27,14 +34,17 @@ module.exports = {
     });
 
     await queryInterface.addIndex("item_attribute_values", ["attribute_id"]);
-    // No duplicate values under one attribute ("W Cut" twice under "Cut").
-    await queryInterface.addConstraint("item_attribute_values", {
-      fields: ["attribute_id", "value"],
-      type: "unique",
-      name: "item_attribute_values_attribute_id_value_unique",
-    });
+    // No duplicate LIVE values under one attribute ("W Cut" twice under "Cut").
+    // Partial so an archived value's name can be reused. Archiving a value that
+    // items still link to stays allowed (it is display-only from then on).
+    await queryInterface.sequelize.query(
+      `CREATE UNIQUE INDEX "item_attribute_values_attribute_id_value_active_unique"
+         ON "item_attribute_values" ("attribute_id", "value") WHERE is_archived = false;`
+    );
     // Composite-FK target: lets inventory_item_attribute_values enforce that a
     // chosen value actually belongs to the claimed attribute (see below).
+    // MUST remain a FULL constraint — foreign keys cannot reference a partial
+    // index, and the composite FK below depends on it.
     await queryInterface.addConstraint("item_attribute_values", {
       fields: ["id", "attribute_id"],
       type: "unique",

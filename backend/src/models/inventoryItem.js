@@ -20,7 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.UUID, primaryKey: true, defaultValue: () => uuidv4() },
       name: { type: DataTypes.TEXT, allowNull: false, validate: { notEmpty: true } },
-      item_code: { type: DataTypes.TEXT, allowNull: true, unique: true },
+      // Uniqueness is a PARTIAL index (live rows only) — see the migration.
+      item_code: { type: DataTypes.TEXT, allowNull: true },
       category_id: {
         type: DataTypes.UUID,
         allowNull: false,

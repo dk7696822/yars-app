@@ -15,10 +15,10 @@ module.exports = (sequelize, DataTypes) => {
   InventoryCategory.init(
     {
       id: { type: DataTypes.UUID, primaryKey: true, defaultValue: () => uuidv4() },
+      // Uniqueness is a PARTIAL index (live rows only) — see the migration.
       name: {
         type: DataTypes.TEXT,
         allowNull: false,
-        unique: true,
         validate: { notEmpty: true },
       },
       is_archived: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },

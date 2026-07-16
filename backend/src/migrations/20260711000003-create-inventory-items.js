@@ -6,7 +6,7 @@ module.exports = {
     await queryInterface.createTable("inventory_items", {
       id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
       name: { type: Sequelize.TEXT, allowNull: false },
-      item_code: { type: Sequelize.TEXT, allowNull: true, unique: true },
+      item_code: { type: Sequelize.TEXT, allowNull: true },
       category_id: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -24,6 +24,13 @@ module.exports = {
     });
 
     await queryInterface.addIndex("inventory_items", ["category_id"]);
+
+    // Partial unique index: only LIVE items must have distinct codes — an
+    // archived item must not hold its code hostage forever.
+    await queryInterface.sequelize.query(
+      `CREATE UNIQUE INDEX "inventory_items_item_code_active_unique"
+         ON "inventory_items" ("item_code") WHERE is_archived = false;`
+    );
   },
 
   async down(queryInterface) {
