@@ -469,7 +469,8 @@ const issueStockInternal = async ({
   await createAuditLog(db.AuditLog, {
     entityType: "STOCK_ISSUE",
     entityId: createdIssue.id,
-    action: issue_type === "ADJUSTMENT_IN" || issue_type === "ADJUSTMENT_OUT" ? "UPDATE" : "CREATE",
+    // Adjustments CREATE a new issue document too — metadata.issue_type distinguishes them.
+    action: "CREATE",
     newValues: {
       issue_number: createdIssue.issue_number,
       issue_date,
@@ -644,7 +645,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
   await createAuditLog(db.AuditLog, {
     entityType: "STOCK_ISSUE",
     entityId: createdIssue.id,
-    action: "UPDATE",
+    action: "CREATE",
     newValues: {
       issue_number: createdIssue.issue_number,
       issue_date,
