@@ -2889,7 +2889,12 @@ const consumeFifo = async (
     remainingToConsume -= take;
   }
 
-  if (remainingToConsume > 0.001) {
+  // Epsilon is 0.0005 — HALF the smallest representable quantity step. Quantities
+  // are DECIMAL(12,3), so 0.001 is a legal quantity, not float noise; a tolerance
+  // of 0.001 would let a request exactly one step over available slip through.
+  // 0.0005 still absorbs IEEE-754 noise (~1e-15 at these magnitudes) but cannot
+  // be reached by any representable quantity.
+  if (remainingToConsume > 0.0005) {
     // Should be unreachable: the caller validates availability first. If we get
     // here, availability and batches disagree — fail loudly rather than write
     // a silently wrong number.
@@ -2960,7 +2965,8 @@ const issueStock = async ({
       const available = await getLockedStockOnHand(item.id, transaction);
       const required = quantity + wastage;
 
-      if (required > available + 0.001) {
+      // 0.0005 = half the smallest DECIMAL(12,3) step — see consumeFifo's epsilon note.
+      if (required > available + 0.0005) {
         throw new InsufficientStockError(item.name, required, available, item.unit);
       }
 
