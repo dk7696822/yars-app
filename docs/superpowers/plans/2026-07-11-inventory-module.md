@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add raw-material inventory management to YARS — suppliers, user-managed categories, purchase orders (ordered vs received), goods receipts, FIFO-costed stock batches, an append-only movement ledger, and mobile-first daily issue entry with wastage tracked separately.
+**Goal:** Add raw-material inventory management to YARS — suppliers, user-managed categories, user-managed item attributes (cut type, GSM, colour — extensible from the UI), purchase orders (ordered vs received), goods receipts, FIFO-costed stock batches, an append-only movement ledger, and mobile-first daily issue entry with wastage tracked separately.
 
-**Architecture:** Eight new Postgres tables via Sequelize migrations. Stock on hand is derived from open FIFO batch remainders (`stock_batches.quantity_remaining`), never from a cached column; every stock event is also appended to an immutable `stock_movements` ledger for history and reconciliation. All stock mutation is funnelled through a single `stockService` that runs inside a DB transaction and row-locks batches, so concurrent issues can never double-spend a batch and stock can never go negative. The REST API mirrors the existing controller/route/model split but introduces server-side pagination (a first for this codebase). The frontend adds an Inventory section built mobile-first — the factory user enters issues daily on a phone.
+**Architecture:** Eleven new Postgres tables via Sequelize migrations. Item variations (D Cut vs W Cut, 60 vs 90 GSM, colour) are **user-managed attribute definitions and values** — chosen per item via dropdowns, at most one value per attribute (enforced by a DB unique constraint on the link table), same philosophy as the user-managed categories; only `unit` stays a fixed code-level enum, because units drive stock math. Stock on hand is derived from open FIFO batch remainders (`stock_batches.quantity_remaining`), never from a cached column; every stock event is also appended to an immutable `stock_movements` ledger for history and reconciliation. All stock mutation is funnelled through a single `stockService` that runs inside a DB transaction and row-locks batches, so concurrent issues can never double-spend a batch and stock can never go negative. The REST API mirrors the existing controller/route/model split but introduces server-side pagination (a first for this codebase). The frontend adds an Inventory section built mobile-first — the factory user enters issues daily on a phone.
 
 **Tech Stack:** Node 20, Express 5, Sequelize 6, Postgres (Supabase), React 19, Vite, Tailwind, Jest (new), Docker (new, tests only).
 
@@ -36,11 +36,13 @@ You are working in `/Users/admin/Desktop/yars-app`. **Only touch `backend/` and 
 
 | File | Responsibility |
 |---|---|
-| `src/migrations/20260711000001-create-inventory-categories.js` … `-000010-extend-audit-entity-type.js` | Schema (10 migrations) |
+| `src/migrations/20260711000001-create-inventory-categories.js` … `-000011-create-item-attributes.js` | Schema (11 migrations) |
 | `src/seeders/20260711000001-inventory-categories.js` | Seed the 5 default categories |
+| `src/seeders/20260711000002-item-attributes.js` | Seed the Cut / GSM / Color attributes and their default values |
 | `src/models/inventoryCategory.js` | Category model |
 | `src/models/supplier.js` | Supplier model |
 | `src/models/inventoryItem.js` | Item model |
+| `src/models/itemAttribute.js`, `itemAttributeValue.js`, `inventoryItemAttributeValue.js` | Attribute masters + item↔value link |
 | `src/models/purchaseOrder.js`, `purchaseOrderItem.js` | PO header + lines |
 | `src/models/goodsReceipt.js`, `goodsReceiptItem.js` | Receipt header + lines |
 | `src/models/stockBatch.js` | FIFO lots |
@@ -50,23 +52,24 @@ You are working in `/Users/admin/Desktop/yars-app`. **Only touch `backend/` and 
 | `src/services/documentNumber.js` | Generates `PO-2026-0001`, `GR-…`, `ISS-…` |
 | `src/utils/pagination.js` | Shared `page`/`limit` → `{limit, offset}` + response envelope |
 | `src/controllers/inventoryCategoryController.js` | Category CRUD |
+| `src/controllers/itemAttributeController.js` | Attribute + value CRUD with in-use guards |
 | `src/controllers/supplierController.js` | Supplier CRUD |
-| `src/controllers/inventoryItemController.js` | Item CRUD |
+| `src/controllers/inventoryItemController.js` | Item CRUD (incl. `attribute_value_ids`) |
 | `src/controllers/purchaseOrderController.js` | PO CRUD + `POST /:id/receive` |
 | `src/controllers/goodsReceiptController.js` | Receipt list/detail/create |
 | `src/controllers/stockIssueController.js` | Issues, wastage, adjustments |
 | `src/controllers/stockController.js` | Stock-on-hand, summary, item detail, movements |
-| `src/routes/*.js` (7 files) | Route wiring |
+| `src/routes/*.js` (8 files) | Route wiring |
 | `tests/` | Jest tests for `stockService` |
 
 **Backend — modify:**
 - `src/models/order.js` — add `Order.hasMany(models.StockMovement)` (one-directional; Order logic untouched).
-- `src/routes/index.js` — mount 7 new routers.
+- `src/routes/index.js` — mount 8 new routers.
 - `src/controllers/exportController.js` — add `exportInventoryData`.
 - `src/routes/exportRoutes.js` — add `GET /inventory`.
 - `package.json` — add Jest, `test` script.
 
-**Frontend — create:** `src/services/inventoryAPI.js`, plus pages `Stock.jsx`, `StockItemDetail.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `StockIssues.jsx`, `CreateStockIssue.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`; components under `src/components/inventory/`; `src/components/common/Pagination.jsx`.
+**Frontend — create:** `src/services/inventoryAPI.js`, plus pages `Stock.jsx`, `StockItemDetail.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `StockIssues.jsx`, `CreateStockIssue.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`, `ItemAttributes.jsx`; components under `src/components/inventory/`; `src/components/common/Pagination.jsx`.
 
 **Frontend — modify:** `src/App.jsx` (routes), `src/components/layout/Sidebar.jsx` (nav).
 
@@ -228,7 +231,7 @@ git commit -m "test(backend): jest harness with throwaway postgres for inventory
 
 # Phase 1 — Database schema
 
-Nine migrations. Run them all at the end of the phase, against the **test** DB only. Production migration happens at rollout, not now.
+Eleven migrations. Run them all at the end of the phase, against the **test** DB only. Production migration happens at rollout, not now.
 
 ### Task 1.1: Categories, suppliers, items
 
@@ -307,8 +310,6 @@ module.exports = {
         onDelete: "RESTRICT",
       },
       unit: { type: Sequelize.ENUM("KG", "PCS", "METRE", "ROLL", "LITRE"), allowNull: false },
-      gsm: { type: Sequelize.INTEGER, allowNull: true },
-      color: { type: Sequelize.TEXT, allowNull: true },
       reorder_level: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
       reorder_target: { type: Sequelize.DECIMAL(10, 2), allowNull: true },
       notes: { type: Sequelize.TEXT, allowNull: true },
@@ -327,6 +328,8 @@ module.exports = {
   },
 };
 ```
+
+There are deliberately **no `gsm` or `color` columns** here. Item variations (cut type, GSM, colour, whatever comes next) are user-managed attributes — see Task 1.5. Hardcoding two of them as columns would mean a migration every time the factory's vocabulary grows.
 
 - [ ] **Step 4: Commit**
 
@@ -815,6 +818,192 @@ git add backend/src/seeders/20260711000001-inventory-categories.js
 git commit -m "feat(inventory): seed default inventory categories"
 ```
 
+### Task 1.5: Item attribute tables
+
+**Files:**
+- Create: `backend/src/migrations/20260711000011-create-item-attributes.js`
+
+Item variations follow the same philosophy as categories: **user-managed, nothing hardcoded.** Three tables in one migration (definitions + values + item link — they only make sense together, like goods receipts and their items in Task 1.2):
+
+- `item_attributes` — the definitions ("Cut", "GSM", "Color", whatever the user adds next).
+- `item_attribute_values` — the choices under each ("D Cut", "W Cut", "60", "90", …).
+- `inventory_item_attribute_values` — which value each item has, at most **one per attribute**. `attribute_id` is deliberately denormalised into this row precisely so that rule can live in the database as `UNIQUE(item_id, attribute_id)` rather than in application code. The controller (Task 4.4) still validates that the chosen value actually belongs to the claimed attribute.
+
+- [ ] **Step 1: `20260711000011-create-item-attributes.js`**
+
+```js
+"use strict";
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable("item_attributes", {
+      id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+      name: { type: Sequelize.TEXT, allowNull: false, unique: true },
+      is_archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+      created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+      updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+    });
+
+    await queryInterface.createTable("item_attribute_values", {
+      id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+      attribute_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: { model: "item_attributes", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT",
+      },
+      value: { type: Sequelize.TEXT, allowNull: false },
+      is_archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
+      created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+      updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+    });
+
+    await queryInterface.addIndex("item_attribute_values", ["attribute_id"]);
+    // No duplicate values under one attribute ("W Cut" twice under "Cut").
+    await queryInterface.addConstraint("item_attribute_values", {
+      fields: ["attribute_id", "value"],
+      type: "unique",
+      name: "item_attribute_values_attribute_id_value_unique",
+    });
+
+    await queryInterface.createTable("inventory_item_attribute_values", {
+      id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+      item_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: { model: "inventory_items", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE", // link rows are owned by the item
+      },
+      attribute_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: { model: "item_attributes", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT",
+      },
+      attribute_value_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: { model: "item_attribute_values", key: "id" },
+        onUpdate: "CASCADE",
+        onDelete: "RESTRICT",
+      },
+      created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+      updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
+    });
+
+    await queryInterface.addIndex("inventory_item_attribute_values", ["item_id"]);
+    await queryInterface.addIndex("inventory_item_attribute_values", ["attribute_value_id"]);
+    // An item gets at most ONE value per attribute. This is the constraint the
+    // denormalised attribute_id exists for — enforce it in the database.
+    await queryInterface.addConstraint("inventory_item_attribute_values", {
+      fields: ["item_id", "attribute_id"],
+      type: "unique",
+      name: "inventory_item_attribute_values_item_id_attribute_id_unique",
+    });
+  },
+
+  async down(queryInterface) {
+    await queryInterface.dropTable("inventory_item_attribute_values");
+    await queryInterface.dropTable("item_attribute_values");
+    await queryInterface.dropTable("item_attributes");
+  },
+};
+```
+
+`backend/tests/setup.js` needs **no change**: the `TRUNCATE … CASCADE` on `inventory_items` clears the link table, and no test writes to `item_attributes` — attributes carry no stock math.
+
+- [ ] **Step 2: Run it against the test DB and verify**
+
+```bash
+cd backend
+npm run test:db:up && sleep 3
+npm run test:migrate
+docker exec yars-test-db psql -U yars -d yars_test -c "\dt" | grep item_attribute
+```
+Expected: `item_attributes`, `item_attribute_values`, `inventory_item_attribute_values` all present.
+
+And verify the one-value-per-attribute constraint is real:
+```bash
+docker exec yars-test-db psql -U yars -d yars_test -c \
+  "SELECT conname FROM pg_constraint WHERE conname = 'inventory_item_attribute_values_item_id_attribute_id_unique';"
+```
+Expected: one row.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add backend/src/migrations/20260711000011-*.js
+git commit -m "feat(inventory): migrations for user-managed item attributes"
+```
+
+### Task 1.6: Seed default attributes
+
+**Files:**
+- Create: `backend/src/seeders/20260711000002-item-attributes.js`
+
+- [ ] **Step 1: Write the seeder**
+
+```js
+"use strict";
+const { v4: uuidv4 } = require("uuid");
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface) {
+    const now = new Date();
+
+    // Color ships with no values on purpose: colours are business-specific,
+    // and a wrong default is worse than an empty dropdown the user fills once.
+    const defaults = {
+      Cut: ["D Cut", "W Cut", "U Cut", "Loop Handle"],
+      GSM: ["60", "70", "80", "90", "100"],
+      Color: [],
+    };
+
+    const attributes = [];
+    const values = [];
+
+    for (const [name, attributeValues] of Object.entries(defaults)) {
+      const attributeId = uuidv4();
+      attributes.push({ id: attributeId, name, is_archived: false, created_at: now, updated_at: now });
+
+      for (const value of attributeValues) {
+        values.push({
+          id: uuidv4(),
+          attribute_id: attributeId,
+          value,
+          is_archived: false,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+    }
+
+    await queryInterface.bulkInsert("item_attributes", attributes);
+    await queryInterface.bulkInsert("item_attribute_values", values);
+  },
+
+  async down(queryInterface) {
+    await queryInterface.bulkDelete("inventory_item_attribute_values", null, {});
+    await queryInterface.bulkDelete("item_attribute_values", null, {});
+    await queryInterface.bulkDelete("item_attributes", null, {});
+  },
+};
+```
+
+Like the categories, these are only defaults — the user renames, extends, and deletes them from the UI. That is the point of the whole mechanism.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add backend/src/seeders/20260711000002-item-attributes.js
+git commit -m "feat(inventory): seed default item attributes (cut, gsm, color)"
+```
+
 ---
 
 # Phase 2 — Sequelize models
@@ -942,8 +1131,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("KG", "PCS", "METRE", "ROLL", "LITRE"),
         allowNull: false,
       },
-      gsm: { type: DataTypes.INTEGER, allowNull: true },
-      color: { type: DataTypes.TEXT, allowNull: true },
       reorder_level: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -1486,6 +1673,191 @@ Expected output includes: `GoodsReceipt`, `GoodsReceiptItem`, `InventoryCategory
 ```bash
 git add backend/src/models/stockBatch.js backend/src/models/stockMovement.js backend/src/models/stockIssue.js backend/src/models/stockIssueItem.js backend/src/models/order.js
 git commit -m "feat(inventory): stock batch, movement ledger, and issue models"
+```
+
+### Task 2.4: Item attribute models
+
+**Files:**
+- Create: `backend/src/models/itemAttribute.js`, `itemAttributeValue.js`, `inventoryItemAttributeValue.js`
+- Modify: `backend/src/models/inventoryItem.js`
+
+- [ ] **Step 1: `itemAttribute.js`**
+
+```js
+"use strict";
+const { Model } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
+
+module.exports = (sequelize, DataTypes) => {
+  class ItemAttribute extends Model {
+    static associate(models) {
+      ItemAttribute.hasMany(models.ItemAttributeValue, {
+        foreignKey: "attribute_id",
+        as: "values",
+      });
+    }
+  }
+
+  ItemAttribute.init(
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, defaultValue: () => uuidv4() },
+      name: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true,
+        validate: { notEmpty: true },
+      },
+      is_archived: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+      updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    },
+    {
+      sequelize,
+      modelName: "ItemAttribute",
+      tableName: "item_attributes",
+      timestamps: true,
+      underscored: true,
+    }
+  );
+
+  return ItemAttribute;
+};
+```
+
+- [ ] **Step 2: `itemAttributeValue.js`**
+
+```js
+"use strict";
+const { Model } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
+
+module.exports = (sequelize, DataTypes) => {
+  class ItemAttributeValue extends Model {
+    static associate(models) {
+      ItemAttributeValue.belongsTo(models.ItemAttribute, {
+        foreignKey: "attribute_id",
+        as: "attribute",
+      });
+      ItemAttributeValue.hasMany(models.InventoryItemAttributeValue, {
+        foreignKey: "attribute_value_id",
+        as: "itemLinks",
+      });
+    }
+  }
+
+  ItemAttributeValue.init(
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, defaultValue: () => uuidv4() },
+      attribute_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: { model: "item_attributes", key: "id" },
+      },
+      value: { type: DataTypes.TEXT, allowNull: false, validate: { notEmpty: true } },
+      is_archived: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+      updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    },
+    {
+      sequelize,
+      modelName: "ItemAttributeValue",
+      tableName: "item_attribute_values",
+      timestamps: true,
+      underscored: true,
+    }
+  );
+
+  return ItemAttributeValue;
+};
+```
+
+- [ ] **Step 3: `inventoryItemAttributeValue.js`** — the link rows
+
+```js
+"use strict";
+const { Model } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
+
+module.exports = (sequelize, DataTypes) => {
+  class InventoryItemAttributeValue extends Model {
+    static associate(models) {
+      InventoryItemAttributeValue.belongsTo(models.InventoryItem, {
+        foreignKey: "item_id",
+        as: "item",
+      });
+      InventoryItemAttributeValue.belongsTo(models.ItemAttribute, {
+        foreignKey: "attribute_id",
+        as: "attribute",
+      });
+      InventoryItemAttributeValue.belongsTo(models.ItemAttributeValue, {
+        foreignKey: "attribute_value_id",
+        as: "value",
+      });
+    }
+  }
+
+  InventoryItemAttributeValue.init(
+    {
+      id: { type: DataTypes.UUID, primaryKey: true, defaultValue: () => uuidv4() },
+      item_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: { model: "inventory_items", key: "id" },
+      },
+      // Denormalised from the value on purpose: it lets the DB enforce
+      // UNIQUE(item_id, attribute_id) — one value per attribute per item.
+      attribute_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: { model: "item_attributes", key: "id" },
+      },
+      attribute_value_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: { model: "item_attribute_values", key: "id" },
+      },
+      created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+      updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    },
+    {
+      sequelize,
+      modelName: "InventoryItemAttributeValue",
+      tableName: "inventory_item_attribute_values",
+      timestamps: true,
+      underscored: true,
+    }
+  );
+
+  return InventoryItemAttributeValue;
+};
+```
+
+- [ ] **Step 4: Wire the item side of the association**
+
+In `backend/src/models/inventoryItem.js`, inside `static associate(models)`, after the existing `InventoryItem.hasMany(models.PurchaseOrderItem, ...)` line, add:
+
+```js
+      InventoryItem.hasMany(models.InventoryItemAttributeValue, {
+        foreignKey: "item_id",
+        as: "attributeValues",
+      });
+```
+
+The read path is `item.attributeValues[].attribute.name` / `item.attributeValues[].value.value` via nested includes — Task 4.4 flattens that into a friendly `attributes` array on the API response.
+
+- [ ] **Step 5: Verify every model loads and associates**
+
+```bash
+cd backend
+NODE_ENV=test node -e "const db=require('./src/models'); console.log(Object.keys(db).filter(k=>!['sequelize','Sequelize'].includes(k)).sort().join('\n')); db.sequelize.close();"
+```
+Expected output now also includes: `InventoryItemAttributeValue`, `ItemAttribute`, `ItemAttributeValue`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add backend/src/models/itemAttribute.js backend/src/models/itemAttributeValue.js backend/src/models/inventoryItemAttributeValue.js backend/src/models/inventoryItem.js
+git commit -m "feat(inventory): item attribute models and associations"
 ```
 
 ---
@@ -3528,16 +3900,87 @@ git commit -m "feat(inventory): supplier CRUD with pagination"
 ```js
 "use strict";
 
-const { InventoryItem, InventoryCategory, StockBatch, PurchaseOrderItem, sequelize } = require("../models");
+const {
+  InventoryItem,
+  InventoryCategory,
+  ItemAttribute,
+  ItemAttributeValue,
+  InventoryItemAttributeValue,
+  StockBatch,
+  PurchaseOrderItem,
+  sequelize,
+} = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
 const { Op } = require("sequelize");
 
 const VALID_UNITS = ["KG", "PCS", "METRE", "ROLL", "LITRE"];
 
+const ITEM_INCLUDES = [
+  { model: InventoryCategory, as: "category", attributes: ["id", "name"] },
+  {
+    model: InventoryItemAttributeValue,
+    as: "attributeValues",
+    include: [
+      { model: ItemAttribute, as: "attribute", attributes: ["id", "name"] },
+      { model: ItemAttributeValue, as: "value", attributes: ["id", "value"] },
+    ],
+  },
+];
+
+/** Flatten the nested link rows into a friendly `attributes` array on the response. */
+const withAttributes = (item) => {
+  const plain = item.toJSON();
+  plain.attributes = (plain.attributeValues || []).map((link) => ({
+    attribute_id: link.attribute.id,
+    attribute_name: link.attribute.name,
+    value_id: link.value.id,
+    value: link.value.value,
+  }));
+  delete plain.attributeValues;
+  return plain;
+};
+
+/**
+ * Validate a set of attribute_value_ids: every value must exist and be
+ * non-archived, and no two values may belong to the same attribute — an item
+ * holds at most ONE value per attribute. The DB unique constraint on the link
+ * table is the backstop; this produces the friendly error. Because the link
+ * row carries a denormalised attribute_id, the values are loaded here so the
+ * link rows are written with the attribute the value ACTUALLY belongs to —
+ * a client cannot claim "W Cut" is a GSM.
+ *
+ * @returns the loaded ItemAttributeValue rows (with their attribute)
+ * @throws Error with a user-facing message on any violation
+ */
+const resolveAttributeValues = async (attributeValueIds) => {
+  const ids = [...new Set(attributeValueIds)];
+
+  const values = await ItemAttributeValue.findAll({
+    where: { id: { [Op.in]: ids }, is_archived: false },
+    include: [
+      { model: ItemAttribute, as: "attribute", attributes: ["id", "name"], where: { is_archived: false } },
+    ],
+  });
+
+  if (values.length !== ids.length) {
+    throw new Error("One or more attribute values are invalid or archived");
+  }
+
+  const seenAttributes = new Set();
+  for (const value of values) {
+    if (seenAttributes.has(value.attribute_id)) {
+      throw new Error(`Only one ${value.attribute.name} value can be chosen per item`);
+    }
+    seenAttributes.add(value.attribute_id);
+  }
+
+  return values;
+};
+
 const createInventoryItem = async (req, res) => {
   try {
-    const { name, item_code, category_id, unit, gsm, color, reorder_level, reorder_target, notes } = req.body;
+    const { name, item_code, category_id, unit, reorder_level, reorder_target, notes, attribute_value_ids } = req.body;
 
     if (!name || !category_id || !unit) {
       return error(res, 400, "Name, category, and unit are required");
@@ -3555,19 +3998,46 @@ const createInventoryItem = async (req, res) => {
       return error(res, 400, "Invalid inventory category");
     }
 
-    const item = await InventoryItem.create({
-      name,
-      item_code: item_code || null,
-      category_id,
-      unit,
-      gsm: gsm || null,
-      color: color || null,
-      reorder_level: reorder_level || 0,
-      reorder_target: reorder_target || null,
-      notes: notes || null,
+    let attributeValues = [];
+    if (attribute_value_ids && attribute_value_ids.length > 0) {
+      try {
+        attributeValues = await resolveAttributeValues(attribute_value_ids);
+      } catch (validationErr) {
+        return error(res, 400, validationErr.message);
+      }
+    }
+
+    const item = await sequelize.transaction(async (transaction) => {
+      const created = await InventoryItem.create(
+        {
+          name,
+          item_code: item_code || null,
+          category_id,
+          unit,
+          reorder_level: reorder_level || 0,
+          reorder_target: reorder_target || null,
+          notes: notes || null,
+        },
+        { transaction }
+      );
+
+      for (const value of attributeValues) {
+        await InventoryItemAttributeValue.create(
+          {
+            item_id: created.id,
+            attribute_id: value.attribute_id, // from the value row, never from the client
+            attribute_value_id: value.id,
+          },
+          { transaction }
+        );
+      }
+
+      return created;
     });
 
-    return success(res, 201, "Inventory item created successfully", item);
+    const created = await InventoryItem.findByPk(item.id, { include: ITEM_INCLUDES });
+
+    return success(res, 201, "Inventory item created successfully", withAttributes(created));
   } catch (err) {
     console.error("Error creating inventory item:", err);
     return error(res, 500, "Failed to create inventory item", err.message);
@@ -3576,7 +4046,7 @@ const createInventoryItem = async (req, res) => {
 
 const getAllInventoryItems = async (req, res) => {
   try {
-    const { search, category_id, all } = req.query;
+    const { search, category_id, attribute_value_id, all } = req.query;
     const whereClause = { is_archived: false };
 
     if (category_id) {
@@ -3587,37 +4057,44 @@ const getAllInventoryItems = async (req, res) => {
       whereClause[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
         { item_code: { [Op.iLike]: `%${search}%` } },
-        { color: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
-    const include = [{ model: InventoryCategory, as: "category", attributes: ["id", "name"] }];
+    // Filter to items carrying one specific attribute value (e.g. all W Cut).
+    if (attribute_value_id) {
+      const links = await InventoryItemAttributeValue.findAll({
+        where: { attribute_value_id },
+        attributes: ["item_id"],
+      });
+      whereClause.id = { [Op.in]: links.map((link) => link.item_id) };
+    }
 
     // `all=true` skips pagination — used to populate item pickers.
     if (all === "true") {
       const items = await InventoryItem.findAll({
         where: whereClause,
-        include,
+        include: ITEM_INCLUDES,
         order: [["name", "ASC"]],
       });
-      return success(res, 200, "Inventory items retrieved successfully", items);
+      return success(res, 200, "Inventory items retrieved successfully", items.map(withAttributes));
     }
 
     const pagination = getPagination(req.query);
 
     const { rows, count } = await InventoryItem.findAndCountAll({
       where: whereClause,
-      include,
+      include: ITEM_INCLUDES,
       order: [["name", "ASC"]],
       limit: pagination.limit,
       offset: pagination.offset,
+      distinct: true, // the attributeValues include would inflate `count` otherwise
     });
 
     return success(
       res,
       200,
       "Inventory items retrieved successfully",
-      buildPaginatedResponse(rows, count, pagination)
+      buildPaginatedResponse(rows.map(withAttributes), count, pagination)
     );
   } catch (err) {
     console.error("Error retrieving inventory items:", err);
@@ -3629,14 +4106,14 @@ const getInventoryItemById = async (req, res) => {
   try {
     const item = await InventoryItem.findOne({
       where: { id: req.params.id, is_archived: false },
-      include: [{ model: InventoryCategory, as: "category", attributes: ["id", "name"] }],
+      include: ITEM_INCLUDES,
     });
 
     if (!item) {
       return error(res, 404, "Inventory item not found");
     }
 
-    return success(res, 200, "Inventory item retrieved successfully", item);
+    return success(res, 200, "Inventory item retrieved successfully", withAttributes(item));
   } catch (err) {
     console.error("Error retrieving inventory item:", err);
     return error(res, 500, "Failed to retrieve inventory item", err.message);
@@ -3645,7 +4122,7 @@ const getInventoryItemById = async (req, res) => {
 
 const updateInventoryItem = async (req, res) => {
   try {
-    const { name, item_code, category_id, unit, gsm, color, reorder_level, reorder_target, notes } = req.body;
+    const { name, item_code, category_id, unit, reorder_level, reorder_target, notes, attribute_value_ids } = req.body;
 
     const item = await InventoryItem.findOne({
       where: { id: req.params.id, is_archived: false },
@@ -3668,19 +4145,49 @@ const updateInventoryItem = async (req, res) => {
       }
     }
 
-    await item.update({
-      name: name ?? item.name,
-      item_code: item_code ?? item.item_code,
-      category_id: category_id ?? item.category_id,
-      unit: unit ?? item.unit,
-      gsm: gsm ?? item.gsm,
-      color: color ?? item.color,
-      reorder_level: reorder_level ?? item.reorder_level,
-      reorder_target: reorder_target ?? item.reorder_target,
-      notes: notes ?? item.notes,
+    // undefined = leave attributes alone; an array (even []) = replace them.
+    let attributeValues = null;
+    if (attribute_value_ids !== undefined) {
+      try {
+        attributeValues = attribute_value_ids.length > 0 ? await resolveAttributeValues(attribute_value_ids) : [];
+      } catch (validationErr) {
+        return error(res, 400, validationErr.message);
+      }
+    }
+
+    await sequelize.transaction(async (transaction) => {
+      await item.update(
+        {
+          name: name ?? item.name,
+          item_code: item_code ?? item.item_code,
+          category_id: category_id ?? item.category_id,
+          unit: unit ?? item.unit,
+          reorder_level: reorder_level ?? item.reorder_level,
+          reorder_target: reorder_target ?? item.reorder_target,
+          notes: notes ?? item.notes,
+        },
+        { transaction }
+      );
+
+      if (attributeValues !== null) {
+        await InventoryItemAttributeValue.destroy({ where: { item_id: item.id }, transaction });
+
+        for (const value of attributeValues) {
+          await InventoryItemAttributeValue.create(
+            {
+              item_id: item.id,
+              attribute_id: value.attribute_id,
+              attribute_value_id: value.id,
+            },
+            { transaction }
+          );
+        }
+      }
     });
 
-    return success(res, 200, "Inventory item updated successfully", item);
+    const updated = await InventoryItem.findByPk(item.id, { include: ITEM_INCLUDES });
+
+    return success(res, 200, "Inventory item updated successfully", withAttributes(updated));
   } catch (err) {
     console.error("Error updating inventory item:", err);
     return error(res, 500, "Failed to update inventory item", err.message);
@@ -3762,6 +4269,299 @@ module.exports = router;
 ```bash
 git add backend/src/controllers/inventoryItemController.js backend/src/routes/inventoryItemRoutes.js
 git commit -m "feat(inventory): inventory item CRUD with stock-on-hand delete guard"
+```
+
+### Task 4.5: Item attribute CRUD
+
+**Files:**
+- Create: `backend/src/controllers/itemAttributeController.js`
+- Create: `backend/src/routes/itemAttributeRoutes.js`
+
+Modelled on Task 4.2's category controller, with the same in-use delete guards, applied at both levels: an attribute cannot be deleted while any non-archived item uses one of its values, and a single value cannot be deleted while any non-archived item uses it. The list endpoint is **not paginated** — this is a small master list, and the item forms need all of it at once anyway.
+
+- [ ] **Step 1: Controller**
+
+```js
+"use strict";
+
+const {
+  ItemAttribute,
+  ItemAttributeValue,
+  InventoryItemAttributeValue,
+  InventoryItem,
+} = require("../models");
+const { success, error } = require("../utils/response");
+const { Op } = require("sequelize");
+
+/** Count non-archived items still using any of these value ids. */
+const countItemsUsingValues = async (valueIds) => {
+  if (valueIds.length === 0) return 0;
+
+  return InventoryItemAttributeValue.count({
+    where: { attribute_value_id: { [Op.in]: valueIds } },
+    include: [{ model: InventoryItem, as: "item", where: { is_archived: false }, required: true }],
+  });
+};
+
+const createItemAttribute = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return error(res, 400, "Attribute name is required");
+    }
+
+    const existing = await ItemAttribute.findOne({
+      where: { name: { [Op.iLike]: name.trim() }, is_archived: false },
+    });
+
+    if (existing) {
+      return error(res, 400, "An attribute with this name already exists");
+    }
+
+    const attribute = await ItemAttribute.create({ name: name.trim() });
+
+    return success(res, 201, "Item attribute created successfully", attribute);
+  } catch (err) {
+    console.error("Error creating item attribute:", err);
+    return error(res, 500, "Failed to create item attribute", err.message);
+  }
+};
+
+/** Every non-archived attribute with its non-archived values nested. Not paginated — small master list. */
+const getAllItemAttributes = async (req, res) => {
+  try {
+    const attributes = await ItemAttribute.findAll({
+      where: { is_archived: false },
+      include: [
+        {
+          model: ItemAttributeValue,
+          as: "values",
+          where: { is_archived: false },
+          required: false,
+          separate: true,
+          order: [["value", "ASC"]],
+        },
+      ],
+      order: [["name", "ASC"]],
+    });
+
+    return success(res, 200, "Item attributes retrieved successfully", attributes);
+  } catch (err) {
+    console.error("Error retrieving item attributes:", err);
+    return error(res, 500, "Failed to retrieve item attributes", err.message);
+  }
+};
+
+const updateItemAttribute = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return error(res, 400, "Attribute name is required");
+    }
+
+    const attribute = await ItemAttribute.findOne({ where: { id, is_archived: false } });
+
+    if (!attribute) {
+      return error(res, 404, "Item attribute not found");
+    }
+
+    const duplicate = await ItemAttribute.findOne({
+      where: { name: { [Op.iLike]: name.trim() }, id: { [Op.ne]: id }, is_archived: false },
+    });
+
+    if (duplicate) {
+      return error(res, 400, "Another attribute with this name already exists");
+    }
+
+    await attribute.update({ name: name.trim() });
+
+    return success(res, 200, "Item attribute updated successfully", attribute);
+  } catch (err) {
+    console.error("Error updating item attribute:", err);
+    return error(res, 500, "Failed to update item attribute", err.message);
+  }
+};
+
+const deleteItemAttribute = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const attribute = await ItemAttribute.findOne({ where: { id, is_archived: false } });
+
+    if (!attribute) {
+      return error(res, 404, "Item attribute not found");
+    }
+
+    // Refuse while any live item still carries one of this attribute's values —
+    // deleting it would silently strip meaning from those items.
+    const values = await ItemAttributeValue.findAll({
+      where: { attribute_id: id },
+      attributes: ["id"],
+    });
+    const inUse = await countItemsUsingValues(values.map((value) => value.id));
+
+    if (inUse > 0) {
+      return error(res, 400, "Cannot delete this attribute as it is being used by inventory items");
+    }
+
+    // Soft-delete the values along with their attribute, so nothing orphaned
+    // ever surfaces in a dropdown.
+    await ItemAttributeValue.update({ is_archived: true }, { where: { attribute_id: id } });
+    await attribute.update({ is_archived: true });
+
+    return success(res, 200, "Item attribute deleted successfully");
+  } catch (err) {
+    console.error("Error deleting item attribute:", err);
+    return error(res, 500, "Failed to delete item attribute", err.message);
+  }
+};
+
+const createItemAttributeValue = async (req, res) => {
+  try {
+    const { id } = req.params; // attribute id
+    const { value } = req.body;
+
+    if (!value || !String(value).trim()) {
+      return error(res, 400, "Value is required");
+    }
+
+    const attribute = await ItemAttribute.findOne({ where: { id, is_archived: false } });
+
+    if (!attribute) {
+      return error(res, 404, "Item attribute not found");
+    }
+
+    const existing = await ItemAttributeValue.findOne({
+      where: { attribute_id: id, value: { [Op.iLike]: String(value).trim() }, is_archived: false },
+    });
+
+    if (existing) {
+      return error(res, 400, `"${String(value).trim()}" already exists under ${attribute.name}`);
+    }
+
+    const created = await ItemAttributeValue.create({
+      attribute_id: id,
+      value: String(value).trim(),
+    });
+
+    return success(res, 201, "Attribute value created successfully", created);
+  } catch (err) {
+    console.error("Error creating attribute value:", err);
+    return error(res, 500, "Failed to create attribute value", err.message);
+  }
+};
+
+const updateItemAttributeValue = async (req, res) => {
+  try {
+    const { valueId } = req.params;
+    const { value } = req.body;
+
+    if (!value || !String(value).trim()) {
+      return error(res, 400, "Value is required");
+    }
+
+    const attributeValue = await ItemAttributeValue.findOne({
+      where: { id: valueId, is_archived: false },
+    });
+
+    if (!attributeValue) {
+      return error(res, 404, "Attribute value not found");
+    }
+
+    const duplicate = await ItemAttributeValue.findOne({
+      where: {
+        attribute_id: attributeValue.attribute_id,
+        value: { [Op.iLike]: String(value).trim() },
+        id: { [Op.ne]: valueId },
+        is_archived: false,
+      },
+    });
+
+    if (duplicate) {
+      return error(res, 400, "Another value with this name already exists under this attribute");
+    }
+
+    await attributeValue.update({ value: String(value).trim() });
+
+    return success(res, 200, "Attribute value updated successfully", attributeValue);
+  } catch (err) {
+    console.error("Error updating attribute value:", err);
+    return error(res, 500, "Failed to update attribute value", err.message);
+  }
+};
+
+const deleteItemAttributeValue = async (req, res) => {
+  try {
+    const { valueId } = req.params;
+
+    const attributeValue = await ItemAttributeValue.findOne({
+      where: { id: valueId, is_archived: false },
+    });
+
+    if (!attributeValue) {
+      return error(res, 404, "Attribute value not found");
+    }
+
+    const inUse = await countItemsUsingValues([valueId]);
+
+    if (inUse > 0) {
+      return error(res, 400, "Cannot delete this value as it is being used by inventory items");
+    }
+
+    await attributeValue.update({ is_archived: true });
+
+    return success(res, 200, "Attribute value deleted successfully");
+  } catch (err) {
+    console.error("Error deleting attribute value:", err);
+    return error(res, 500, "Failed to delete attribute value", err.message);
+  }
+};
+
+module.exports = {
+  createItemAttribute,
+  getAllItemAttributes,
+  updateItemAttribute,
+  deleteItemAttribute,
+  createItemAttributeValue,
+  updateItemAttributeValue,
+  deleteItemAttributeValue,
+};
+```
+
+Renaming an attribute or a value that **is** in use is allowed on purpose — the link rows point at ids, so every item picks up the new spelling instantly. Only deletion is guarded.
+
+- [ ] **Step 2: Routes**
+
+`backend/src/routes/itemAttributeRoutes.js`:
+```js
+"use strict";
+
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/itemAttributeController");
+
+// Value routes first, for readability — they cannot actually collide with
+// /:id (two path segments vs one), but keep the specific ones on top.
+router.put("/values/:valueId", controller.updateItemAttributeValue);
+router.delete("/values/:valueId", controller.deleteItemAttributeValue);
+router.post("/:id/values", controller.createItemAttributeValue);
+
+router.post("/", controller.createItemAttribute);
+router.get("/", controller.getAllItemAttributes);
+router.put("/:id", controller.updateItemAttribute);
+router.delete("/:id", controller.deleteItemAttribute);
+
+module.exports = router;
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add backend/src/controllers/itemAttributeController.js backend/src/routes/itemAttributeRoutes.js
+git commit -m "feat(inventory): item attribute and value CRUD with in-use delete guards"
 ```
 
 ---
@@ -4517,7 +5317,18 @@ Stock and value are computed with raw SQL aggregates rather than by loading ever
 ```js
 "use strict";
 
-const { InventoryItem, InventoryCategory, StockBatch, StockMovement, GoodsReceipt, Supplier, sequelize } = require("../models");
+const {
+  InventoryItem,
+  InventoryCategory,
+  ItemAttribute,
+  ItemAttributeValue,
+  InventoryItemAttributeValue,
+  StockBatch,
+  StockMovement,
+  GoodsReceipt,
+  Supplier,
+  sequelize,
+} = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
 const { Op, QueryTypes } = require("sequelize");
@@ -4529,7 +5340,7 @@ const { Op, QueryTypes } = require("sequelize");
  */
 const getStock = async (req, res) => {
   try {
-    const { search, category_id, low_stock_only, sort_by = "name" } = req.query;
+    const { search, category_id, attribute_value_id, low_stock_only, sort_by = "name" } = req.query;
     const pagination = getPagination(req.query);
 
     const conditions = ["i.is_archived = false"];
@@ -4541,8 +5352,17 @@ const getStock = async (req, res) => {
     }
 
     if (search) {
-      conditions.push("(i.name ILIKE :search OR i.item_code ILIKE :search OR i.color ILIKE :search)");
+      conditions.push("(i.name ILIKE :search OR i.item_code ILIKE :search)");
       replacements.search = `%${search}%`;
+    }
+
+    // Filter to items carrying one specific attribute value (e.g. all W Cut).
+    if (attribute_value_id) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM inventory_item_attribute_values iav
+        WHERE iav.item_id = i.id AND iav.attribute_value_id = :attribute_value_id
+      )`);
+      replacements.attribute_value_id = attribute_value_id;
     }
 
     const whereSql = conditions.join(" AND ");
@@ -4567,12 +5387,24 @@ const getStock = async (req, res) => {
         i.name,
         i.item_code,
         i.unit,
-        i.gsm,
-        i.color,
         i.reorder_level,
         i.reorder_target,
         c.id   AS category_id,
         c.name AS category_name,
+        COALESCE((
+          SELECT json_agg(
+                   json_build_object(
+                     'attribute_id', a.id,
+                     'attribute_name', a.name,
+                     'value_id', v.id,
+                     'value', v.value
+                   ) ORDER BY a.name
+                 )
+          FROM inventory_item_attribute_values iav
+          JOIN item_attributes a ON a.id = iav.attribute_id
+          JOIN item_attribute_values v ON v.id = iav.attribute_value_id
+          WHERE iav.item_id = i.id
+        ), '[]'::json)                                    AS attributes,
         COALESCE(SUM(b.quantity_remaining), 0)            AS in_stock,
         COALESCE(SUM(b.quantity_remaining * b.rate), 0)   AS stock_value,
         COALESCE((
@@ -4623,8 +5455,7 @@ const getStock = async (req, res) => {
         name: row.name,
         item_code: row.item_code,
         unit: row.unit,
-        gsm: row.gsm,
-        color: row.color,
+        attributes: row.attributes, // [{ attribute_id, attribute_name, value_id, value }]
         category: { id: row.category_id, name: row.category_name },
         in_stock: inStock,
         stock_value: parseFloat(row.stock_value),
@@ -4701,12 +5532,32 @@ const getItemStock = async (req, res) => {
 
     const item = await InventoryItem.findOne({
       where: { id: itemId, is_archived: false },
-      include: [{ model: InventoryCategory, as: "category", attributes: ["id", "name"] }],
+      include: [
+        { model: InventoryCategory, as: "category", attributes: ["id", "name"] },
+        {
+          model: InventoryItemAttributeValue,
+          as: "attributeValues",
+          include: [
+            { model: ItemAttribute, as: "attribute", attributes: ["id", "name"] },
+            { model: ItemAttributeValue, as: "value", attributes: ["id", "value"] },
+          ],
+        },
+      ],
     });
 
     if (!item) {
       return error(res, 404, "Inventory item not found");
     }
+
+    // Flatten the attribute link rows into the same shape the item API uses.
+    const plainItem = item.toJSON();
+    plainItem.attributes = (plainItem.attributeValues || []).map((link) => ({
+      attribute_id: link.attribute.id,
+      attribute_name: link.attribute.name,
+      value_id: link.value.id,
+      value: link.value.value,
+    }));
+    delete plainItem.attributeValues;
 
     const batches = await StockBatch.findAll({
       where: { item_id: itemId, quantity_remaining: { [Op.gt]: 0 } },
@@ -4747,7 +5598,7 @@ const getItemStock = async (req, res) => {
     const stockValue = openBatches.reduce((sum, b) => sum + b.value, 0);
 
     return success(res, 200, "Item stock retrieved successfully", {
-      item,
+      item: plainItem,
       in_stock: inStock,
       stock_value: stockValue,
       batches: openBatches,
@@ -4842,6 +5693,7 @@ In `backend/src/routes/index.js`, add the requires alongside the existing ones:
 
 ```js
 const inventoryCategoryRoutes = require("./inventoryCategoryRoutes");
+const itemAttributeRoutes = require("./itemAttributeRoutes");
 const supplierRoutes = require("./supplierRoutes");
 const inventoryItemRoutes = require("./inventoryItemRoutes");
 const purchaseOrderRoutes = require("./purchaseOrderRoutes");
@@ -4854,6 +5706,7 @@ and the mounts, before the `/health` route:
 
 ```js
 router.use("/inventory-categories", inventoryCategoryRoutes);
+router.use("/item-attributes", itemAttributeRoutes);
 router.use("/suppliers", supplierRoutes);
 router.use("/inventory-items", inventoryItemRoutes);
 router.use("/purchase-orders", purchaseOrderRoutes);
@@ -4885,40 +5738,51 @@ CAT=$(curl -s -X POST localhost:5001/api/inventory-categories \
 SUP=$(curl -s -X POST localhost:5001/api/suppliers \
   -H 'Content-Type: application/json' -d '{"name":"Sharma Textiles","phone":"9999999999"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.id')
 
-# 3. Item: 90 GSM white fabric, reorder at 200kg, top up to 800kg
+# 3. Attribute "GSM" with a value "90" (the seeder provides these in production;
+#    the test DB only runs migrations, so create them through the API — which
+#    also proves the attribute endpoints work)
+ATTR=$(curl -s -X POST localhost:5001/api/item-attributes \
+  -H 'Content-Type: application/json' -d '{"name":"GSM"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.id')
+VAL=$(curl -s -X POST localhost:5001/api/item-attributes/$ATTR/values \
+  -H 'Content-Type: application/json' -d '{"value":"90"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.id')
+
+# 4. Item: 90 GSM white fabric, reorder at 200kg, top up to 800kg, tagged GSM: 90
 ITEM=$(curl -s -X POST localhost:5001/api/inventory-items \
   -H 'Content-Type: application/json' \
-  -d "{\"name\":\"90 GSM White\",\"category_id\":\"$CAT\",\"unit\":\"KG\",\"gsm\":90,\"color\":\"White\",\"reorder_level\":200,\"reorder_target\":800}" \
+  -d "{\"name\":\"90 GSM White\",\"category_id\":\"$CAT\",\"unit\":\"KG\",\"reorder_level\":200,\"reorder_target\":800,\"attribute_value_ids\":[\"$VAL\"]}" \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.id')
 
-# 4. Purchase order: 500kg @ 80
+# 4a. The item must echo its attributes back
+curl -s localhost:5001/api/inventory-items/$ITEM | node -pe 'JSON.stringify(JSON.parse(require("fs").readFileSync(0)).data.attributes)'
+
+# 5. Purchase order: 500kg @ 80
 PO=$(curl -s -X POST localhost:5001/api/purchase-orders \
   -H 'Content-Type: application/json' \
   -d "{\"supplier_id\":\"$SUP\",\"order_date\":\"2026-07-01\",\"items\":[{\"item_id\":\"$ITEM\",\"quantity_ordered\":500,\"rate\":80}]}" \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.id')
 
-# 5. Receive 200kg of it (partial)
+# 6. Receive 200kg of it (partial)
 POI=$(curl -s localhost:5001/api/purchase-orders/$PO | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.items[0].id')
 curl -s -X POST localhost:5001/api/purchase-orders/$PO/receive \
   -H 'Content-Type: application/json' \
   -d "{\"receipt_date\":\"2026-07-05\",\"items\":[{\"item_id\":\"$ITEM\",\"purchase_order_item_id\":\"$POI\",\"quantity_received\":200,\"rate\":80}]}" > /dev/null
 
-# 6. PO should now be PARTIALLY_RECEIVED
+# 7. PO should now be PARTIALLY_RECEIVED
 curl -s localhost:5001/api/purchase-orders/$PO | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.status'
 
-# 7. Stock should be 200kg worth 16000, and LOW (200 <= 200)
+# 8. Stock should be 200kg worth 16000, and LOW (200 <= 200)
 curl -s localhost:5001/api/stock | node -pe 'JSON.stringify(JSON.parse(require("fs").readFileSync(0)).data.data[0], null, 2)'
 
-# 8. Issue 50kg with 5kg wastage
+# 9. Issue 50kg with 5kg wastage
 curl -s -X POST localhost:5001/api/stock-issues \
   -H 'Content-Type: application/json' \
   -d "{\"issue_date\":\"2026-07-11\",\"items\":[{\"item_id\":\"$ITEM\",\"quantity\":50,\"wastage_quantity\":5}]}" \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.issue_number'
 
-# 9. Stock should now be 145kg
+# 10. Stock should now be 145kg
 curl -s localhost:5001/api/stock/$ITEM | node -pe 'JSON.parse(require("fs").readFileSync(0)).data.in_stock'
 
-# 10. Over-issue must be REFUSED with a clear 400
+# 11. Over-issue must be REFUSED with a clear 400
 curl -s -X POST localhost:5001/api/stock-issues \
   -H 'Content-Type: application/json' \
   -d "{\"issue_date\":\"2026-07-11\",\"items\":[{\"item_id\":\"$ITEM\",\"quantity\":9999}]}" \
@@ -4926,15 +5790,16 @@ curl -s -X POST localhost:5001/api/stock-issues \
 ```
 
 **Expected results:**
-- Step 6: `PARTIALLY_RECEIVED`
-- Step 7: `in_stock: 200`, `stock_value: 16000`, `on_order: 300`, `is_low_stock: true`, `suggested_quantity: 600`
-- Step 8: an issue number like `ISS-2026-0001`
-- Step 9: `145` (200 − 50 − 5)
-- Step 10: `Insufficient stock for 90 GSM White: tried to issue 9999 KG, but only 145 KG available`
+- Step 4a: `[{"attribute_id":"…","attribute_name":"GSM","value_id":"…","value":"90"}]`
+- Step 7: `PARTIALLY_RECEIVED`
+- Step 8: `in_stock: 200`, `stock_value: 16000`, `on_order: 300`, `is_low_stock: true`, `suggested_quantity: 600`, and `attributes` carrying the GSM: 90 entry
+- Step 9: an issue number like `ISS-2026-0001`
+- Step 10: `145` (200 − 50 − 5)
+- Step 11: `Insufficient stock for 90 GSM White: tried to issue 9999 KG, but only 145 KG available`
 
 Kill the server when done: `kill %1`
 
-If step 7 shows `on_order: 0`, the subquery in `getStock` is not seeing the PO — check that the PO status is in the `('PENDING', 'PARTIALLY_RECEIVED')` list.
+If step 8 shows `on_order: 0`, the subquery in `getStock` is not seeing the PO — check that the PO status is in the `('PENDING', 'PARTIALLY_RECEIVED')` list.
 
 - [ ] **Step 3: Commit**
 
@@ -5087,8 +5952,13 @@ const exportInventoryData = async (req, res) => {
          i.item_code                                     AS "Code",
          c.name                                          AS "Category",
          i.unit                                          AS "Unit",
-         i.gsm                                           AS "GSM",
-         i.color                                         AS "Colour",
+         COALESCE((
+           SELECT string_agg(a.name || ': ' || v.value, '; ' ORDER BY a.name)
+           FROM inventory_item_attribute_values iav
+           JOIN item_attributes a ON a.id = iav.attribute_id
+           JOIN item_attribute_values v ON v.id = iav.attribute_value_id
+           WHERE iav.item_id = i.id
+         ), '')                                          AS "Attributes",
          COALESCE(SUM(b.quantity_remaining), 0)          AS "In Stock",
          COALESCE(SUM(b.quantity_remaining * b.rate), 0) AS "Stock Value",
          i.reorder_level                                 AS "Reorder Level",
@@ -5198,7 +6068,7 @@ With the test server running (as in Task 6.3):
 ```bash
 curl -s -o /tmp/inv.xlsx -w "%{http_code} %{content_type}\n" localhost:5001/api/export/inventory
 ```
-Expected: `200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, and `/tmp/inv.xlsx` opens in Excel with three sheets.
+Expected: `200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, and `/tmp/inv.xlsx` opens in Excel with three sheets. The Stock sheet carries a single flattened **Attributes** column reading like `Cut: W Cut; GSM: 60` — one column that survives whatever attributes the user invents, instead of a hardcoded column per variation.
 
 - [ ] **Step 4: Commit**
 
@@ -5217,7 +6087,7 @@ The existing API endpoints return `{ success, message, data }`, and pages read `
 
 **The new paginated endpoints nest one level deeper:** `data` is `{ data: [...], pagination: {...} }`. So a paginated list is at **`response.data.data.data`** and its metadata at **`response.data.data.pagination`**. That is ugly and easy to get wrong, so `inventoryAPI.js` below unwraps it — always use the helpers, never reach into the raw axios response.
 
-Endpoints that are **not** paginated (and so return a plain array at `response.data.data`): `inventory-categories`, and any list called with `all=true`.
+Endpoints that are **not** paginated (and so return a plain array at `response.data.data`): `inventory-categories`, `item-attributes`, and any list called with `all=true`.
 
 ### Task 8.1: API client
 
@@ -5257,6 +6127,17 @@ export const inventoryCategoryAPI = {
   create: (data) => api.post("/inventory-categories", data),
   update: (id, data) => api.put(`/inventory-categories/${id}`, data),
   delete: (id) => api.delete(`/inventory-categories/${id}`),
+};
+
+// --- Item attributes (never paginated — small master list, values nested) ---
+export const itemAttributesAPI = {
+  getAll: async () => unwrap(await api.get("/item-attributes")),
+  create: (data) => api.post("/item-attributes", data),
+  update: (id, data) => api.put(`/item-attributes/${id}`, data),
+  delete: (id) => api.delete(`/item-attributes/${id}`),
+  createValue: (attributeId, data) => api.post(`/item-attributes/${attributeId}/values`, data),
+  updateValue: (valueId, data) => api.put(`/item-attributes/values/${valueId}`, data),
+  deleteValue: (valueId) => api.delete(`/item-attributes/values/${valueId}`),
 };
 
 // --- Suppliers ---
@@ -5424,9 +6305,9 @@ Do this **now**, before the pages exist, so each page can be clicked through as 
 
 - [ ] **Step 1: Create stub pages so the routes resolve**
 
-For each of these 16 files in `frontend/src/pages/`, create a stub:
+For each of these 17 files in `frontend/src/pages/`, create a stub:
 
-`Stock.jsx`, `StockItemDetail.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `StockIssues.jsx`, `CreateStockIssue.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`
+`Stock.jsx`, `StockItemDetail.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `StockIssues.jsx`, `CreateStockIssue.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`, `ItemAttributes.jsx`
 
 Stub content (substitute the component name):
 ```jsx
@@ -5455,6 +6336,7 @@ import CreateSupplier from "./pages/CreateSupplier";
 import EditSupplier from "./pages/EditSupplier";
 import SupplierDetail from "./pages/SupplierDetail";
 import InventoryCategories from "./pages/InventoryCategories";
+import ItemAttributes from "./pages/ItemAttributes";
 ```
 
 and the routes, inside `<Route path="/" element={<MainLayout />}>`, after the existing `history` route:
@@ -5491,6 +6373,7 @@ and the routes, inside `<Route path="/" element={<MainLayout />}>`, after the ex
                 </Route>
 
                 <Route path="inventory-categories" element={<InventoryCategories />} />
+                <Route path="item-attributes" element={<ItemAttributes />} />
 ```
 
 ⚠️ The `<Route path="*" element={<NotFound />} />` must remain **last** inside the layout route, or it will swallow everything after it.
@@ -5521,7 +6404,7 @@ and the nav items — Inventory sits after Expenses, before Invoices:
   ];
 ```
 
-Categories are reachable from the Inventory Items page (as Expense Categories are from Expenses), not from the sidebar — the sidebar is already long.
+Categories and Item Attributes are reachable from the Inventory Items page (as Expense Categories are from Expenses), not from the sidebar — the sidebar is already long, and both are set-and-forget masters, not daily screens.
 
 - [ ] **Step 4: Verify the app still builds and every route resolves**
 
@@ -5560,7 +6443,7 @@ git commit -m "feat(inventory): routes, navigation, and page stubs"
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { FaSearch, FaDownload, FaExclamationTriangle, FaBoxOpen, FaRupeeSign, FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { stockAPI, inventoryCategoryAPI, inventoryExportAPI } from "../services/inventoryAPI";
+import { stockAPI, inventoryCategoryAPI, itemAttributesAPI, inventoryExportAPI } from "../services/inventoryAPI";
 import { formatCurrency } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
 
@@ -5581,16 +6464,37 @@ const StatTile = ({ icon: Icon, label, value, tone = "default" }) => {
   );
 };
 
+/** The item's chosen attribute values, as compact chips: "W Cut", "60". */
+const AttributeChips = ({ attributes }) => {
+  if (!attributes || attributes.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {attributes.map((attribute) => (
+        <span
+          key={attribute.value_id}
+          title={`${attribute.attribute_name}: ${attribute.value}`}
+          className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 dark:bg-emerald-500/10 text-gray-600 dark:text-emerald-300"
+        >
+          {attribute.value}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const Stock = () => {
   const [rows, setRows] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [summary, setSummary] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [attributes, setAttributes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [attributeValueId, setAttributeValueId] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -5600,6 +6504,7 @@ const Stock = () => {
       const params = { page, limit: 20 };
       if (search.trim()) params.search = search.trim();
       if (categoryId) params.category_id = categoryId;
+      if (attributeValueId) params.attribute_value_id = attributeValueId;
       if (lowStockOnly) params.low_stock_only = "true";
 
       const { rows: data, pagination: meta } = await stockAPI.getStock(params);
@@ -5612,7 +6517,7 @@ const Stock = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, search, categoryId, lowStockOnly]);
+  }, [page, search, categoryId, attributeValueId, lowStockOnly]);
 
   useEffect(() => {
     // Debounce so typing in the search box does not fire a request per keystroke.
@@ -5623,12 +6528,14 @@ const Stock = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [summaryData, categoryData] = await Promise.all([
+        const [summaryData, categoryData, attributeData] = await Promise.all([
           stockAPI.getSummary(),
           inventoryCategoryAPI.getAll(),
+          itemAttributesAPI.getAll(),
         ]);
         setSummary(summaryData);
         setCategories(categoryData);
+        setAttributes(attributeData);
       } catch (err) {
         console.error("Error loading stock summary:", err);
       }
@@ -5639,7 +6546,7 @@ const Stock = () => {
   // Any filter change resets to page 1 — otherwise you can land on an empty page 5.
   useEffect(() => {
     setPage(1);
-  }, [search, categoryId, lowStockOnly]);
+  }, [search, categoryId, attributeValueId, lowStockOnly]);
 
   const handleExport = async () => {
     try {
@@ -5696,7 +6603,7 @@ const Stock = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search item, code, colour…"
+            placeholder="Search item or code…"
             className="w-full min-h-[44px] pl-11 pr-4 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50 placeholder:text-gray-400"
           />
         </div>
@@ -5711,6 +6618,23 @@ const Stock = () => {
             {categories.map((category) => (
               <option key={category.id} value={category.id}>{category.name}</option>
             ))}
+          </select>
+
+          <select
+            value={attributeValueId}
+            onChange={(e) => setAttributeValueId(e.target.value)}
+            className="flex-1 min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50"
+          >
+            <option value="">All attributes</option>
+            {attributes
+              .filter((attribute) => attribute.values.length > 0)
+              .map((attribute) => (
+                <optgroup key={attribute.id} label={attribute.name}>
+                  {attribute.values.map((value) => (
+                    <option key={value.id} value={value.id}>{value.value}</option>
+                  ))}
+                </optgroup>
+              ))}
           </select>
 
           <button
@@ -5757,6 +6681,7 @@ const Stock = () => {
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 dark:text-emerald-50 truncate">{row.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{row.category.name}</p>
+                    <AttributeChips attributes={row.attributes} />
                   </div>
                   {row.is_low_stock && (
                     <span className="shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
@@ -5816,6 +6741,7 @@ const Stock = () => {
                       {row.item_code && (
                         <p className="text-xs text-gray-500 dark:text-gray-400">{row.item_code}</p>
                       )}
+                      <AttributeChips attributes={row.attributes} />
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{row.category.name}</td>
                     <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-emerald-50">
@@ -5870,6 +6796,8 @@ Check, **with the browser at 390px wide (iPhone width)**:
 - Items render as cards, not a squashed table.
 - The page does **not** scroll horizontally.
 - The low-stock filter toggles and the list updates.
+- An item with attributes shows them as small chips under its name (hover a chip on desktop to see the attribute name).
+- Picking a value in the attribute filter (grouped by attribute) narrows the list to items carrying it; "All attributes" clears it.
 - Typing in search does not fire a request per keystroke (watch the network tab — one request 300ms after you stop).
 
 - [ ] **Step 3: Commit**
@@ -6264,13 +7192,13 @@ git commit -m "feat(inventory): mobile-first daily stock issue entry with wastag
 ### Task 9.3: Remaining pages
 
 **Files:**
-- Modify: `frontend/src/pages/StockItemDetail.jsx`, `StockIssues.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`
+- Modify: `frontend/src/pages/StockItemDetail.jsx`, `StockIssues.jsx`, `PurchaseOrders.jsx`, `CreatePurchaseOrder.jsx`, `PurchaseOrderDetail.jsx`, `ReceivePurchaseOrder.jsx`, `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`, `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`, `InventoryCategories.jsx`, `ItemAttributes.jsx`
 
 These follow the patterns already established in Tasks 9.1 and 9.2 (data fetch → loading/empty/error → cards on mobile, table on `md:` → `<Pagination>`), and mirror existing pages in the codebase. Each is one task; commit after each.
 
 - [ ] **Step 1: `StockItemDetail.jsx`** — clone the layout language of `Stock.jsx`.
   - Fetch: `stockAPI.getItemStock(itemId)` and `stockAPI.getItemMovements(itemId, { page })`.
-  - Show: item name, category, unit, GSM/colour; stat tiles for in-stock and stock value; reorder level and whether it is low.
+  - Show: item name, category, unit, and the item's attribute values as chips (`item.attributes`, same `AttributeChips` treatment as `Stock.jsx`); stat tiles for in-stock and stock value; reorder level and whether it is low.
   - **Open batches table** (this is the FIFO story): received date, supplier, rate, quantity remaining, value. Sorted oldest first — the top row is what the next issue will consume.
   - **Movement history**, paginated, with a movement-type filter. Colour inbound movements (`RECEIPT`, `ADJUSTMENT_IN`) green and outbound (`ISSUE`, `WASTAGE`, `ADJUSTMENT_OUT`) red, and show the sign on the quantity.
   - Commit: `feat(inventory): item detail with FIFO batches and movement history`
@@ -6311,11 +7239,13 @@ These follow the patterns already established in Tasks 9.1 and 9.2 (data fetch �
   - Commit: `feat(inventory): receive material against a purchase order`
 
 - [ ] **Step 7: `InventoryItems.jsx`, `CreateInventoryItem.jsx`, `EditInventoryItem.jsx`** — item CRUD.
-  - List: `inventoryItemAPI.getAll({ page, search, category_id })`; row shows name, code, category, unit, reorder level; edit and delete actions; a link to Categories in the header (mirroring how `Expenses.jsx` links to Expense Categories).
-  - Form fields: name, item code, category (from `inventoryCategoryAPI.getAll()`), unit (fixed select: KG / PCS / METRE / ROLL / LITRE), GSM, colour, reorder level, reorder target, notes.
-  - Show GSM and colour only when the selected category is Fabric — they are meaningless for packing tape. Do not hide them behind a hard-coded id; match on the category name being `Fabric`.
+  - List: `inventoryItemAPI.getAll({ page, search, category_id, attribute_value_id })`; row shows name, code, category, unit, attribute chips (same `AttributeChips` treatment as `Stock.jsx`), reorder level; edit and delete actions; the same grouped attribute-value filter as `Stock.jsx` in the filter row; links to **Categories** and **Item Attributes** in the header (mirroring how `Expenses.jsx` links to Expense Categories).
+  - Form fields: name, item code, category (from `inventoryCategoryAPI.getAll()`), unit (fixed select: KG / PCS / METRE / ROLL / LITRE), one dropdown per attribute (see below), reorder level, reorder target, notes.
+  - **Attribute dropdowns:** fetch `itemAttributesAPI.getAll()` and render **one `<select>` per non-archived attribute**, labelled with the attribute's name, listing its non-archived values, with a "—" empty first option. Every one is optional. Selections are held as `{ [attribute_id]: value_id }` and POSTed as `attribute_value_ids: Object.values(selections).filter(Boolean)`. One value per attribute needs no client-side juggling — a single-select per attribute cannot produce two.
+  - `EditInventoryItem.jsx` pre-selects from the item's `attributes` array (`value_id` keyed by `attribute_id`), and always sends `attribute_value_ids` on save so cleared dropdowns actually clear.
+  - There are **no GSM or colour inputs** — those are just the seeded "GSM" and "Color" attributes, rendered by the same loop as everything else.
   - Delete surfaces the backend's refusal message when the item still has stock.
-  - Commit: `feat(inventory): inventory item CRUD pages`
+  - Commit: `feat(inventory): inventory item CRUD pages with attribute dropdowns`
 
 - [ ] **Step 8: `Suppliers.jsx`, `CreateSupplier.jsx`, `EditSupplier.jsx`, `SupplierDetail.jsx`** — supplier CRUD.
   - Clone `Customers.jsx` / `CreateCustomer.jsx` / `EditCustomer.jsx` / `CustomerDetails.jsx`, swapping `customerAPI` for `supplierAPI` and the fields for name / phone / email / GST / address.
@@ -6328,6 +7258,16 @@ These follow the patterns already established in Tasks 9.1 and 9.2 (data fetch �
   - Not paginated — `inventoryCategoryAPI.getAll()` returns a plain array.
   - The delete failure message from the backend ("Cannot delete this category as it is being used by inventory items") must be shown to the user, not swallowed.
   - Commit: `feat(inventory): inventory category CRUD page`
+
+- [ ] **Step 10: `ItemAttributes.jsx`** — attribute and value management.
+  - Fetch: `itemAttributesAPI.getAll()` — every attribute with its values nested; not paginated. Refetch after every mutation, since one response carries the whole tree.
+  - **Accordion list**, one card per attribute: the collapsed row shows the attribute name, a value count (e.g. "4 values"), and rename/delete actions; tapping the row expands its values. One attribute expanded at a time — this is a phone screen.
+  - Inside an expanded card: each value as a row with inline rename/delete (same inline-edit pattern as `InventoryCategories.jsx`), plus an "Add value" input + button at the bottom (`itemAttributesAPI.createValue(attributeId, { value })`).
+  - "Add attribute" at the top of the page (`itemAttributesAPI.create({ name })`) — a freshly created attribute starts with zero values, exactly like the seeded Color.
+  - Both delete guards surface the backend's refusal messages verbatim ("Cannot delete this attribute/value as it is being used by inventory items") — never swallowed. Deletes go through `ConfirmationModal`, like every other destructive action in the app.
+  - Same success/error banner pattern, dark-mode classes, and ≥44px tap targets as `InventoryCategories.jsx`.
+  - Reached from the Inventory Items page header, beside the Categories link (Step 7).
+  - Commit: `feat(inventory): item attribute management page`
 
 ---
 
@@ -6355,18 +7295,20 @@ Backend on the test DB, `npm run dev` on the frontend, **browser at 390px wide**
 
 1. Create a category "Fabric" → appears in the list.
 2. Create a supplier "Sharma Textiles".
-3. Create an item: 90 GSM White, KG, reorder level 200, reorder target 800.
-4. `/stock` shows it at 0, flagged **LOW**, suggesting a purchase of 800.
-5. Raise a PO: 500 kg @ ₹80. Status `PENDING`. `/stock` now shows **on order: 500**.
-6. Receive 200 kg of it. PO → `PARTIALLY_RECEIVED`, line shows Ordered 500 / Received 200 / Pending 300.
-7. `/stock`: in stock **200**, value **₹16,000**, on order **300**, still LOW (200 ≤ 200).
-8. Receive the remaining 300 kg **at ₹90** (price went up). PO → `RECEIVED`.
-9. Item detail shows **two batches**: 200 @ ₹80 and 300 @ ₹90. Stock 500, value ₹43,000.
-10. Record an issue: 250 kg used, 10 kg wastage.
-11. Item detail: the ₹80 batch is **gone** (200 consumed), the ₹90 batch has 240 left. Stock **240**.
+3. On `/item-attributes` (linked from Inventory Items): add attribute "GSM" with values 60 and 90, and "Cut" with value "W Cut" (the test DB runs no seeders, so this also exercises the attribute page). Try deleting "GSM" now → allowed, nothing uses it yet; re-add it.
+4. Create an item: 90 GSM White, KG, reorder level 200, reorder target 800, picking **GSM: 90** and **Cut: W Cut** from the attribute dropdowns.
+5. `/stock` shows it at 0, flagged **LOW**, suggesting a purchase of 800, with "90" and "W Cut" chips under its name. The attribute filter set to GSM → 60 hides it; GSM → 90 shows it.
+6. Back on `/item-attributes`: deleting the value "90" is now **refused** ("being used by inventory items"). Renaming "GSM" to "Grammage" works and the item's chip tooltip follows.
+7. Raise a PO: 500 kg @ ₹80. Status `PENDING`. `/stock` now shows **on order: 500**.
+8. Receive 200 kg of it. PO → `PARTIALLY_RECEIVED`, line shows Ordered 500 / Received 200 / Pending 300.
+9. `/stock`: in stock **200**, value **₹16,000**, on order **300**, still LOW (200 ≤ 200).
+10. Receive the remaining 300 kg **at ₹90** (price went up). PO → `RECEIVED`.
+11. Item detail shows **two batches**: 200 @ ₹80 and 300 @ ₹90. Stock 500, value ₹43,000.
+12. Record an issue: 250 kg used, 10 kg wastage.
+13. Item detail: the ₹80 batch is **gone** (200 consumed), the ₹90 batch has 240 left. Stock **240**.
     Movement history shows the consumption **split across both batches at their own rates** — this is FIFO working.
-12. Try to issue 9,999 kg → refused with *"Insufficient stock for 90 GSM White: tried to issue 9999 KG, but only 240 KG available"*. Stock unchanged.
-13. Export to Excel → three sheets, numbers match the screen.
+14. Try to issue 9,999 kg → refused with *"Insufficient stock for 90 GSM White: tried to issue 9999 KG, but only 240 KG available"*. Stock unchanged.
+15. Export to Excel → three sheets, numbers match the screen, and the Stock sheet's **Attributes** column reads `Cut: W Cut; Grammage: 90`.
 
 Confirm at every step that the page **does not scroll horizontally** on the phone-width viewport.
 
@@ -6398,12 +7340,13 @@ cd backend && NODE_ENV=production npm run migrate
 ```
 Watch for the `audit_logs` enum migration specifically — it is the one that behaves differently in Postgres. If it fails with *"ALTER TYPE ... cannot run inside a transaction block"*, that migration is being wrapped in a transaction; fix it and re-run.
 
-- [ ] **Step 3: Seed the default categories**
+- [ ] **Step 3: Seed the default categories and attributes**
 
 ```bash
 cd backend && NODE_ENV=production npx sequelize db:seed --seed 20260711000001-inventory-categories.js
+cd backend && NODE_ENV=production npx sequelize db:seed --seed 20260711000002-item-attributes.js
 ```
-Seed **only this one file**. Running `db:seed:all` would re-run the existing seeders and duplicate the expense categories, plate types, and product sizes already in production.
+Seed **only these two files**. Running `db:seed:all` would re-run the existing seeders and duplicate the expense categories, plate types, and product sizes already in production.
 
 - [ ] **Step 4: Deploy the backend to Cloud Run**
 
@@ -6425,7 +7368,8 @@ Target project is `yars-dashboard` (`frontend/.firebaserc`). Then open `https://
 - [ ] **Step 6: Seed the real data with the user**
 
 The module is worthless until the real items exist. Sit with the user and enter:
-- The fabric grades actually stocked (GSM + colour), with honest reorder levels.
+- The business's actual colours as values under the seeded **Color** attribute (it ships empty on purpose), plus any missing Cut or GSM values.
+- The fabric grades actually stocked, picking GSM / Cut / Color from the attribute dropdowns, with honest reorder levels.
 - The consumables (handles, thread, ink, packing).
 - The real suppliers.
 - An opening stock figure per item — enter these as **`ADJUSTMENT_IN`** with the reason *"Opening stock"*, so day one has a real starting position and an honest audit trail.
