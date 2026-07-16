@@ -33,6 +33,13 @@ module.exports = {
       type: "unique",
       name: "item_attribute_values_attribute_id_value_unique",
     });
+    // Composite-FK target: lets inventory_item_attribute_values enforce that a
+    // chosen value actually belongs to the claimed attribute (see below).
+    await queryInterface.addConstraint("item_attribute_values", {
+      fields: ["id", "attribute_id"],
+      type: "unique",
+      name: "item_attribute_values_id_attribute_id_unique",
+    });
 
     await queryInterface.createTable("inventory_item_attribute_values", {
       id: { allowNull: false, primaryKey: true, type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
@@ -50,12 +57,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
+      // No plain FK here: the value must be tied to attribute_id via the
+      // composite FK below, otherwise "Cut" could be paired with a GSM value.
       attribute_value_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: { model: "item_attribute_values", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
       },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
@@ -69,6 +75,18 @@ module.exports = {
       fields: ["item_id", "attribute_id"],
       type: "unique",
       name: "inventory_item_attribute_values_item_id_attribute_id_unique",
+    });
+    // Composite FK: attribute_value_id must belong to attribute_id.
+    await queryInterface.addConstraint("inventory_item_attribute_values", {
+      fields: ["attribute_value_id", "attribute_id"],
+      type: "foreign key",
+      name: "inventory_item_attribute_values_value_attribute_fk",
+      references: {
+        table: "item_attribute_values",
+        fields: ["id", "attribute_id"],
+      },
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     });
   },
 

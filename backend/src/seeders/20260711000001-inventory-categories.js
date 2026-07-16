@@ -15,11 +15,14 @@ module.exports = {
         is_archived: false,
         created_at: now,
         updated_at: now,
-      }))
+      })),
+      { ignoreDuplicates: true }
     );
   },
 
-  async down(queryInterface) {
-    await queryInterface.bulkDelete("inventory_categories", null, {});
+  async down(queryInterface, Sequelize) {
+    await queryInterface.bulkDelete("inventory_categories", {
+      name: { [Sequelize.Op.in]: ["Fabric", "Handle", "Thread", "Ink", "Packing"] },
+    });
   },
 };

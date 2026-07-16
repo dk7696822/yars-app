@@ -51,8 +51,8 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
-      quantity_received: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      rate: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      quantity_received: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      rate: { type: Sequelize.DECIMAL(14, 2), allowNull: false },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
@@ -61,6 +61,7 @@ module.exports = {
     await queryInterface.addIndex("goods_receipts", ["purchase_order_id"]);
     await queryInterface.addIndex("goods_receipt_items", ["goods_receipt_id"]);
     await queryInterface.addIndex("goods_receipt_items", ["item_id"]);
+    await queryInterface.addIndex("goods_receipt_items", ["purchase_order_item_id"]);
   },
 
   async down(queryInterface) {

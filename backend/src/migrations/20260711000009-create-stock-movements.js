@@ -17,7 +17,7 @@ module.exports = {
         allowNull: false,
       },
       // Signed: positive = into stock, negative = out of stock.
-      quantity: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
+      quantity: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
       stock_batch_id: {
         type: Sequelize.UUID,
         allowNull: true,
@@ -25,8 +25,8 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
-      unit_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
-      total_cost: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      unit_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
+      total_cost: { type: Sequelize.DECIMAL(14, 2), allowNull: false, defaultValue: 0 },
       reference_type: {
         type: Sequelize.ENUM("GOODS_RECEIPT", "STOCK_ISSUE", "STOCK_ADJUSTMENT"),
         allowNull: false,
@@ -48,6 +48,7 @@ module.exports = {
     await queryInterface.addIndex("stock_movements", ["reference_type", "reference_id"]);
     await queryInterface.addIndex("stock_movements", ["movement_type"]);
     await queryInterface.addIndex("stock_movements", ["order_id"]);
+    await queryInterface.addIndex("stock_movements", ["stock_batch_id"]);
   },
 
   async down(queryInterface) {

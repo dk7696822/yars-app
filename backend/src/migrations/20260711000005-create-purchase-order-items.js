@@ -19,9 +19,9 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "RESTRICT",
       },
-      quantity_ordered: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      rate: { type: Sequelize.DECIMAL(10, 2), allowNull: false },
-      quantity_received: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+      quantity_ordered: { type: Sequelize.DECIMAL(12, 3), allowNull: false },
+      rate: { type: Sequelize.DECIMAL(14, 2), allowNull: false },
+      quantity_received: { type: Sequelize.DECIMAL(12, 3), allowNull: false, defaultValue: 0 },
       created_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
       updated_at: { allowNull: false, type: Sequelize.DATE, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
     });
