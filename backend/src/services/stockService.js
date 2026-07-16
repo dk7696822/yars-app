@@ -33,6 +33,44 @@ class InsufficientStockError extends Error {
 }
 
 /**
+ * Thrown when FIFO consumption cannot account for the full quantity it was
+ * asked to draw down, after the caller already validated availability. This
+ * should be unreachable in normal operation — if it fires, the batches and
+ * the availability check have disagreed, which is a data-integrity problem,
+ * not a user input problem. Named separately from InsufficientStockError so
+ * controllers can map it to a 500-with-alert instead of a 400, rather than
+ * string-matching the message to tell the two apart.
+ */
+class StockReconciliationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "StockReconciliationError";
+  }
+}
+
+/**
+ * Quantities are DECIMAL(12,3) in the schema. Every public entry point below
+ * quantizes its inputs through this BEFORE any arithmetic touches them. If
+ * two related numbers land on different points of the grid — e.g. a caller
+ * passes a wastage_quantity of 0.0005, which cannot be represented at 3
+ * decimal places — Postgres rounds the batch decrement and the movement
+ * quantity INDEPENDENTLY when each is written, and they can round to
+ * different values: the batches/movements invariant breaks by a whole grid
+ * step. Quantizing once, at the boundary, means every number downstream is
+ * already grid-aligned, so both writes round to the identical value.
+ */
+const quantizeQuantity = (value) => Math.round(parseFloat(value) * 1000) / 1000;
+
+/** Same idea for money: DECIMAL(14,2), quantize to the cent. */
+const quantizeRate = (value) => Math.round(parseFloat(value) * 100) / 100;
+
+/** Round a cost to the cent — used so a FIFO line's total is exactly the sum of its movements. */
+const roundCents = (value) => Math.round(value * 100) / 100;
+
+/** Extract the calendar year from a "YYYY-MM-DD" string without going through timezone-sensitive Date parsing. */
+const yearFromDateString = (dateStr) => Number(String(dateStr).slice(0, 4));
+
+/**
  * Current stock and value for one item, derived from its open batches.
  * @returns {{quantity: number, value: number}}
  */
@@ -80,7 +118,7 @@ const receiveStock = async ({
   }
 
   return db.sequelize.transaction(async (transaction) => {
-    const year = new Date(receipt_date).getFullYear();
+    const year = yearFromDateString(receipt_date);
     const receiptNumber = await generateDocumentNumber(
       db.GoodsReceipt,
       "receipt_number",
@@ -102,8 +140,8 @@ const receiveStock = async ({
     );
 
     for (const line of items) {
-      const quantity = parseFloat(line.quantity_received);
-      const rate = parseFloat(line.rate);
+      const quantity = quantizeQuantity(line.quantity_received);
+      const rate = quantizeRate(line.rate);
 
       if (!(quantity > 0)) {
         throw new Error("Received quantity must be greater than zero");
@@ -228,10 +266,15 @@ const consumeFifo = async (
 
     const available = parseFloat(batch.quantity_remaining);
     const rate = parseFloat(batch.rate);
-    const take = Math.min(available, remainingToConsume);
-    const lineCost = take * rate;
+    const take = quantizeQuantity(Math.min(available, remainingToConsume));
+    // Round each batch's slice of the cost to the cent BEFORE writing it and
+    // before folding it into the running total, so the line's total_cost
+    // ends up exactly the sum of its movements' total_costs (M2) rather than
+    // a separately-rounded float sum that can drift by a cent or two across
+    // many batches.
+    const lineCost = roundCents(take * rate);
 
-    await batch.update({ quantity_remaining: available - take }, { transaction });
+    await batch.update({ quantity_remaining: quantizeQuantity(available - take) }, { transaction });
 
     await db.StockMovement.create(
       {
@@ -251,7 +294,7 @@ const consumeFifo = async (
     );
 
     cost += lineCost;
-    remainingToConsume -= take;
+    remainingToConsume = quantizeQuantity(remainingToConsume - take);
   }
 
   // Epsilon is 0.0005 — HALF the smallest representable quantity step. Quantities
@@ -263,7 +306,7 @@ const consumeFifo = async (
     // Should be unreachable: the caller validates availability first. If we get
     // here, availability and batches disagree — fail loudly rather than write
     // a silently wrong number.
-    throw new Error(
+    throw new StockReconciliationError(
       `FIFO consumption fell short for ${item.name}: ${remainingToConsume} left unconsumed`
     );
   }
@@ -295,7 +338,7 @@ const issueStockInternal = async ({
   }
 
   return db.sequelize.transaction(async (transaction) => {
-    const year = new Date(issue_date).getFullYear();
+    const year = yearFromDateString(issue_date);
     const issueNumber = await generateDocumentNumber(
       db.StockIssue,
       "issue_number",
@@ -310,8 +353,11 @@ const issueStockInternal = async ({
     );
 
     for (const line of items) {
-      const quantity = parseFloat(line.quantity);
-      const wastage = parseFloat(line.wastage_quantity || 0);
+      const quantity = quantizeQuantity(line.quantity);
+      // A wastage_quantity that quantizes down to zero is legal — it just
+      // means "no wastage" — but a primary quantity that quantizes to zero
+      // is a rejected input (see the check below).
+      const wastage = quantizeQuantity(line.wastage_quantity || 0);
 
       if (!(quantity > 0)) {
         throw new Error("Issue quantity must be greater than zero");
@@ -440,7 +486,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
   }
 
   return db.sequelize.transaction(async (transaction) => {
-    const year = new Date(issue_date).getFullYear();
+    const year = yearFromDateString(issue_date);
     const issueNumber = await generateDocumentNumber(
       db.StockIssue,
       "issue_number",
@@ -455,7 +501,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
     );
 
     for (const line of items) {
-      const quantity = parseFloat(line.quantity);
+      const quantity = quantizeQuantity(line.quantity);
       if (!(quantity > 0)) {
         throw new Error("Adjustment quantity must be greater than zero");
       }
@@ -465,16 +511,36 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
         throw new Error(`Inventory item not found: ${line.item_id}`);
       }
 
-      // Value the found stock at the newest known rate for this item.
-      const newest = await db.StockBatch.findOne({
-        where: { item_id: item.id },
+      // Value the found stock at the newest RECEIPT-backed rate for this item.
+      // A previous ADJUSTMENT_IN batch (goods_receipt_item_id IS NULL) has no
+      // real pricing behind it — often literally rate 0, e.g. "found unrecorded
+      // stock" — and if one happens to be the newest batch, using its rate
+      // would poison every ADJUSTMENT_IN after it to 0. Only fall back to the
+      // newest batch of any kind (and then to 0) if the item has never been
+      // formally received at all.
+      const newestReceipted = await db.StockBatch.findOne({
+        where: { item_id: item.id, goods_receipt_item_id: { [Op.ne]: null } },
         order: [
           ["received_date", "DESC"],
           ["sequence_number", "DESC"],
         ],
         transaction,
       });
-      const rate = newest ? parseFloat(newest.rate) : 0;
+
+      let rate;
+      if (newestReceipted) {
+        rate = parseFloat(newestReceipted.rate);
+      } else {
+        const newestAny = await db.StockBatch.findOne({
+          where: { item_id: item.id },
+          order: [
+            ["received_date", "DESC"],
+            ["sequence_number", "DESC"],
+          ],
+          transaction,
+        });
+        rate = newestAny ? parseFloat(newestAny.rate) : 0;
+      }
 
       const batch = await db.StockBatch.create(
         {
@@ -488,6 +554,8 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
         { transaction }
       );
 
+      const totalCost = roundCents(quantity * rate);
+
       await db.StockMovement.create(
         {
           item_id: item.id,
@@ -495,7 +563,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
           quantity, // positive: into stock
           stock_batch_id: batch.id,
           unit_cost: rate,
-          total_cost: quantity * rate,
+          total_cost: totalCost,
           reference_type: "STOCK_ADJUSTMENT",
           reference_id: issue.id,
           movement_date: issue_date,
@@ -509,7 +577,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
           stock_issue_id: issue.id,
           item_id: item.id,
           quantity,
-          total_cost: quantity * rate,
+          total_cost: totalCost,
         },
         { transaction }
       );
@@ -524,6 +592,7 @@ const adjustStock = async ({ issue_date, issue_type, reason, notes = null, items
 
 module.exports = {
   InsufficientStockError,
+  StockReconciliationError,
   getStockOnHand,
   receiveStock,
   recomputePurchaseOrderStatus,

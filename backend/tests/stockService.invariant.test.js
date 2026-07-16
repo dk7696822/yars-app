@@ -12,7 +12,7 @@ const assertReconciled = async (itemId) => {
   const batchTotal = batches.reduce((sum, b) => sum + parseFloat(b.quantity_remaining), 0);
   const ledgerTotal = movements.reduce((sum, m) => sum + parseFloat(m.quantity), 0);
 
-  expect(batchTotal).toBeCloseTo(ledgerTotal, 2);
+  expect(batchTotal).toBeCloseTo(ledgerTotal, 3);
   return batchTotal;
 };
 
@@ -60,10 +60,10 @@ describe("stock invariant: batches reconcile with the movement ledger", () => {
     const total = await assertReconciled(item.id);
 
     // 300 + 400 - 350 - 15 - 25 + 10
-    expect(total).toBeCloseTo(320, 2);
+    expect(total).toBeCloseTo(320, 3);
 
     const stock = await stockService.getStockOnHand(item.id);
-    expect(stock.quantity).toBeCloseTo(320, 2);
+    expect(stock.quantity).toBeCloseTo(320, 3);
   });
 
   it("a failed issue leaves the ledger and the batches reconciled", async () => {
@@ -84,7 +84,7 @@ describe("stock invariant: batches reconcile with the movement ledger", () => {
     ).rejects.toThrow(stockService.InsufficientStockError);
 
     const total = await assertReconciled(item.id);
-    expect(total).toBeCloseTo(100, 2);
+    expect(total).toBeCloseTo(100, 3);
   });
 
   it("concurrent issues of the same item cannot double-spend a batch", async () => {
@@ -112,7 +112,7 @@ describe("stock invariant: batches reconcile with the movement ledger", () => {
     expect(rejected[0].reason).toBeInstanceOf(stockService.InsufficientStockError);
 
     const stock = await stockService.getStockOnHand(item.id);
-    expect(stock.quantity).toBeCloseTo(40, 2); // never negative
+    expect(stock.quantity).toBeCloseTo(40, 3); // never negative
     await assertReconciled(item.id);
   });
 });
