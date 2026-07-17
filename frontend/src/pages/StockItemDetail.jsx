@@ -264,7 +264,7 @@ const StockItemDetail = () => {
                   </div>
                   <div className="text-right">
                     <p className={`font-semibold ${movementColor(movement.movement_type)}`}>
-                      {movementSign(movement.movement_type)}{parseFloat(movement.quantity)} {item.unit}
+                      {movementSign(movement.movement_type)}{Math.abs(parseFloat(movement.quantity))} {item.unit}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{formatCurrency(movement.total_cost)}</p>
                   </div>
