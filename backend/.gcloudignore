@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+tests
+docker-compose.test.yml
+scripts
+.DS_Store
