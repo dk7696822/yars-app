@@ -114,7 +114,7 @@ const EditOrder = () => {
       </Link>
 
       {/* Header */}
-      <div>
+      <div className="hidden sm:block">
         <h1 className="page-title">Edit Order</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
           Update order for <span className="font-medium text-gray-700 dark:text-gray-300">{order?.customer?.name}</span>

@@ -137,7 +137,7 @@ const Invoices = () => {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div className="hidden sm:block">
           <h1 className="page-title">Invoices</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             Generate and manage tax invoices

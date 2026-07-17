@@ -100,7 +100,7 @@ const EditProductSize = () => {
       </Link>
 
       {/* Header */}
-      <div>
+      <div className="hidden sm:block">
         <h1 className="page-title">Edit Product Size</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
           Update details for <span className="font-medium text-gray-700 dark:text-gray-300">{productSize?.size_label}</span>

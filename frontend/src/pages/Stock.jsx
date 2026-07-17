@@ -131,7 +131,7 @@ const Stock = () => {
   return (
     <div className="p-4 sm:p-6 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="hidden sm:block">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50">Stock</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Raw material on hand</p>
         </div>

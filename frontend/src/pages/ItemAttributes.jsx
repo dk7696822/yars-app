@@ -154,7 +154,7 @@ const ItemAttributes = () => {
         </div>
       )}
 
-      <div>
+      <div className="hidden sm:block">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50">Item Attributes</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">GSM, colour, cut — and whatever comes next</p>
       </div>

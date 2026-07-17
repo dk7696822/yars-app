@@ -74,7 +74,7 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed }) => {
 
           {/* Page title */}
           <div className="flex items-center gap-2">
-            <h1 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white font-display tracking-tight">
+            <h1 className="sm:hidden text-lg font-semibold text-gray-900 dark:text-white font-display tracking-tight">
               {getPageTitle()}
             </h1>
           </div>

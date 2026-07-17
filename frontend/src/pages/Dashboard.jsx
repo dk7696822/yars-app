@@ -378,12 +378,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Mobile Header - Simplified */}
-      <div className="sm:hidden">
-        <h1 className="text-2xl font-display font-bold text-gray-900 dark:text-white mb-1">Dashboard</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Business overview</p>
-      </div>
-
       {/* Desktop Header */}
       <div className="dashboard-header hidden sm:block relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-[#111916] dark:via-[#0d1210] dark:to-[#0a0f0d] border border-gray-200/60 dark:border-emerald-900/20 p-5 lg:p-8 dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.5)]">
         <GridPattern className="text-gray-900 dark:text-emerald-500/30" />

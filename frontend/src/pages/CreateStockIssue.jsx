@@ -153,8 +153,8 @@ const CreateStockIssue = () => {
         <FaArrowLeft className="w-3 h-3" /> Back
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50 mb-1">Record Stock Issue</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Material used in production today</p>
+      <h1 className="hidden sm:block text-2xl font-bold text-gray-900 dark:text-emerald-50 mb-1">Record Stock Issue</h1>
+      <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mb-5">Material used in production today</p>
 
       {error && (
         <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300">

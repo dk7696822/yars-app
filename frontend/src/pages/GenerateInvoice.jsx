@@ -84,7 +84,7 @@ const GenerateInvoice = () => {
       </Link>
 
       {/* Header */}
-      <div>
+      <div className="hidden sm:block">
         <h1 className="page-title">Generate New Invoice</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Create an invoice from customer orders</p>
       </div>

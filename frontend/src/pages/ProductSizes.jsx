@@ -85,7 +85,7 @@ const ProductSizes = () => {
       )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-emerald-50">Product Sizes</h1>
+        <h1 className="hidden sm:block text-2xl sm:text-3xl font-bold text-gray-900 dark:text-emerald-50">Product Sizes</h1>
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/product-sizes/new"

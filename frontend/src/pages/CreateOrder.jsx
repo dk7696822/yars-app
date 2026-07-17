@@ -76,7 +76,7 @@ const CreateOrder = () => {
       </Link>
 
       {/* Header */}
-      <div>
+      <div className="hidden sm:block">
         <h1 className="page-title">Create New Order</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Fill in the order details below</p>
       </div>
