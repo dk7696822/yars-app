@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
 import { inventoryItemAPI, supplierAPI, purchaseOrderAPI } from "../services/inventoryAPI";
 import { formatCurrency } from "../utils/formatters";
+import Dropdown from "../components/ui/Dropdown";
 
 const todayISO = () => new Date().toISOString().split("T")[0];
 
@@ -122,12 +123,17 @@ const CreatePurchaseOrder = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Supplier <span className="text-red-500">*</span>
           </label>
-          <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={inputClasses} required>
-            <option value="">Select supplier…</option>
-            {suppliers.map((supplier) => (
-              <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-            ))}
-          </select>
+          <Dropdown
+            id="po-supplier"
+            value={supplierId}
+            onChange={(e) => setSupplierId(e.target.value)}
+            placeholder="Select supplier…"
+            required
+            options={[
+              { value: "", label: "Select supplier…" },
+              ...suppliers.map((supplier) => ({ value: supplier.id, label: supplier.name })),
+            ]}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -164,18 +170,18 @@ const CreatePurchaseOrder = () => {
                 className="rounded-2xl border border-gray-200/60 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] p-4 space-y-3"
               >
                 <div className="flex items-start gap-2">
-                  <select
-                    value={line.item_id}
-                    onChange={(e) => updateLine(index, "item_id", e.target.value)}
-                    className={inputClasses}
-                  >
-                    <option value="">Select item…</option>
-                    {items.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} ({item.unit})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <Dropdown
+                      id={`po-line-item-${index}`}
+                      value={line.item_id}
+                      onChange={(e) => updateLine(index, "item_id", e.target.value)}
+                      placeholder="Select item…"
+                      options={[
+                        { value: "", label: "Select item…" },
+                        ...items.map((item) => ({ value: item.id, label: `${item.name} (${item.unit})` })),
+                      ]}
+                    />
+                  </div>
 
                   {lines.length > 1 && (
                     <button

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { inventoryItemAPI, inventoryCategoryAPI, itemAttributesAPI } from "../services/inventoryAPI";
+import Dropdown from "../components/ui/Dropdown";
 
 const UNITS = ["KG", "PCS", "METRE", "ROLL", "LITRE"];
 
@@ -115,22 +116,28 @@ const CreateInventoryItem = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category <span className="text-red-500">*</span>
             </label>
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClasses} required>
-              <option value="">Select category…</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
+            <Dropdown
+              id="new-item-category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              placeholder="Select category…"
+              required
+              options={[
+                { value: "", label: "Select category…" },
+                ...categories.map((category) => ({ value: category.id, label: category.name })),
+              ]}
+            />
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
-          <select value={unit} onChange={(e) => setUnit(e.target.value)} className={inputClasses}>
-            {UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
+          <Dropdown
+            id="new-item-unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            options={UNITS.map((u) => ({ value: u, label: u }))}
+          />
         </div>
 
         {/* One dropdown per attribute — GSM, Color, Cut and anything added later
@@ -142,16 +149,16 @@ const CreateInventoryItem = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {attribute.name} <span className="text-gray-400">(optional)</span>
                 </label>
-                <select
+                <Dropdown
+                  id={`new-item-attr-${attribute.id}`}
                   value={selections[attribute.id] || ""}
                   onChange={(e) => setSelections((current) => ({ ...current, [attribute.id]: e.target.value }))}
-                  className={inputClasses}
-                >
-                  <option value="">—</option>
-                  {attribute.values.map((value) => (
-                    <option key={value.id} value={value.id}>{value.value}</option>
-                  ))}
-                </select>
+                  placeholder="—"
+                  options={[
+                    { value: "", label: "—" },
+                    ...attribute.values.map((value) => ({ value: value.id, label: value.value })),
+                  ]}
+                />
               </div>
             ))}
           </div>

@@ -6,6 +6,7 @@ import Pagination from "../components/common/Pagination";
 import FilterBar from "../components/common/FilterBar";
 import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 import ConfirmationModal from "../components/common/ConfirmationModal";
+import Dropdown from "../components/ui/Dropdown";
 
 const AttributeChips = ({ attributes }) => {
   if (!attributes || attributes.length === 0) return null;
@@ -24,9 +25,6 @@ const AttributeChips = ({ attributes }) => {
     </div>
   );
 };
-
-const inputClasses =
-  "min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50";
 
 const InventoryItems = () => {
   const location = useLocation();
@@ -178,28 +176,34 @@ const InventoryItems = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`w-full ${inputClasses}`}>
-              <option value="">All categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
+            <Dropdown
+              id="item-category-filter"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              placeholder="All categories"
+              options={[
+                { value: "", label: "All categories" },
+                ...categories.map((category) => ({ value: category.id, label: category.name })),
+              ]}
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute</label>
-            <select value={attributeValueId} onChange={(e) => setAttributeValueId(e.target.value)} className={`w-full ${inputClasses}`}>
-              <option value="">All attributes</option>
-              {attributes
-                .filter((attribute) => attribute.values.length > 0)
-                .map((attribute) => (
-                  <optgroup key={attribute.id} label={attribute.name}>
-                    {attribute.values.map((value) => (
-                      <option key={value.id} value={value.id}>{value.value}</option>
-                    ))}
-                  </optgroup>
-                ))}
-            </select>
+            <Dropdown
+              id="item-attribute-filter"
+              value={attributeValueId}
+              onChange={(e) => setAttributeValueId(e.target.value)}
+              placeholder="All attributes"
+              options={[
+                { value: "", label: "All attributes" },
+                ...attributes
+                  .filter((attribute) => attribute.values.length > 0)
+                  .flatMap((attribute) =>
+                    attribute.values.map((value) => ({ value: value.id, label: value.value, group: attribute.name }))
+                  ),
+              ]}
+            />
           </div>
         </div>
       </FilterBar>

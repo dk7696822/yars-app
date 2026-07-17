@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
 import { inventoryItemAPI, stockIssueAPI, stockAPI } from "../services/inventoryAPI";
 import { orderAPI } from "../services/api";
+import Dropdown from "../components/ui/Dropdown";
 
 const RECENT_ITEMS_KEY = "yars_recent_inventory_items";
 
@@ -177,12 +178,17 @@ const CreateStockIssue = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-            <select value={issueType} onChange={(e) => setIssueType(e.target.value)} className={inputClasses}>
-              <option value="ISSUE">Production issue</option>
-              <option value="WASTAGE">Wastage write-off</option>
-              <option value="ADJUSTMENT_OUT">Adjustment — remove stock</option>
-              <option value="ADJUSTMENT_IN">Adjustment — add stock</option>
-            </select>
+            <Dropdown
+              id="issue-type"
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value)}
+              options={[
+                { value: "ISSUE", label: "Production issue" },
+                { value: "WASTAGE", label: "Wastage write-off" },
+                { value: "ADJUSTMENT_OUT", label: "Adjustment — remove stock" },
+                { value: "ADJUSTMENT_IN", label: "Adjustment — add stock" },
+              ]}
+            />
           </div>
         </div>
 
@@ -210,14 +216,19 @@ const CreateStockIssue = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Customer order <span className="text-gray-400">(optional)</span>
             </label>
-            <select value={orderId} onChange={(e) => setOrderId(e.target.value)} className={inputClasses}>
-              <option value="">Not linked to an order</option>
-              {orders.map((order) => (
-                <option key={order.id} value={order.id}>
-                  {order.customer?.name} — {new Date(order.order_date).toLocaleDateString("en-IN")}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              id="issue-order"
+              value={orderId}
+              onChange={(e) => setOrderId(e.target.value)}
+              placeholder="Not linked to an order"
+              options={[
+                { value: "", label: "Not linked to an order" },
+                ...orders.map((order) => ({
+                  value: order.id,
+                  label: `${order.customer?.name} — ${new Date(order.order_date).toLocaleDateString("en-IN")}`,
+                })),
+              ]}
+            />
           </div>
         )}
 
@@ -246,18 +257,18 @@ const CreateStockIssue = () => {
                 className="rounded-2xl border border-gray-200/60 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] p-4 space-y-3"
               >
                 <div className="flex items-start gap-2">
-                  <select
-                    value={line.item_id}
-                    onChange={(e) => updateLine(index, "item_id", e.target.value)}
-                    className={inputClasses}
-                  >
-                    <option value="">Select item…</option>
-                    {items.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} ({item.unit})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <Dropdown
+                      id={`issue-line-item-${index}`}
+                      value={line.item_id}
+                      onChange={(e) => updateLine(index, "item_id", e.target.value)}
+                      placeholder="Select item…"
+                      options={[
+                        { value: "", label: "Select item…" },
+                        ...items.map((item) => ({ value: item.id, label: `${item.name} (${item.unit})` })),
+                      ]}
+                    />
+                  </div>
 
                   {lines.length > 1 && (
                     <button

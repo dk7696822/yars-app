@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
 import FilterBar from "../components/common/FilterBar";
 import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
+import Dropdown from "../components/ui/Dropdown";
 
 const ISSUE_TYPES = ["ISSUE", "WASTAGE", "ADJUSTMENT_IN", "ADJUSTMENT_OUT"];
 
@@ -121,12 +122,16 @@ const StockIssues = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
-            <select value={issueType} onChange={(e) => setIssueType(e.target.value)} className={`w-full ${inputClasses}`}>
-              <option value="">All types</option>
-              {ISSUE_TYPES.map((type) => (
-                <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
-              ))}
-            </select>
+            <Dropdown
+              id="issue-type-filter"
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value)}
+              placeholder="All types"
+              options={[
+                { value: "", label: "All types" },
+                ...ISSUE_TYPES.map((type) => ({ value: type, label: type.replace(/_/g, " ") })),
+              ]}
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From date</label>

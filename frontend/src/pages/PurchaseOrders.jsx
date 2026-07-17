@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
 import FilterBar from "../components/common/FilterBar";
 import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
+import Dropdown from "../components/ui/Dropdown";
 
 const STATUSES = ["PENDING", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"];
 
@@ -21,9 +22,6 @@ const StatusBadge = ({ status }) => (
     {status.replace(/_/g, " ")}
   </span>
 );
-
-const inputClasses =
-  "min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50";
 
 const PurchaseOrders = () => {
   const [rows, setRows] = useState([]);
@@ -115,22 +113,30 @@ const PurchaseOrders = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Supplier</label>
-            <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`w-full ${inputClasses}`}>
-              <option value="">All suppliers</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-              ))}
-            </select>
+            <Dropdown
+              id="po-supplier-filter"
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              placeholder="All suppliers"
+              options={[
+                { value: "", label: "All suppliers" },
+                ...suppliers.map((supplier) => ({ value: supplier.id, label: supplier.name })),
+              ]}
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className={`w-full ${inputClasses}`}>
-              <option value="">All statuses</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-              ))}
-            </select>
+            <Dropdown
+              id="po-status-filter"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              placeholder="All statuses"
+              options={[
+                { value: "", label: "All statuses" },
+                ...STATUSES.map((s) => ({ value: s, label: s.replace(/_/g, " ") })),
+              ]}
+            />
           </div>
         </div>
       </FilterBar>

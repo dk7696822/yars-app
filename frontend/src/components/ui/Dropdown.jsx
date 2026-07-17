@@ -2,15 +2,21 @@ import { useState, useRef, useEffect } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { cn } from '../../lib/utils';
 
-const Dropdown = ({ 
-  options, 
-  value, 
-  onChange, 
+/**
+ * Custom-styled replacement for a native <select>. Options may carry an
+ * optional `group` key — consecutive options sharing a group get a small
+ * header above them (the custom equivalent of <optgroup>).
+ */
+const Dropdown = ({
+  options,
+  value,
+  onChange,
   placeholder = 'Select an option',
   className,
   id,
   name,
   required,
+  disabled = false,
   label
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,9 +66,10 @@ const Dropdown = ({
           "border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a]",
           "text-gray-900 dark:text-emerald-50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
           isOpen && "ring-2 ring-primary border-primary",
+          disabled && "opacity-50 pointer-events-none",
           className
         )}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         tabIndex={0}
         role="combobox"
         aria-expanded={isOpen}
@@ -83,23 +90,33 @@ const Dropdown = ({
           role="listbox"
           id={`${id}-options`}
         >
-          {options.map((option) => (
-            <li
-              key={option.value}
-              className={cn(
-                "px-3 py-2.5 cursor-pointer text-sm transition-colors",
-                "hover:bg-gray-100 dark:hover:bg-emerald-500/10",
-                selectedOption?.value === option.value
-                  ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400 font-medium"
-                  : "text-gray-900 dark:text-gray-100"
-              )}
-              onClick={() => handleOptionClick(option)}
-              role="option"
-              aria-selected={selectedOption?.value === option.value}
-            >
-              {option.label}
-            </li>
-          ))}
+          {options.map((option, index) => {
+            const showGroupHeader = option.group && option.group !== options[index - 1]?.group;
+            return (
+              <li key={option.value} role="presentation">
+                {showGroupHeader && (
+                  <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 select-none">
+                    {option.group}
+                  </p>
+                )}
+                <div
+                  className={cn(
+                    "px-3 py-2.5 cursor-pointer text-sm transition-colors",
+                    option.group && "pl-5",
+                    "hover:bg-gray-100 dark:hover:bg-emerald-500/10",
+                    selectedOption?.value === option.value
+                      ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400 font-medium"
+                      : "text-gray-900 dark:text-gray-100"
+                  )}
+                  onClick={() => handleOptionClick(option)}
+                  role="option"
+                  aria-selected={selectedOption?.value === option.value}
+                >
+                  {option.label}
+                </div>
+              </li>
+            );
+          })}
           {options.length === 0 && (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
               No options available

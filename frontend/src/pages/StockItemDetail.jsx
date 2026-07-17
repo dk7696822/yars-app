@@ -4,6 +4,7 @@ import { FaArrowLeft, FaBoxOpen, FaRupeeSign, FaLayerGroup } from "react-icons/f
 import { stockAPI } from "../services/inventoryAPI";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
+import Dropdown from "../components/ui/Dropdown";
 
 const MOVEMENT_TYPES = ["RECEIPT", "ISSUE", "WASTAGE", "ADJUSTMENT_IN", "ADJUSTMENT_OUT"];
 const INBOUND_TYPES = ["RECEIPT", "ADJUSTMENT_IN"];
@@ -232,16 +233,18 @@ const StockItemDetail = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-emerald-50">Movement history</h2>
-          <select
-            value={movementType}
-            onChange={(e) => setMovementType(e.target.value)}
-            className="min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50"
-          >
-            <option value="">All movements</option>
-            {MOVEMENT_TYPES.map((type) => (
-              <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
-            ))}
-          </select>
+          <div className="w-48">
+            <Dropdown
+              id="movement-type"
+              value={movementType}
+              onChange={(e) => setMovementType(e.target.value)}
+              placeholder="All movements"
+              options={[
+                { value: "", label: "All movements" },
+                ...MOVEMENT_TYPES.map((type) => ({ value: type, label: type.replace(/_/g, " ") })),
+              ]}
+            />
+          </div>
         </div>
 
         {movements.length === 0 ? (
