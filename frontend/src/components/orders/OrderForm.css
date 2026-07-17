@@ -1,204 +1,317 @@
+/* OrderForm - Mobile-first responsive design */
 .order-form {
-  background-color: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
+@media (min-width: 640px) {
   .order-form {
-    background-color: var(--gray-800, #1f2937);
-    color: var(--gray-200, #e5e7eb);
+    padding: 1.5rem;
   }
 }
 
-/* Support for class-based dark mode */
-.dark .order-form {
-  background-color: var(--gray-800, #1f2937);
-  color: var(--gray-200, #e5e7eb);
-}
-
+/* Form rows - Stack on mobile, inline on desktop */
 .form-row {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .form-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
 }
 
 .form-group {
   flex: 1;
+  min-width: 0; /* Prevent overflow */
+}
+
+@media (min-width: 640px) {
+  .form-group {
+    min-width: 200px;
+  }
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   font-weight: 500;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.dark .form-group label {
+  color: #d1d5db;
 }
 
 .form-control,
 select {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  transition: var(--transition);
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
   background-color: white;
-  color: var(--gray-900);
+  color: #111827;
+  min-height: 48px;
 }
 
 .form-control:focus,
 select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  border-color: #0d6b4f;
+  box-shadow: 0 0 0 3px rgba(13, 107, 79, 0.15);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .form-group label {
-    color: var(--gray-300, #d1d5db);
-  }
-
-  .form-control,
-  select {
-    background-color: var(--gray-700, #374151);
-    border-color: var(--gray-600, #4b5563);
-    color: var(--gray-100, #f3f4f6);
-  }
+.form-control::placeholder {
+  color: #9ca3af;
 }
 
-/* Support for class-based dark mode */
-.dark .form-group label {
-  color: var(--gray-300, #d1d5db);
-}
-
+/* Dark mode */
 .dark .form-control,
 .dark select {
-  background-color: var(--gray-700, #374151);
-  border-color: var(--gray-600, #4b5563);
-  color: var(--gray-100, #f3f4f6);
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
 }
 
+.dark .form-control::placeholder {
+  color: #6b7280;
+}
+
+.dark .form-control:focus,
+.dark select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Product sizes section */
 .product-sizes-section {
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--border-radius);
+  margin-bottom: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
   padding: 1rem;
-  background-color: var(--gray-50);
+  background-color: #f9fafb;
+}
+
+.dark .product-sizes-section {
+  border-color: #374151;
+  background-color: rgba(17, 24, 39, 0.5);
 }
 
 .section-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+@media (min-width: 480px) {
+  .section-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
 .section-header h3 {
-  font-size: 1.125rem;
-  color: var(--gray-700);
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .product-sizes-section {
-    border-color: var(--gray-700, #374151);
-    background-color: var(--gray-900, #111827);
-  }
-
-  .section-header h3 {
-    color: var(--gray-300, #d1d5db);
-  }
-}
-
-/* Support for class-based dark mode */
-.dark .product-sizes-section {
-  border-color: var(--gray-700, #374151);
-  background-color: var(--gray-900, #111827);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
 }
 
 .dark .section-header h3 {
-  color: var(--gray-300, #d1d5db);
+  color: #f3f4f6;
 }
 
 .btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  background-color: #0d6b4f;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 40px;
+  width: 100%;
 }
 
+@media (min-width: 480px) {
+  .btn-sm {
+    width: auto;
+  }
+}
+
+.btn-sm:hover {
+  background-color: #065f46;
+}
+
+.btn-sm:active {
+  transform: scale(0.95);
+}
+
+/* Product size row - Mobile card layout */
 .product-size-row {
   display: flex;
-  gap: 1rem;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px dashed var(--gray-300);
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  position: relative;
 }
 
-.product-size-row:last-child {
+.dark .product-size-row {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+@media (min-width: 768px) {
+  .product-size-row {
+    flex-direction: row;
+    align-items: flex-end;
+    padding: 0.75rem;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px dashed #e5e7eb;
+    border-radius: 0;
+  }
+
+  .product-size-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .dark .product-size-row {
+    background-color: transparent;
+    border-bottom-color: #374151;
+  }
+}
+
+.product-size-row .form-group {
   margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
 }
 
 .amount-column {
-  width: 120px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .amount-column {
+    width: 120px;
+    flex-shrink: 0;
+  }
 }
 
 .amount-display {
-  padding: 0.5rem;
-  background-color: var(--gray-100);
-  border: 1px solid var(--gray-300);
-  border-radius: var(--border-radius);
-  font-weight: 500;
+  padding: 0.75rem 1rem;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+  font-weight: 600;
   text-align: right;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .product-size-row {
-    border-bottom-color: var(--gray-700, #374151);
-  }
-
-  .amount-display {
-    background-color: var(--gray-800, #1f2937);
-    border-color: var(--gray-700, #374151);
-    color: var(--gray-200, #e5e7eb);
-  }
-}
-
-/* Support for class-based dark mode */
-.dark .product-size-row {
-  border-bottom-color: var(--gray-700, #374151);
+  color: #047857;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .dark .amount-display {
-  background-color: var(--gray-800, #1f2937);
-  border-color: var(--gray-700, #374151);
-  color: var(--gray-200, #e5e7eb);
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
 }
 
+/* Remove button */
 .remove-btn {
-  align-self: flex-end;
-  margin-bottom: 0.5rem;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
+.dark .remove-btn {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+@media (min-width: 768px) {
+  .remove-btn {
+    position: static;
+    align-self: flex-end;
+    margin-bottom: 0.25rem;
+  }
+}
+
+.remove-btn:hover:not(:disabled) {
+  background-color: #fecaca;
+}
+
+.dark .remove-btn:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+.remove-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+/* Order summary */
 .order-summary {
-  background-color: var(--gray-100);
-  border-radius: var(--border-radius);
+  background-color: #f8fafc;
+  border-radius: 0.75rem;
   padding: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .order-summary {
+  background-color: rgba(30, 41, 59, 0.5);
+  border-color: #374151;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--gray-200);
+  align-items: center;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9375rem;
+  color: #374151;
+}
+
+.dark .summary-row {
+  border-bottom-color: #374151;
+  color: #d1d5db;
 }
 
 .summary-row:last-child {
@@ -206,52 +319,150 @@ select:focus {
 }
 
 .summary-row.total {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.125rem;
-  color: var(--primary-color);
-  padding-top: 0.75rem;
+  color: #0d6b4f;
+  padding-top: 0.875rem;
+  margin-top: 0.25rem;
+  border-top: 2px solid #0d6b4f;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .order-summary {
-    background-color: var(--gray-800, #1f2937);
-  }
-
-  .summary-row {
-    border-bottom-color: var(--gray-700, #374151);
-  }
+.dark .summary-row.total {
+  color: #34d399;
+  border-top-color: #34d399;
 }
 
-/* Support for class-based dark mode */
-.dark .order-summary {
-  background-color: var(--gray-800, #1f2937);
-}
-
-.dark .summary-row {
-  border-bottom-color: var(--gray-700, #374151);
-}
-
+/* Form actions */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (min-width: 480px) {
+  .form-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+.dark .form-actions {
+  border-top-color: #374151;
 }
 
 .form-actions button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  min-height: 48px;
+  width: 100%;
 }
 
-@media (max-width: 768px) {
-  .form-row,
-  .product-size-row {
-    flex-direction: column;
-    gap: 0.5rem;
+@media (min-width: 480px) {
+  .form-actions button {
+    width: auto;
   }
+}
 
-  .amount-column {
-    width: 100%;
-  }
+.btn-primary {
+  background-color: #0d6b4f;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(13, 107, 79, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #065f46;
+  box-shadow: 0 6px 10px -2px rgba(13, 107, 79, 0.3);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6;
+}
+
+.btn-secondary:active {
+  transform: scale(0.95);
+}
+
+.dark .btn-secondary {
+  background-color: #1f2937;
+  color: #d1d5db;
+  border-color: #374151;
+}
+
+.dark .btn-secondary:hover {
+  background-color: #374151;
+}
+
+/* DatePicker mobile fixes */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+}
+
+/* DatePicker dark mode */
+.dark .react-datepicker {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dark .react-datepicker__header {
+  background-color: #111827;
+  border-bottom-color: #374151;
+}
+
+.dark .react-datepicker__current-month,
+.dark .react-datepicker__day-name,
+.dark .react-datepicker-time__header {
+  color: #f3f4f6;
+}
+
+.dark .react-datepicker__day {
+  color: #d1d5db;
+}
+
+.dark .react-datepicker__day:hover {
+  background-color: #374151;
+}
+
+.dark .react-datepicker__day--selected,
+.dark .react-datepicker__day--keyboard-selected {
+  background-color: #10b981;
+  color: white;
+}
+
+.dark .react-datepicker__day--disabled {
+  color: #4b5563;
+}
+
+.dark .react-datepicker__navigation-icon::before {
+  border-color: #9ca3af;
 }

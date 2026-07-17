@@ -41,6 +41,18 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "order_id",
         as: "payments",
       });
+
+      // Inventory consumption tagged to this order. One-directional:
+      // Order logic never reads or depends on Inventory.
+      Order.hasMany(models.StockMovement, {
+        foreignKey: "order_id",
+        as: "stockMovements",
+      });
+
+      Order.hasMany(models.StockIssue, {
+        foreignKey: "order_id",
+        as: "stockIssues",
+      });
     }
   }
 
@@ -134,6 +146,75 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "orders",
       timestamps: true,
       underscored: true,
+      hooks: {
+        afterCreate: async (order, options) => {
+          const { createAuditLog, extractOrderAuditData } = require("../services/auditService");
+          const { AuditLog, Customer } = sequelize.models;
+
+          // Get customer name
+          let customerName = null;
+          if (order.customer_id) {
+            const customer = await Customer.findByPk(order.customer_id);
+            customerName = customer?.name;
+          }
+
+          await createAuditLog(AuditLog, {
+            entityType: "ORDER",
+            entityId: order.id,
+            action: "CREATE",
+            newValues: extractOrderAuditData(order),
+            metadata: {
+              customer_name: customerName,
+              status: order.status,
+              order_date: order.order_date,
+            },
+            transaction: options.transaction,
+          });
+        },
+
+        beforeUpdate: async (order, options) => {
+          // Store previous values for comparison
+          order._previousValues = { ...order._previousDataValues };
+        },
+
+        afterUpdate: async (order, options) => {
+          const { createAuditLog, extractOrderAuditData } = require("../services/auditService");
+          const { AuditLog, Customer } = sequelize.models;
+
+          const previousStatus = order._previousValues?.status;
+          const currentStatus = order.status;
+          const previousArchived = order._previousValues?.is_archived;
+          const currentArchived = order.is_archived;
+
+          // Only log if status changed or order was archived (soft delete)
+          if (previousStatus !== currentStatus || previousArchived !== currentArchived) {
+            // Get customer name
+            let customerName = null;
+            if (order.customer_id) {
+              const customer = await Customer.findByPk(order.customer_id);
+              customerName = customer?.name;
+            }
+
+            // Determine if this is a soft delete
+            const action = !previousArchived && currentArchived ? "DELETE" : "UPDATE";
+
+            await createAuditLog(AuditLog, {
+              entityType: "ORDER",
+              entityId: order.id,
+              action,
+              oldValues: extractOrderAuditData(order._previousValues),
+              newValues: extractOrderAuditData(order),
+              metadata: {
+                customer_name: customerName,
+                previous_status: previousStatus,
+                new_status: currentStatus,
+                is_soft_delete: action === "DELETE",
+              },
+              transaction: options.transaction,
+            });
+          }
+        },
+      },
     }
   );
 

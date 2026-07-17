@@ -409,7 +409,150 @@ const exportExpensesData = async (req, res) => {
   }
 };
 
+/**
+ * Export inventory as a 3-sheet workbook: Stock, Movements, Purchases.
+ * Uses the same XLSX pattern as exportDashboardData above.
+ */
+const exportInventoryData = async (req, res) => {
+  try {
+    const { sequelize } = require("../models");
+    const { QueryTypes } = require("sequelize");
+    const { from_date, to_date } = req.query;
+
+    // Postgres returns DECIMAL/SUM columns as strings; coerce the named
+    // columns so the spreadsheet cells are real numbers, not text.
+    const toNumbers = (rows, numericColumns) =>
+      rows.map((row) => {
+        const out = { ...row };
+        for (const col of numericColumns) {
+          out[col] = row[col] === null || row[col] === undefined ? 0 : parseFloat(row[col]);
+        }
+        return out;
+      });
+
+    // --- Sheet 1: current stock ---
+    const stockRows = await sequelize.query(
+      `SELECT
+         i.name                                          AS "Item",
+         i.item_code                                     AS "Code",
+         c.name                                          AS "Category",
+         i.unit                                          AS "Unit",
+         COALESCE((
+           SELECT string_agg(a.name || ': ' || v.value, '; ' ORDER BY a.name)
+           FROM inventory_item_attribute_values iav
+           JOIN item_attributes a ON a.id = iav.attribute_id
+           JOIN item_attribute_values v ON v.id = iav.attribute_value_id
+           WHERE iav.item_id = i.id
+         ), '')                                          AS "Attributes",
+         COALESCE(SUM(b.quantity_remaining), 0)          AS "In Stock",
+         COALESCE(SUM(b.quantity_remaining * b.rate), 0) AS "Stock Value",
+         i.reorder_level                                 AS "Reorder Level",
+         CASE
+           WHEN i.reorder_level > 0
+            AND COALESCE(SUM(b.quantity_remaining), 0) <= i.reorder_level
+           THEN 'LOW'
+           ELSE 'OK'
+         END                                             AS "Status"
+       FROM inventory_items i
+       JOIN inventory_categories c ON c.id = i.category_id
+       LEFT JOIN stock_batches b ON b.item_id = i.id AND b.quantity_remaining > 0
+       WHERE i.is_archived = false
+       GROUP BY i.id, c.id
+       ORDER BY i.name ASC`,
+      { type: QueryTypes.SELECT }
+    );
+
+    // --- Sheet 2: movements (date-filtered) ---
+    const movementConditions = [];
+    const movementReplacements = {};
+
+    if (from_date) {
+      movementConditions.push("m.movement_date >= :from_date");
+      movementReplacements.from_date = from_date;
+    }
+    if (to_date) {
+      movementConditions.push("m.movement_date <= :to_date");
+      movementReplacements.to_date = to_date;
+    }
+
+    const movementWhere = movementConditions.length
+      ? `WHERE ${movementConditions.join(" AND ")}`
+      : "";
+
+    const movementRows = await sequelize.query(
+      `SELECT
+         m.movement_date  AS "Date",
+         i.name           AS "Item",
+         m.movement_type  AS "Type",
+         m.quantity       AS "Quantity",
+         i.unit           AS "Unit",
+         m.unit_cost      AS "Rate",
+         m.total_cost     AS "Cost",
+         m.notes          AS "Notes"
+       FROM stock_movements m
+       JOIN inventory_items i ON i.id = m.item_id
+       ${movementWhere}
+       ORDER BY m.movement_date DESC, m.created_at DESC`,
+      { replacements: movementReplacements, type: QueryTypes.SELECT }
+    );
+
+    // --- Sheet 3: purchases ---
+    const purchaseRows = await sequelize.query(
+      `SELECT
+         po.po_number                                             AS "PO Number",
+         po.order_date                                            AS "Order Date",
+         s.name                                                   AS "Supplier",
+         i.name                                                   AS "Item",
+         poi.quantity_ordered                                     AS "Ordered",
+         poi.quantity_received                                    AS "Received",
+         GREATEST(poi.quantity_ordered - poi.quantity_received, 0) AS "Pending",
+         i.unit                                                   AS "Unit",
+         poi.rate                                                 AS "Rate",
+         (poi.quantity_ordered * poi.rate)                        AS "Order Value",
+         po.status                                                AS "Status"
+       FROM purchase_order_items poi
+       JOIN purchase_orders po ON po.id = poi.purchase_order_id
+       JOIN suppliers s ON s.id = po.supplier_id
+       JOIN inventory_items i ON i.id = poi.item_id
+       WHERE po.is_archived = false
+       ORDER BY po.order_date DESC`,
+      { type: QueryTypes.SELECT }
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(toNumbers(stockRows, ["In Stock", "Stock Value", "Reorder Level"])),
+      "Stock"
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(toNumbers(movementRows, ["Quantity", "Rate", "Cost"])),
+      "Movements"
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.json_to_sheet(toNumbers(purchaseRows, ["Ordered", "Received", "Pending", "Rate", "Order Value"])),
+      "Purchases"
+    );
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="inventory.xlsx"');
+
+    return res.send(buffer);
+  } catch (err) {
+    console.error("Error exporting inventory data:", err);
+    return error(res, 500, "Failed to export inventory data", err.message);
+  }
+};
+
 module.exports = {
   exportDashboardData,
   exportExpensesData,
+  exportInventoryData,
 };

@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { FaSave, FaTimes } from "react-icons/fa";
+import { FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import Dropdown from "../ui/Dropdown";
-import Alert from "../common/Alert";
-import Spinner from "../common/Spinner";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { orderAPI } from "../../services/api";
 import "react-datepicker/dist/react-datepicker.css";
@@ -136,13 +134,18 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
   };
 
   return (
-    <div className="generate-invoice-form">
-      {error && <Alert type="danger" message={error} />}
+    <div className="generate-invoice-form p-4 sm:p-6">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 mb-5">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-row grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="form-group">
-            <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Customer *
             </label>
             <Dropdown
@@ -162,8 +165,8 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="tax_percent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div>
+            <label htmlFor="tax_percent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Tax Percentage (%)
             </label>
             <input
@@ -175,14 +178,14 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               min="0"
               max="100"
               step="0.01"
-              className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
         </div>
 
-        <div className="form-row grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="form-group">
-            <label htmlFor="billing_period_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="billing_period_start" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Billing Period Start *
             </label>
             <DatePicker
@@ -192,14 +195,15 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               selectsStart
               startDate={formData.billing_period_start}
               endDate={formData.billing_period_end}
-              className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               dateFormat="dd/MM/yyyy"
               required
+              wrapperClassName="w-full"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="billing_period_end" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div>
+            <label htmlFor="billing_period_end" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Billing Period End *
             </label>
             <DatePicker
@@ -210,14 +214,15 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               startDate={formData.billing_period_start}
               endDate={formData.billing_period_end}
               minDate={formData.billing_period_start}
-              className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               dateFormat="dd/MM/yyyy"
               required
+              wrapperClassName="w-full"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="payment_due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div>
+            <label htmlFor="payment_due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Payment Due Date
             </label>
             <DatePicker
@@ -225,37 +230,44 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               selected={formData.payment_due_date}
               onChange={(date) => handleDateChange(date, "payment_due_date")}
               minDate={new Date()}
-              className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               dateFormat="dd/MM/yyyy"
+              wrapperClassName="w-full"
             />
           </div>
         </div>
 
         {selectedCustomer && (
-          <div className="orders-section mb-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Select Orders to Include</h3>
+          <div className="orders-section">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Select Orders to Include</h3>
 
             {availableOrders.length === 0 ? (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md">
-                <p className="text-gray-500 dark:text-gray-400">No unbilled orders found for this customer. Please create orders first.</p>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No unbilled orders found for this customer. Please create orders first.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-3">
                 {availableOrders.map((order) => (
                   <div
                     key={order.id}
-                    className={`p-4 rounded-md border cursor-pointer transition-colors ${
-                      formData.order_ids.includes(order.id) ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all active:scale-[0.98] ${
+                      formData.order_ids.includes(order.id)
+                        ? "bg-primary/5 dark:bg-primary/10 border-primary shadow-sm"
+                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                     onClick={() => handleOrderSelection(order.id)}
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Order Date: {formatDate(order.order_date)}</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                          Order Date: {formatDate(order.order_date)}
+                        </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Items: {order.orderProductSizes.length}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(order.totalReceivable)}</p>
+                      <div className="sm:text-right">
+                        <p className="font-semibold text-primary dark:text-primary-400 text-base sm:text-lg">
+                          {formatCurrency(order.totalReceivable)}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -265,27 +277,28 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
           </div>
         )}
 
-        <div className="form-actions flex justify-end space-x-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 mt-5 border-t border-gray-100 dark:border-gray-800">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-h-[48px]"
           >
-            <FaTimes className="inline mr-2" /> Cancel
+            <FaTimes className="w-4 h-4" /> Cancel
           </button>
 
           <button
             type="submit"
             disabled={isLoading || !formData.customer_id || formData.order_ids.length === 0}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px]"
           >
             {isLoading ? (
               <>
-                <Spinner size="small" color="white" /> Generating...
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Generating...
               </>
             ) : (
               <>
-                <FaSave className="inline mr-2" /> Generate Invoice
+                <FaSave className="w-4 h-4" /> Generate Invoice
               </>
             )}
           </button>

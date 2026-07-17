@@ -99,36 +99,36 @@ const OrderFilter = ({ onFilter }) => {
 
         <div>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Date Filter Type</label>
-          <div className="inline-flex rounded-md shadow-sm">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
+              className={`inline-flex items-center px-4 py-2.5 text-sm font-medium border rounded-lg transition-all min-h-[44px] ${
                 filterMode === "range"
-                  ? "bg-primary text-white border-primary z-10"
+                  ? "bg-primary text-white border-primary"
                   : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
-              } rounded-l-md focus:z-10 focus:outline-none focus:ring-2 focus:ring-primary`}
+              } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
               onClick={() => setFilterMode("range")}
             >
               Date Range
             </button>
             <button
               type="button"
-              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border-t border-b ${
+              className={`inline-flex items-center px-4 py-2.5 text-sm font-medium border rounded-lg transition-all min-h-[44px] ${
                 filterMode === "single"
-                  ? "bg-primary text-white border-primary z-10"
+                  ? "bg-primary text-white border-primary"
                   : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
-              } focus:z-10 focus:outline-none focus:ring-2 focus:ring-primary`}
+              } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
               onClick={() => setFilterMode("single")}
             >
               Single Date
             </button>
             <button
               type="button"
-              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
+              className={`inline-flex items-center px-4 py-2.5 text-sm font-medium border rounded-lg transition-all min-h-[44px] ${
                 filterMode === "multi"
-                  ? "bg-primary text-white border-primary z-10"
+                  ? "bg-primary text-white border-primary"
                   : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
-              } rounded-r-md focus:z-10 focus:outline-none focus:ring-2 focus:ring-primary`}
+              } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
               onClick={() => setFilterMode("multi")}
             >
               Multiple Dates
@@ -245,17 +245,17 @@ const OrderFilter = ({ onFilter }) => {
           )}
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 min-h-[48px] w-full sm:w-auto transition-all"
           >
             <FaTimes className="mr-2 h-4 w-4" /> Clear Filters
           </button>
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 min-h-[48px] w-full sm:w-auto shadow-lg shadow-primary/25 transition-all"
           >
             <FaFilter className="mr-2 h-4 w-4" /> Apply Filters
           </button>

@@ -1,6 +1,13 @@
 "use strict";
 
-require("dotenv").config();
+// Mirror src/config/database.js: in test mode, load .env.test so the server
+// can only aim at the local throwaway database. Without this, the plain .env
+// (production Supabase) loads first and wins — dotenv never overrides vars
+// that are already set — so "NODE_ENV=test node src/server.js" would silently
+// connect to production.
+require("dotenv").config(
+  process.env.NODE_ENV === "test" ? { path: __dirname + "/../.env.test" } : {}
+);
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -14,8 +21,8 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" ? ["https://yars-app.vercel.app", "https://yars-app.netlify.app", "http://localhost:5173", "https://main.d34s1dbm0njr7r.amplifyapp.com"] : "http://localhost:5173",
-    credentials: true,
+    origin: process.env.NODE_ENV === "production" ? ["https://yars-app.firebaseapp.com", "https://yars-dashboard.web.app", "https://yars-app.vercel.app", "https://yars-app.netlify.app", "http://localhost:5173", "https://main.d34s1dbm0njr7r.amplifyapp.com"] : ["http://localhost:5173","http://localhost:8081", "https://yars-dashboard.web.app"],
+    credentials: true
   })
 );
 app.use(express.json());
@@ -45,7 +52,7 @@ const startServer = async () => {
     console.log("Database connection has been established successfully.");
 
     // Start the server
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {

@@ -25,8 +25,8 @@ const PaymentList = ({ payments, onEdit, onDelete }) => {
 
   if (!payments || payments.length === 0) {
     return (
-      <div className="rounded-md bg-muted/50 p-8 text-center">
-        <p className="text-muted-foreground">No payments found. Record a payment to get started.</p>
+      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 p-8 text-center">
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No payments found. Record a payment to get started.</p>
       </div>
     );
   }

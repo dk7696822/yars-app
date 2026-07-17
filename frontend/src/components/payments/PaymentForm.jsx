@@ -8,8 +8,8 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const CustomDatePickerInput = forwardRef(({ value, onClick, className }, ref) => (
   <div className="relative">
-    <input ref={ref} className={`${className} pr-10`} value={value} onClick={onClick} readOnly />
-    <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400" onClick={onClick} />
+    <input ref={ref} className={`${className} pr-10 cursor-pointer`} value={value} onClick={onClick} readOnly />
+    <FaCalendarAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
   </div>
 ));
 
@@ -101,12 +101,14 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
     { value: "REFUND", label: "Refund" },
   ];
 
+  const inputClassName = "block w-full h-12 px-4 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label htmlFor="amount" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Amount *
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Amount <span className="text-red-500">*</span>
           </label>
           <input
             id="amount"
@@ -117,44 +119,46 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
             required
             value={formData.amount}
             onChange={handleChange}
-            className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            className={inputClassName}
+            placeholder="0.00"
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="payment_date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Payment Date *
+        <div className="space-y-1.5">
+          <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Payment Date <span className="text-red-500">*</span>
           </label>
           <DatePicker
             id="payment_date"
             selected={formData.payment_date}
             onChange={handleDateChange}
-            className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            className={inputClassName}
             dateFormat="dd/MM/yyyy"
             required
-            customInput={<CustomDatePickerInput className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white" />}
+            customInput={<CustomDatePickerInput className={inputClassName} />}
             popperClassName="react-datepicker-dark"
             calendarClassName="dark-calendar"
+            wrapperClassName="w-full"
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="payment_method" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Payment Method *
+        <div className="space-y-1.5">
+          <label htmlFor="payment_method" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Payment Method <span className="text-red-500">*</span>
           </label>
           <Dropdown id="payment_method" name="payment_method" value={formData.payment_method} onChange={handleChange} options={paymentMethods} required />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="payment_type" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Payment Type *
+        <div className="space-y-1.5">
+          <label htmlFor="payment_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Payment Type <span className="text-red-500">*</span>
           </label>
           <Dropdown id="payment_type" name="payment_type" value={formData.payment_type} onChange={handleChange} options={paymentTypes} required />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="reference_number" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Reference Number
+        <div className="space-y-1.5 sm:col-span-2">
+          <label htmlFor="reference_number" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Reference Number <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
           </label>
           <input
             id="reference_number"
@@ -162,15 +166,15 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
             type="text"
             value={formData.reference_number}
             onChange={handleChange}
-            className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+            className={inputClassName}
             placeholder="Transaction ID, Check Number, etc."
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="notes" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Notes
+      <div className="space-y-1.5">
+        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Notes <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
         </label>
         <textarea
           id="notes"
@@ -178,16 +182,16 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
           value={formData.notes}
           onChange={handleChange}
           rows={3}
-          className="block w-full p-2 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+          className="block w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all resize-none"
           placeholder="Additional information about this payment"
         />
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="ghost" onClick={onCancel} className="flex items-center gap-2">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 border-t border-gray-100 dark:border-gray-800">
+        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto min-h-[48px]">
           <FaTimes /> Cancel
         </Button>
-        <Button type="submit" variant="primary" className="flex items-center gap-2">
+        <Button type="submit" variant="primary" className="w-full sm:w-auto min-h-[48px]">
           <FaSave /> {payment ? "Update Payment" : "Record Payment"}
         </Button>
       </div>

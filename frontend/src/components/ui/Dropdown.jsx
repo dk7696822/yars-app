@@ -79,7 +79,7 @@ const Dropdown = ({
       
       {isOpen && (
         <ul
-          className="absolute z-10 w-full mt-1 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60"
+          className="absolute z-50 w-full mt-1 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60"
           role="listbox"
           id={`${id}-options`}
         >
@@ -89,8 +89,8 @@ const Dropdown = ({
               className={cn(
                 "px-3 py-2 cursor-pointer text-sm",
                 "hover:bg-gray-100 dark:hover:bg-gray-700",
-                selectedOption?.value === option.value 
-                  ? "bg-primary-50 dark:bg-primary-900 text-primary dark:text-primary-300 font-medium" 
+                selectedOption?.value === option.value
+                  ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400 font-medium"
                   : "text-gray-900 dark:text-gray-100"
               )}
               onClick={() => handleOptionClick(option)}

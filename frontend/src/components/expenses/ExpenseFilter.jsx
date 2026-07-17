@@ -73,21 +73,21 @@ const ExpenseFilter = ({ categories, onFilter }) => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative w-full sm:w-auto flex-1">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
+          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
           <input
             type="text"
             name="search"
             value={filters.search}
             onChange={handleChange}
             placeholder="Search expenses..."
-            className="pl-10 w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="pl-11 w-full h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
           />
         </div>
 
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 whitespace-nowrap"
+          className="inline-flex items-center justify-center h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all whitespace-nowrap"
         >
           <FaFilter className="mr-2 h-4 w-4" />
           {isExpanded ? "Hide Filters" : "Show Filters"}
@@ -95,7 +95,7 @@ const ExpenseFilter = ({ categories, onFilter }) => {
       </div>
 
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-gray-50 dark:bg-gray-800 space-y-5">
+        <form onSubmit={handleSubmit} className="border border-gray-200 dark:border-gray-700/50 rounded-xl p-5 bg-gray-50 dark:bg-gray-800/60 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
@@ -121,7 +121,7 @@ const ExpenseFilter = ({ categories, onFilter }) => {
                 selected={filters.from_date}
                 onChange={(date) => handleDateChange(date, "from_date")}
                 dateFormat="yyyy-MM-dd"
-                className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
                 isClearable
                 placeholderText="From date"
               />
@@ -133,7 +133,7 @@ const ExpenseFilter = ({ categories, onFilter }) => {
                 selected={filters.to_date}
                 onChange={(date) => handleDateChange(date, "to_date")}
                 dateFormat="yyyy-MM-dd"
-                className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
                 isClearable
                 placeholderText="To date"
               />
@@ -163,22 +163,22 @@ const ExpenseFilter = ({ categories, onFilter }) => {
                 value={filters.vendor}
                 onChange={handleChange}
                 placeholder="Vendor name"
-                className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/80 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="inline-flex items-center justify-center h-11 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
               <FaTimes className="mr-2 h-4 w-4" /> Reset
             </button>
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="inline-flex items-center justify-center h-11 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600 shadow-lg shadow-primary/25 transition-all"
             >
               <FaFilter className="mr-2 h-4 w-4" /> Apply Filters
             </button>

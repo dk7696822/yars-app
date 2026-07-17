@@ -1,18 +1,18 @@
 import { cn } from "../../lib/utils";
 
 function Badge({ className, variant = "default", ...props }) {
-  const baseClasses = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold";
+  const baseClasses = "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors";
 
   const variantClasses = {
-    default: "border-transparent bg-primary text-white",
-    secondary: "border-transparent bg-secondary text-white",
-    destructive: "border-transparent bg-destructive text-white",
-    outline: "border-gray-200 text-gray-900",
-    success: "border-transparent bg-green-100 text-green-800",
-    warning: "border-transparent bg-yellow-100 text-yellow-800",
+    default: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-400",
+    secondary: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    destructive: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    outline: "border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 bg-transparent",
+    success: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   };
 
-  return <div className={cn(baseClasses, variantClasses[variant], className)} {...props} />;
+  return <span className={cn(baseClasses, variantClasses[variant], className)} {...props} />;
 }
 
 export { Badge };

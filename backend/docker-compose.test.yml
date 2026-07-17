@@ -1,0 +1,12 @@
+services:
+  yars-test-db:
+    image: postgres:16-alpine
+    container_name: yars-test-db
+    environment:
+      POSTGRES_USER: yars
+      POSTGRES_PASSWORD: yars
+      POSTGRES_DB: yars_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data

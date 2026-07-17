@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import DatePicker from "react-datepicker";
-import { FaPlus, FaTrash, FaSave, FaTimes } from "react-icons/fa";
+import { FaPlus, FaTrash, FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import { formatCurrency } from "../../utils/formatters";
-import Alert from "../common/Alert";
-import Spinner from "../common/Spinner";
-import Select from "../ui/Select";
 import Dropdown from "../ui/Dropdown";
 import "react-datepicker/dist/react-datepicker.css";
 import "./OrderForm.css";
@@ -29,11 +26,12 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
   // Initialize form with initial values if provided
   useEffect(() => {
     if (initialValues) {
-      const productSizesData = initialValues.orderProductSizes?.map((item) => ({
-        product_size_id: item.product_size_id,
-        quantity_kg: parseFloat(item.quantity_kg),
-        rate_per_kg: parseFloat(item.rate_per_kg || item.productSize.rate_per_kg),
-      })) || [{ product_size_id: "", quantity_kg: 1 }];
+      const productSizesData =
+        initialValues.orderProductSizes?.map((item) => ({
+          product_size_id: item.product_size_id,
+          quantity_kg: parseFloat(item.quantity_kg),
+          rate_per_kg: parseFloat(item.rate_per_kg || item.productSize.rate_per_kg),
+        })) || [{ product_size_id: "", quantity_kg: 1 }];
 
       setFormData({
         customer_id: initialValues.customer_id || "",
@@ -149,12 +147,20 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
 
   return (
     <div className="order-form">
-      {error && <Alert type="danger" message={error} />}
+      {/* Error alert */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 mb-5">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="customer_id">Customer *</label>
+            <label htmlFor="customer_id">
+              Customer <span className="text-red-500">*</span>
+            </label>
             <Dropdown
               id="customer_id"
               name="customer_id"
@@ -162,25 +168,23 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
               onChange={handleChange}
               placeholder="Select Customer"
               required
-              options={[
-                { value: "", label: "Select Customer" },
-                ...customers.map((customer) => ({
-                  value: customer.id,
-                  label: customer.name,
-                })),
-              ]}
+              options={[{ value: "", label: "Select Customer" }, ...customers.map((customer) => ({ value: customer.id, label: customer.name }))]}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="order_date">Order Date *</label>
+            <label htmlFor="order_date">
+              Order Date <span className="text-red-500">*</span>
+            </label>
             <DatePicker id="order_date" selected={formData.order_date} onChange={handleDateChange} dateFormat="dd/MM/yyyy" className="form-control" required />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="plate_type_id">Plate Type *</label>
+            <label htmlFor="plate_type_id">
+              Plate Type <span className="text-red-500">*</span>
+            </label>
             <Dropdown
               id="plate_type_id"
               name="plate_type_id"
@@ -226,18 +230,9 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
           <div className="form-group">
             <label htmlFor="round_off_amount">
               Round Off Amount
-              <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Amount to subtract from total)</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Amount to subtract)</span>
             </label>
-            <input
-              type="number"
-              id="round_off_amount"
-              name="round_off_amount"
-              value={formData.round_off_amount || ""}
-              onChange={handleChange}
-              step="0.01"
-              placeholder="Enter round off amount (e.g., 5 for ₹10005 → ₹10000)"
-              className="form-control"
-            />
+            <input type="number" id="round_off_amount" name="round_off_amount" value={formData.round_off_amount || ""} onChange={handleChange} step="0.01" placeholder="e.g., 5 for ₹10005 → ₹10000" className="form-control" />
           </div>
 
           <div className="form-group">
@@ -248,7 +243,9 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="status">Order Status *</label>
+            <label htmlFor="status">
+              Order Status <span className="text-red-500">*</span>
+            </label>
             <Dropdown
               id="status"
               name="status"
@@ -268,7 +265,9 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
 
         <div className="product-sizes-section">
           <div className="section-header">
-            <h3>Product Sizes *</h3>
+            <h3>
+              Product Sizes <span className="text-red-500">*</span>
+            </h3>
             <button type="button" className="btn-sm" onClick={addProductSize}>
               <FaPlus /> Add Product Size
             </button>
@@ -370,7 +369,8 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
           <button type="submit" className="btn-primary" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Spinner size="small" color="white" /> Saving...
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Saving...
               </>
             ) : (
               <>

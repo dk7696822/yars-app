@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import { FaSave, FaTimes } from "react-icons/fa";
+import { FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Alert from "../common/Alert";
-import Spinner from "../common/Spinner";
-import Select from "../ui/Select";
 import Dropdown from "../ui/Dropdown";
 
 const ExpenseForm = ({ initialData, categories, onSubmit, onCancel, isLoading }) => {
@@ -60,18 +57,36 @@ const ExpenseForm = ({ initialData, categories, onSubmit, onCancel, isLoading })
   };
 
   return (
-    <div className="expense-form">
-      {error && <Alert type="danger" message={error} />}
+    <div>
+      {/* Error alert */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-4 flex items-start gap-3 mb-5">
+          <FaExclamationCircle className="text-red-500 mt-0.5 flex-shrink-0" />
+          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="bill_date">Bill Date *</label>
-            <DatePicker selected={formData.bill_date} onChange={(date) => handleDateChange(date, "bill_date")} dateFormat="yyyy-MM-dd" className="form-control" required />
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {/* Row 1: Bill Date & Category */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="bill_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Bill Date <span className="text-red-500">*</span>
+            </label>
+            <DatePicker
+              selected={formData.bill_date}
+              onChange={(date) => handleDateChange(date, "bill_date")}
+              dateFormat="yyyy-MM-dd"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
+              required
+              wrapperClassName="w-full"
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="category_id">Category *</label>
+          <div>
+            <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Category <span className="text-red-500">*</span>
+            </label>
             <Dropdown
               id="category_id"
               name="category_id"
@@ -90,48 +105,111 @@ const ExpenseForm = ({ initialData, categories, onSubmit, onCancel, isLoading })
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="description">Description *</label>
-          <input type="text" id="description" name="description" value={formData.description} onChange={handleChange} className="form-control" placeholder="Enter expense description" required />
+        {/* Description */}
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Description <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
+            placeholder="Enter expense description"
+            required
+          />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="vendor">Vendor/Supplier *</label>
-          <input type="text" id="vendor" name="vendor" value={formData.vendor} onChange={handleChange} className="form-control" placeholder="Enter vendor name" required />
+        {/* Vendor */}
+        <div>
+          <label htmlFor="vendor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Vendor/Supplier <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="vendor"
+            name="vendor"
+            value={formData.vendor}
+            onChange={handleChange}
+            className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
+            placeholder="Enter vendor name"
+            required
+          />
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="quantity">Quantity</label>
-            <input type="number" id="quantity" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control" min="1" required />
+        {/* Row 2: Quantity, Unit Cost, Total Cost */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Quantity
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              name="quantity"
+              value={formData.quantity}
+              onChange={handleChange}
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
+              min="1"
+              required
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="unit_cost">Unit Cost (₹) *</label>
-            <input type="number" id="unit_cost" name="unit_cost" value={formData.unit_cost} onChange={handleChange} className="form-control" step="0.01" min="0" required />
+          <div>
+            <label htmlFor="unit_cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Unit Cost <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="unit_cost"
+              name="unit_cost"
+              value={formData.unit_cost}
+              onChange={handleChange}
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
+              step="0.01"
+              min="0"
+              required
+            />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="total_cost">Total Cost (₹)</label>
-            <input type="number" id="total_cost" name="total_cost" value={formData.total_cost} className="form-control" readOnly />
+          <div>
+            <label htmlFor="total_cost" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Total Cost
+            </label>
+            <input
+              type="number"
+              id="total_cost"
+              name="total_cost"
+              value={formData.total_cost}
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+              readOnly
+            />
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="due_date">Due Date (Optional)</label>
+        {/* Row 3: Due Date & Payment Status */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Due Date <span className="text-gray-400 dark:text-gray-500 font-normal">(Optional)</span>
+            </label>
             <DatePicker
               selected={formData.due_date}
               onChange={(date) => handleDateChange(date, "due_date")}
               dateFormat="yyyy-MM-dd"
-              className="form-control"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary/20 dark:focus:ring-amber-500/30 focus:border-primary dark:focus:border-amber-500/50 transition-all"
               isClearable
-              placeholderText="Select due date (optional)"
+              placeholderText="Select due date"
+              wrapperClassName="w-full"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="payment_status">Payment Status</label>
+          <div>
+            <label htmlFor="payment_status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Payment Status
+            </label>
             <Dropdown
               id="payment_status"
               name="payment_status"
@@ -145,18 +223,28 @@ const ExpenseForm = ({ initialData, categories, onSubmit, onCancel, isLoading })
           </div>
         </div>
 
-        <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCancel}>
-            <FaTimes /> Cancel
+        {/* Form Actions */}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 mt-5 border-t border-gray-100 dark:border-gray-700/50">
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+            onClick={onCancel}
+          >
+            <FaTimes className="w-4 h-4" /> Cancel
           </button>
-          <button type="submit" className="btn-primary" disabled={isLoading}>
+          <button
+            type="submit"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
-                <Spinner size="small" color="white" /> Saving...
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Saving...
               </>
             ) : (
               <>
-                <FaSave /> Save Expense
+                <FaSave className="w-4 h-4" /> Save Expense
               </>
             )}
           </button>
