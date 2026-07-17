@@ -19,6 +19,13 @@ yars-app/
 
 **`epidermohydra/` is a completely separate business's codebase that happens to live in this repo. Do not read, modify, build, or deploy anything inside it as part of YARS work.**
 
+## ⛔ Epidermohydra is NOT part of YARS
+
+- It is a **different business entirely** (a skincare e-commerce project) that only shares this directory for convenience. It has its own frontend, admin panel, backend, database, GCP project (`epidermohydra`), and Firebase sites. Nothing in it is imported by, deployed with, or related to YARS in any way.
+- **While working on yars-app, never touch `epidermohydra/`**: don't edit its files, don't stage or commit anything under it, don't run its scripts or migrations, don't include it in searches/refactors/builds, and don't let a broad command (`git add .`, repo-wide find-and-replace, formatters, linters) reach into it.
+- When the user says "frontend", "backend", "the app", "deploy" in a YARS context, they mean the **root** `frontend/` and `backend/` — never Epidermohydra's.
+- Epidermohydra work happens in its own sessions with its own instructions (e.g., its active deploy dirs are `frontend-revamp/`/`admin-revamp/`, not `frontend/`/`admin/` — but that's for those sessions, not this handoff).
+
 ## Tech stack
 
 - **Backend**: Node 20, Express 5, Sequelize 6, PostgreSQL. Entry: `backend/src/server.js`. Routes mounted in `backend/src/routes/index.js`.
