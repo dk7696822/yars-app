@@ -1,79 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import BottomNav from "./BottomNav";
 
 const MainLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  const handleSidebarToggle = () => {
-    if (window.innerWidth < 1024) {
-      setIsMobileOpen(!isMobileOpen);
-    } else {
-      setIsSidebarCollapsed(!isSidebarCollapsed);
-    }
-  };
-
-  // Close mobile sidebar on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsMobileOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileOpen]);
 
   return (
     <div className="main-layout flex h-screen bg-gray-50 dark:bg-[#0d1210] overflow-hidden">
-      {/* Desktop sidebar - part of flex layout */}
+      {/* Desktop sidebar — on phones, navigation lives in the bottom tab bar */}
       <div className="hidden lg:block flex-shrink-0">
-        <Sidebar
-          isCollapsed={isSidebarCollapsed}
-          isMobileOpen={isMobileOpen}
-          onToggle={handleSidebarToggle}
-        />
-      </div>
-
-      {/* Mobile sidebar - overlay */}
-      <div className="lg:hidden">
-        <Sidebar
-          isCollapsed={false}
-          isMobileOpen={isMobileOpen}
-          onToggle={handleSidebarToggle}
-        />
+        <Sidebar isCollapsed={isSidebarCollapsed} />
       </div>
 
       {/* Main content area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header
-          onSidebarToggle={handleSidebarToggle}
+          onSidebarToggle={() => setIsSidebarCollapsed((value) => !value)}
           isSidebarCollapsed={isSidebarCollapsed}
-          isMobileOpen={isMobileOpen}
         />
 
-        {/* Main content with page transition */}
+        {/* Main content with page transition; bottom padding clears the mobile tab bar */}
         <main className="flex-1 overflow-y-auto">
-          <div className="page-enter">
+          <div className="page-enter pb-24 lg:pb-0">
             <Outlet />
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom tab bar */}
+      <BottomNav />
     </div>
   );
 };

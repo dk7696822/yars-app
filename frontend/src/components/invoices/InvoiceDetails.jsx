@@ -61,7 +61,7 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-[#161d1a] p-4 rounded-lg shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Invoice Information</h3>
 
           <div className="grid grid-cols-2 gap-4">
@@ -89,7 +89,7 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-[#161d1a] p-4 rounded-lg shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Customer Information</h3>
 
           <div>
@@ -99,20 +99,20 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-8">
+      <div className="bg-white dark:bg-[#161d1a] p-4 rounded-lg shadow-sm mb-8">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Invoice Items</h3>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
+              <tr className="border-b border-gray-200 dark:border-emerald-900/30">
                 <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unit Price</th>
                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200 dark:divide-emerald-900/20">
               {invoice.invoiceItems.map((item) => (
                 <tr key={item.id}>
                   <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{item.description}</td>
@@ -126,17 +126,17 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+      <div className="bg-white dark:bg-[#161d1a] p-4 rounded-lg shadow-sm">
         <div className="flex flex-col items-end">
           <div className="w-full md:w-1/3 space-y-2">
-            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-emerald-900/30">
               <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
               <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(invoice.total_amount)}</span>
             </div>
 
             {/* Calculate and show advance payment if any */}
             {invoice.invoiceItems.some((item) => item.description.includes("Advance Payment")) && (
-              <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between py-2 border-b border-gray-200 dark:border-emerald-900/30">
                 <span className="text-gray-600 dark:text-gray-400">Advance Paid</span>
                 <span className="font-medium text-gray-900 dark:text-white">
                   {formatCurrency(invoice.invoiceItems.filter((item) => item.description.includes("Advance Payment")).reduce((total, item) => total + Math.abs(parseFloat(item.total_price)), 0))}
@@ -144,7 +144,7 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
               </div>
             )}
 
-            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between py-2 border-b border-gray-200 dark:border-emerald-900/30">
               <span className="text-gray-600 dark:text-gray-400">Tax ({invoice.tax_percent}%)</span>
               <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(invoice.tax_amount)}</span>
             </div>

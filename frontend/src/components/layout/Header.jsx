@@ -1,44 +1,57 @@
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FaSignOutAlt, FaUser, FaBars, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaSignOutAlt, FaUser, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 import { ThemeToggle } from "../theme/ThemeToggle";
+import ConfirmationModal from "../common/ConfirmationModal";
 import PropTypes from "prop-types";
 
-const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
+// Most specific prefix first — "/stock-issues" must win over "/stock".
+const PAGE_TITLES = [
+  ["/orders/new", "New Order"],
+  ["/orders/edit", "Edit Order"],
+  ["/orders", "Orders"],
+  ["/customers/new", "New Customer"],
+  ["/customers/edit", "Edit Customer"],
+  ["/customers", "Customers"],
+  ["/plate-types/new", "New Plate Type"],
+  ["/plate-types/edit", "Edit Plate Type"],
+  ["/plate-types", "Plate Types"],
+  ["/product-sizes/new", "New Product Size"],
+  ["/product-sizes/edit", "Edit Product Size"],
+  ["/product-sizes", "Product Sizes"],
+  ["/expense-categories", "Expense Categories"],
+  ["/expenses/new", "New Expense"],
+  ["/expenses/edit", "Edit Expense"],
+  ["/expenses", "Expenses"],
+  ["/invoices/generate", "Generate Invoice"],
+  ["/invoices", "Invoices"],
+  ["/history", "History"],
+  ["/stock-issues/new", "New Stock Issue"],
+  ["/stock-issues", "Stock Issues"],
+  ["/stock", "Stock"],
+  ["/inventory-items/new", "New Inventory Item"],
+  ["/inventory-items/edit", "Edit Inventory Item"],
+  ["/inventory-items", "Inventory Items"],
+  ["/purchase-orders/new", "New Purchase Order"],
+  ["/purchase-orders", "Purchase Orders"],
+  ["/suppliers/new", "New Supplier"],
+  ["/suppliers/edit", "Edit Supplier"],
+  ["/suppliers", "Suppliers"],
+  ["/inventory-categories", "Inventory Categories"],
+  ["/item-attributes", "Item Attributes"],
+];
+
+const Header = ({ onSidebarToggle, isSidebarCollapsed }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Get page title based on current route
   const getPageTitle = () => {
     const path = location.pathname;
-
     if (path === "/") return "Dashboard";
-    if (path.includes("/orders/new")) return "New Order";
-    if (path.includes("/orders/edit")) return "Edit Order";
-    if (path.includes("/orders")) return "Orders";
-    if (path.includes("/customers/new")) return "New Customer";
-    if (path.includes("/customers/edit")) return "Edit Customer";
-    if (path.includes("/customers")) return "Customers";
-    if (path.includes("/plate-types/new")) return "New Plate Type";
-    if (path.includes("/plate-types/edit")) return "Edit Plate Type";
-    if (path.includes("/plate-types")) return "Plate Types";
-    if (path.includes("/product-sizes/new")) return "New Product Size";
-    if (path.includes("/product-sizes/edit")) return "Edit Product Size";
-    if (path.includes("/product-sizes")) return "Product Sizes";
-    if (path.includes("/expenses/new")) return "New Expense";
-    if (path.includes("/expenses/edit")) return "Edit Expense";
-    if (path.includes("/expense-categories")) return "Expense Categories";
-    if (path.includes("/expenses")) return "Expenses";
-    if (path.includes("/invoices/generate")) return "Generate Invoice";
-    if (path.includes("/invoices")) return "Invoices";
-
-    return "YARS";
-  };
-
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-    }
+    const match = PAGE_TITLES.find(([prefix]) => path.startsWith(prefix));
+    return match ? match[1] : "YARS";
   };
 
   return (
@@ -46,16 +59,7 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
         {/* Left section */}
         <div className="flex items-center gap-3">
-          {/* Mobile hamburger menu */}
-          <button
-            onClick={onSidebarToggle}
-            className="lg:hidden p-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-95"
-            aria-label="Toggle sidebar"
-          >
-            <FaBars className="w-5 h-5" />
-          </button>
-
-          {/* Desktop sidebar toggle */}
+          {/* Desktop sidebar toggle — phones navigate via the bottom tab bar */}
           <button
             onClick={onSidebarToggle}
             className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200 transition-all"
@@ -95,7 +99,7 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
             {/* Logout button */}
             <button
               className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#161d1a] rounded-xl hover:bg-gray-200 dark:hover:bg-emerald-500/10 hover:text-gray-900 dark:hover:text-emerald-300 border border-transparent dark:border-emerald-900/30 transition-all active:scale-95"
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               title="Logout"
             >
               <FaSignOutAlt className="w-4 h-4" />
@@ -104,6 +108,17 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={logout}
+        title="Log out"
+        message="You will need to sign in again to use the app."
+        confirmText="Log out"
+        cancelText="Stay"
+        type="warning"
+      />
     </header>
   );
 };
@@ -111,7 +126,6 @@ const Header = ({ onSidebarToggle, isSidebarCollapsed, isMobileOpen }) => {
 Header.propTypes = {
   onSidebarToggle: PropTypes.func,
   isSidebarCollapsed: PropTypes.bool,
-  isMobileOpen: PropTypes.bool,
 };
 
 export default Header;

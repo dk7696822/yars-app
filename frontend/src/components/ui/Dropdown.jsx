@@ -56,9 +56,9 @@ const Dropdown = ({
     <div className="relative w-full" ref={dropdownRef}>
       <div
         className={cn(
-          "flex items-center justify-between w-full h-10 px-3 py-2 text-sm border rounded-md cursor-pointer",
-          "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700",
-          "text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+          "flex items-center justify-between w-full min-h-[44px] px-3 py-2 text-sm border rounded-xl cursor-pointer transition-colors",
+          "border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a]",
+          "text-gray-900 dark:text-emerald-50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
           isOpen && "ring-2 ring-primary border-primary",
           className
         )}
@@ -79,7 +79,7 @@ const Dropdown = ({
       
       {isOpen && (
         <ul
-          className="absolute z-50 w-full mt-1 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60"
+          className="absolute z-50 w-full mt-1 overflow-auto bg-white dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/40 rounded-xl shadow-lg dark:shadow-black/40 max-h-60 animate-scale-in origin-top"
           role="listbox"
           id={`${id}-options`}
         >
@@ -87,8 +87,8 @@ const Dropdown = ({
             <li
               key={option.value}
               className={cn(
-                "px-3 py-2 cursor-pointer text-sm",
-                "hover:bg-gray-100 dark:hover:bg-gray-700",
+                "px-3 py-2.5 cursor-pointer text-sm transition-colors",
+                "hover:bg-gray-100 dark:hover:bg-emerald-500/10",
                 selectedOption?.value === option.value
                   ? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-emerald-400 font-medium"
                   : "text-gray-900 dark:text-gray-100"

@@ -40,7 +40,7 @@ const HistoryList = ({ logs }) => {
   const getItemClasses = (log) => {
     const baseClasses = "history-item relative flex gap-4 p-4 rounded-xl border transition-all duration-200 cursor-default";
     const lightClasses = "bg-gray-50 border-gray-100 hover:border-gray-200 hover:bg-gray-100/50";
-    const darkClasses = "dark:bg-gray-800/40 dark:border-gray-700/50 dark:hover:border-gray-600/50 dark:hover:bg-gray-800/60";
+    const darkClasses = "dark:bg-emerald-500/5 dark:border-emerald-900/30 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10";
 
     let actionClass = "";
     if (log.entity_type === "PAYMENT" && log.action === "CREATE") {
@@ -99,7 +99,7 @@ const HistoryList = ({ logs }) => {
 
         {/* Metrics impact */}
         {metadata?.before_metrics && metadata?.after_metrics && (
-          <div className="history-metrics bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-2 border border-gray-100 dark:border-gray-700/30">
+          <div className="history-metrics bg-gray-50 dark:bg-[#161d1a] rounded-lg p-3 space-y-2 border border-gray-100 dark:border-emerald-900/20">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Impact</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="history-metrics-row flex items-center justify-between gap-2 p-2 -m-2 rounded-lg">
@@ -220,7 +220,7 @@ const HistoryList = ({ logs }) => {
   if (logs.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="history-empty-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center mx-auto mb-5 shadow-lg dark:shadow-gray-900/50 border border-gray-200/50 dark:border-gray-700/50">
+        <div className="history-empty-icon w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-[#161d1a] dark:to-[#0d1411] flex items-center justify-center mx-auto mb-5 shadow-lg dark:shadow-black/40 border border-gray-200/50 dark:border-emerald-900/30">
           <FaBoxes className="w-9 h-9 text-gray-300 dark:text-gray-600" />
         </div>
         <div className="history-empty-text">
@@ -241,7 +241,7 @@ const HistoryList = ({ logs }) => {
         >
           {/* Entity Icon */}
           <div className="flex-shrink-0">
-            <div className="history-icon-wrapper w-11 h-11 rounded-xl bg-white dark:bg-gray-700/80 flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-600/50">
+            <div className="history-icon-wrapper w-11 h-11 rounded-xl bg-white dark:bg-[#1e2823] flex items-center justify-center shadow-sm border border-gray-100 dark:border-emerald-900/40">
               {getEntityIcon(log.entity_type)}
             </div>
           </div>

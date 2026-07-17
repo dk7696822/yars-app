@@ -101,7 +101,7 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
     { value: "REFUND", label: "Refund" },
   ];
 
-  const inputClassName = "block w-full h-12 px-4 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all";
+  const inputClassName = "block w-full h-12 px-4 text-sm border border-gray-200 dark:border-emerald-900/40 rounded-xl bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -182,12 +182,12 @@ const PaymentForm = ({ payment, invoice, order, onSubmit, onCancel, isEditing = 
           value={formData.notes}
           onChange={handleChange}
           rows={3}
-          className="block w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all resize-none"
+          className="block w-full px-4 py-3 text-sm border border-gray-200 dark:border-emerald-900/40 rounded-xl bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary dark:focus:border-primary transition-all resize-none"
           placeholder="Additional information about this payment"
         />
       </div>
 
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 border-t border-gray-100 dark:border-gray-800">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5 border-t border-gray-100 dark:border-emerald-900/30">
         <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto min-h-[48px]">
           <FaTimes /> Cancel
         </Button>

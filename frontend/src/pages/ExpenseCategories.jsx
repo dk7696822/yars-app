@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { FaPlus, FaSearch, FaExclamationCircle, FaCheckCircle, FaTags, FaArrowLeft } from 'react-icons/fa';
 import { expenseCategoryAPI } from '../services/api';
 import ExpenseCategoryList from '../components/expenses/ExpenseCategoryList';
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const ExpenseCategories = () => {
   const location = useLocation();
@@ -11,6 +12,7 @@ const ExpenseCategories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -54,10 +56,11 @@ const ExpenseCategories = () => {
     }
   }, [searchTerm, categories]);
 
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) {
-      return;
-    }
+  const handleDeleteCategory = (id) => setDeleteTarget(id);
+
+  const confirmDeleteCategory = async () => {
+    const id = deleteTarget;
+    if (!id) return;
 
     try {
       await expenseCategoryAPI.delete(id);
@@ -187,6 +190,17 @@ const ExpenseCategories = () => {
       >
         <FaArrowLeft className="w-3 h-3" /> Back to Expenses
       </Link>
+
+      <ConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteCategory}
+        title="Delete category"
+        message="This will permanently remove the expense category. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

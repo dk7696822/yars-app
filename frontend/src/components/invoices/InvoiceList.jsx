@@ -69,7 +69,7 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
 
   if (!invoices || invoices.length === 0) {
     return (
-      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 p-8 text-center">
+      <div className="rounded-xl bg-gray-50 dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/30 p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">No invoices found. Try adjusting your filters or generate a new invoice.</p>
       </div>
     );
@@ -86,10 +86,10 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
           return (
             <div
               key={invoice.id}
-              className="bg-white dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden"
+              className="bg-white dark:bg-[#161d1a] rounded-xl border border-gray-200 dark:border-emerald-900/30 overflow-hidden"
             >
               {/* Card Header */}
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700/50">
+              <div className="p-4 border-b border-gray-100 dark:border-emerald-900/30">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
@@ -167,7 +167,7 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
                 </button>
 
                 {isExpanded && (
-                  <div className="pt-2 border-t border-gray-100 dark:border-gray-700/50">
+                  <div className="pt-2 border-t border-gray-100 dark:border-emerald-900/30">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Due Date</span>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -179,10 +179,10 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
               </div>
 
               {/* Card Footer - Quick Actions */}
-              <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-900/30 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
+              <div className="px-4 py-3 bg-gray-50/50 dark:bg-[#0d1411] border-t border-gray-100 dark:border-emerald-900/30 flex gap-2">
                 <Link
                   to={`/invoices/${invoice.id}`}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/30 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-emerald-500/10 transition-colors"
                 >
                   <FaEye className="w-3 h-3" />
                   View
@@ -204,19 +204,19 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
       <div className="hidden md:block overflow-x-auto rounded-xl">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50/80 dark:bg-gray-800/50">
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Invoice #</th>
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Customer</th>
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Date</th>
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Due Date</th>
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Status</th>
-              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Amount</th>
-              <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-gray-700/60">Actions</th>
+            <tr className="bg-gray-50/80 dark:bg-[#161d1a]">
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Invoice #</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Customer</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Date</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Due Date</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Status</th>
+              <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Amount</th>
+              <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+          <tbody className="divide-y divide-gray-100 dark:divide-emerald-900/20">
             {invoices.map((invoice) => (
-              <tr key={invoice.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+              <tr key={invoice.id} className="hover:bg-gray-50/50 dark:hover:bg-emerald-500/5 transition-colors">
                 <td className="p-4 align-middle">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">

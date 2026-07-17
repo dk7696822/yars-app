@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaPlus, FaSearch, FaCheckCircle, FaBoxOpen, FaEdit, FaTrash, FaTags, FaSlidersH } from "react-icons/fa";
+import { FaPlus, FaCheckCircle, FaBoxOpen, FaEdit, FaTrash, FaTags, FaSlidersH } from "react-icons/fa";
 import { inventoryItemAPI, inventoryCategoryAPI, itemAttributesAPI } from "../services/inventoryAPI";
 import Pagination from "../components/common/Pagination";
+import FilterBar from "../components/common/FilterBar";
+import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const AttributeChips = ({ attributes }) => {
@@ -149,40 +151,58 @@ const InventoryItems = () => {
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search item or code…"
-            className={`w-full pl-11 pr-4 ${inputClasses}`}
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`flex-1 ${inputClasses}`}>
-            <option value="">All categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </select>
-
-          <select value={attributeValueId} onChange={(e) => setAttributeValueId(e.target.value)} className={`flex-1 ${inputClasses}`}>
-            <option value="">All attributes</option>
-            {attributes
-              .filter((attribute) => attribute.values.length > 0)
-              .map((attribute) => (
-                <optgroup key={attribute.id} label={attribute.name}>
-                  {attribute.values.map((value) => (
-                    <option key={value.id} value={value.id}>{value.value}</option>
-                  ))}
-                </optgroup>
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search item or code…"
+        activeCount={(categoryId ? 1 : 0) + (attributeValueId ? 1 : 0)}
+        chips={[
+          categoryId && {
+            key: "category",
+            label: categories.find((category) => category.id === categoryId)?.name || "Category",
+            onRemove: () => setCategoryId(""),
+          },
+          attributeValueId && {
+            key: "attribute",
+            label:
+              attributes.flatMap((attribute) => attribute.values).find((value) => value.id === attributeValueId)
+                ?.value || "Attribute",
+            onRemove: () => setAttributeValueId(""),
+          },
+        ].filter(Boolean)}
+        onClearAll={() => {
+          setCategoryId("");
+          setAttributeValueId("");
+        }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`w-full ${inputClasses}`}>
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
               ))}
-          </select>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute</label>
+            <select value={attributeValueId} onChange={(e) => setAttributeValueId(e.target.value)} className={`w-full ${inputClasses}`}>
+              <option value="">All attributes</option>
+              {attributes
+                .filter((attribute) => attribute.values.length > 0)
+                .map((attribute) => (
+                  <optgroup key={attribute.id} label={attribute.name}>
+                    {attribute.values.map((value) => (
+                      <option key={value.id} value={value.id}>{value.value}</option>
+                    ))}
+                  </optgroup>
+                ))}
+            </select>
+          </div>
         </div>
-      </div>
+      </FilterBar>
 
       {error && (
         <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300">
@@ -191,7 +211,14 @@ const InventoryItems = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 dark:text-gray-400">Loading items…</div>
+        <>
+          <div className="md:hidden">
+            <CardListSkeleton count={5} />
+          </div>
+          <div className="hidden md:block">
+            <TableSkeleton rows={8} columns={5} />
+          </div>
+        </>
       ) : rows.length === 0 ? (
         <div className="py-16 text-center">
           <FaBoxOpen className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -203,7 +230,7 @@ const InventoryItems = () => {
       ) : (
         <>
           {/* Mobile: cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 md:hidden stagger-list">
             {rows.map((item) => (
               <div
                 key={item.id}

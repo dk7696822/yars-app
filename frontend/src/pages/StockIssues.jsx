@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaPlus, FaSearch, FaCheckCircle, FaClipboardList } from "react-icons/fa";
+import { FaPlus, FaCheckCircle, FaClipboardList } from "react-icons/fa";
 import { stockIssueAPI } from "../services/inventoryAPI";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
+import FilterBar from "../components/common/FilterBar";
+import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 
 const ISSUE_TYPES = ["ISSUE", "WASTAGE", "ADJUSTMENT_IN", "ADJUSTMENT_OUT"];
 
@@ -100,29 +102,42 @@ const StockIssues = () => {
         <FaPlus className="w-4 h-4" /> Record issue
       </Link>
 
-      <div className="space-y-3">
-        <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search issue number…"
-            className={`w-full pl-11 pr-4 ${inputClasses}`}
-          />
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search issue number…"
+        activeCount={(issueType ? 1 : 0) + (fromDate ? 1 : 0) + (toDate ? 1 : 0)}
+        chips={[
+          issueType && { key: "type", label: issueType.replace(/_/g, " "), onRemove: () => setIssueType("") },
+          fromDate && { key: "from", label: `From ${fromDate}`, onRemove: () => setFromDate("") },
+          toDate && { key: "to", label: `To ${toDate}`, onRemove: () => setToDate("") },
+        ].filter(Boolean)}
+        onClearAll={() => {
+          setIssueType("");
+          setFromDate("");
+          setToDate("");
+        }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+            <select value={issueType} onChange={(e) => setIssueType(e.target.value)} className={`w-full ${inputClasses}`}>
+              <option value="">All types</option>
+              {ISSUE_TYPES.map((type) => (
+                <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From date</label>
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={`w-full ${inputClasses}`} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To date</label>
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={`w-full ${inputClasses}`} />
+          </div>
         </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <select value={issueType} onChange={(e) => setIssueType(e.target.value)} className={inputClasses}>
-            <option value="">All types</option>
-            {ISSUE_TYPES.map((type) => (
-              <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
-            ))}
-          </select>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={inputClasses} aria-label="From date" />
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={inputClasses} aria-label="To date" />
-        </div>
-      </div>
+      </FilterBar>
 
       {error && (
         <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300">
@@ -131,7 +146,14 @@ const StockIssues = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 dark:text-gray-400">Loading issues…</div>
+        <>
+          <div className="md:hidden">
+            <CardListSkeleton count={5} />
+          </div>
+          <div className="hidden md:block">
+            <TableSkeleton rows={8} columns={5} />
+          </div>
+        </>
       ) : rows.length === 0 ? (
         <div className="py-16 text-center">
           <FaClipboardList className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -140,7 +162,7 @@ const StockIssues = () => {
       ) : (
         <>
           {/* Mobile: cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 md:hidden stagger-list">
             {rows.map((issue) => (
               <div
                 key={issue.id}

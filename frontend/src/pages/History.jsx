@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaHistory, FaFilter, FaChevronLeft, FaChevronRight, FaExclamationCircle } from "react-icons/fa";
+import { FaHistory, FaChevronLeft, FaChevronRight, FaExclamationCircle } from "react-icons/fa";
 import { auditLogAPI } from "../services/api";
 import HistoryFilter from "../components/history/HistoryFilter";
 import HistoryList from "../components/history/HistoryList";
@@ -37,8 +37,6 @@ const History = () => {
     totalPages: 0,
   });
   const [filters, setFilters] = useState({});
-  const [showFilters, setShowFilters] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     fetchLogs();
@@ -60,7 +58,6 @@ const History = () => {
       setError("Failed to load history. Please try again later.");
     } finally {
       setLoading(false);
-      setIsInitialLoad(false);
     }
   };
 
@@ -91,33 +88,10 @@ const History = () => {
           <h1 className="page-title">History</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Track payment and order changes</p>
         </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="history-btn inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all sm:hidden"
-        >
-          <FaFilter className={`h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </button>
       </div>
 
-      {/* Filter section */}
-      <div
-        className={`history-filter-section history-card relative bg-white dark:bg-gray-800/90 rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-soft transition-all duration-300 ease-out ${
-          showFilters
-            ? ""
-            : "hidden sm:block"
-        }`}
-      >
-        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-gray-700/50 px-5 py-4">
-          <h2 className="section-title flex items-center gap-2">
-            <FaFilter className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-            Filter History
-          </h2>
-        </div>
-        <div className="relative p-4 md:p-5 overflow-visible">
-          <HistoryFilter onFilter={handleFilter} />
-        </div>
-      </div>
+      {/* Filters — collapsed by default */}
+      <HistoryFilter onFilter={handleFilter} />
 
       {/* History list */}
       <div className="history-list-section history-card relative bg-white dark:bg-gray-800/90 rounded-2xl border border-gray-200/60 dark:border-gray-700/50 shadow-soft overflow-hidden">

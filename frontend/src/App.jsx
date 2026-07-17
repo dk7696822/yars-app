@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -59,8 +60,9 @@ import "./styles/dark-theme.css";
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
+      <ToastProvider>
+        <AuthProvider>
+          <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
 
@@ -150,9 +152,10 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Route>
-          </Routes>
-        </Router>
-      </AuthProvider>
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

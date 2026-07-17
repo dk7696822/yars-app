@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle, FaDownload, FaFilter, FaMoneyBillWave, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaPlus, FaListAlt, FaExclamationCircle, FaCheckCircle, FaDownload, FaMoneyBillWave, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { expenseAPI, expenseCategoryAPI, exportAPI } from "../services/api";
 import ExpenseList from "../components/expenses/ExpenseList";
 import ExpenseFilter from "../components/expenses/ExpenseFilter";
 import TotalExpenseCard from "../components/expenses/TotalExpenseCard";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const EXPENSES_PER_PAGE = 10;
 
@@ -15,6 +16,7 @@ const Expenses = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [filters, setFilters] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -82,14 +84,13 @@ const Expenses = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-  const handleDeleteExpense = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this expense?")) {
-      return;
-    }
+  const handleDeleteExpense = (id) => setDeleteTarget(id);
 
+  const confirmDeleteExpense = async () => {
+    if (!deleteTarget) return;
     try {
-      await expenseAPI.delete(id);
-      setExpenses(expenses.filter((expense) => expense.id !== id));
+      await expenseAPI.delete(deleteTarget);
+      setExpenses(expenses.filter((expense) => expense.id !== deleteTarget));
       setSuccessMessage("Expense deleted successfully");
       setTimeout(() => {
         setSuccessMessage("");
@@ -193,7 +194,7 @@ const Expenses = () => {
               <FaMoneyBillWave className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-emerald-50">Filter & View Expenses</h2>
+              <h2 className="text-base sm:text-lg font-display font-semibold text-gray-900 dark:text-emerald-50">All Expenses</h2>
               <p className="text-[10px] sm:text-xs text-gray-500 dark:text-emerald-100/60">
                 {expenses.length} {expenses.length === 1 ? "expense" : "expenses"}
               </p>
@@ -281,6 +282,17 @@ const Expenses = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteExpense}
+        title="Delete expense"
+        message="This will permanently remove the expense. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

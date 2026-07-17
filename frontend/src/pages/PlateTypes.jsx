@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FaPlus, FaSearch, FaExclamationCircle, FaCheckCircle } from "react-icons/fa";
 import { plateTypeAPI } from "../services/api";
 import PlateTypeList from "../components/plateTypes/PlateTypeList";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const PlateTypes = () => {
   const location = useLocation();
@@ -11,6 +12,7 @@ const PlateTypes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -52,16 +54,17 @@ const PlateTypes = () => {
     }
   }, [searchTerm, plateTypes]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this plate type?")) {
-      try {
-        await plateTypeAPI.delete(id);
-        setPlateTypes((prev) => prev.filter((plateType) => plateType.id !== id));
-        setSuccessMessage("Plate type deleted successfully");
-      } catch (err) {
-        console.error("Error deleting plate type:", err);
-        setError("Failed to delete plate type. Please try again.");
-      }
+  const handleDelete = (id) => setDeleteTarget(id);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await plateTypeAPI.delete(deleteTarget);
+      setPlateTypes((prev) => prev.filter((plateType) => plateType.id !== deleteTarget));
+      setSuccessMessage("Plate type deleted successfully");
+    } catch (err) {
+      console.error("Error deleting plate type:", err);
+      setError("Failed to delete plate type. Please try again.");
     }
   };
 
@@ -120,6 +123,17 @@ const PlateTypes = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete plate type"
+        message="This will permanently remove the plate type. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

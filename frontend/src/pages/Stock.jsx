@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FaSearch, FaDownload, FaExclamationTriangle, FaBoxOpen, FaRupeeSign, FaArrowDown, FaArrowUp } from "react-icons/fa";
+import { FaDownload, FaExclamationTriangle, FaBoxOpen, FaRupeeSign, FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { stockAPI, inventoryCategoryAPI, itemAttributesAPI, inventoryExportAPI } from "../services/inventoryAPI";
 import { formatCurrency } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
+import FilterBar from "../components/common/FilterBar";
+import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 
 const StatTile = ({ icon, label, value, tone = "default" }) => {
   // Local uppercase alias so it can be rendered as a component; the destructured
@@ -157,60 +159,79 @@ const Stock = () => {
         </div>
       )}
 
-      <div className="space-y-3">
-        <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search item or code…"
-            className="w-full min-h-[44px] pl-11 pr-4 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50 placeholder:text-gray-400"
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="flex-1 min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50"
-          >
-            <option value="">All categories</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </select>
-
-          <select
-            value={attributeValueId}
-            onChange={(e) => setAttributeValueId(e.target.value)}
-            className="flex-1 min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-gray-900 dark:text-emerald-50"
-          >
-            <option value="">All attributes</option>
-            {attributes
-              .filter((attribute) => attribute.values.length > 0)
-              .map((attribute) => (
-                <optgroup key={attribute.id} label={attribute.name}>
-                  {attribute.values.map((value) => (
-                    <option key={value.id} value={value.id}>{value.value}</option>
-                  ))}
-                </optgroup>
-              ))}
-          </select>
-
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search item or code…"
+        activeCount={(categoryId ? 1 : 0) + (attributeValueId ? 1 : 0)}
+        chips={[
+          categoryId && {
+            key: "category",
+            label: categories.find((category) => category.id === categoryId)?.name || "Category",
+            onRemove: () => setCategoryId(""),
+          },
+          attributeValueId && {
+            key: "attribute",
+            label:
+              attributes.flatMap((attribute) => attribute.values).find((value) => value.id === attributeValueId)
+                ?.value || "Attribute",
+            onRemove: () => setAttributeValueId(""),
+          },
+        ].filter(Boolean)}
+        onClearAll={() => {
+          setCategoryId("");
+          setAttributeValueId("");
+        }}
+        trailing={
           <button
             type="button"
             onClick={() => setLowStockOnly((value) => !value)}
-            className={`min-h-[44px] px-4 rounded-xl border text-sm font-medium transition-colors ${
+            className={`min-h-[44px] px-4 rounded-xl border text-sm font-medium transition-all active:scale-95 whitespace-nowrap ${
               lowStockOnly
-                ? "bg-amber-500 border-amber-500 text-white"
+                ? "bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/25"
                 : "bg-white dark:bg-[#161d1a] border-gray-200 dark:border-emerald-900/40 text-gray-700 dark:text-emerald-100"
             }`}
           >
             Low stock
           </button>
+        }
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50"
+            >
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Attribute</label>
+            <select
+              value={attributeValueId}
+              onChange={(e) => setAttributeValueId(e.target.value)}
+              className="w-full min-h-[44px] px-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50"
+            >
+              <option value="">All attributes</option>
+              {attributes
+                .filter((attribute) => attribute.values.length > 0)
+                .map((attribute) => (
+                  <optgroup key={attribute.id} label={attribute.name}>
+                    {attribute.values.map((value) => (
+                      <option key={value.id} value={value.id}>{value.value}</option>
+                    ))}
+                  </optgroup>
+                ))}
+            </select>
+          </div>
         </div>
-      </div>
+      </FilterBar>
 
       {error && (
         <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300">
@@ -219,7 +240,14 @@ const Stock = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 dark:text-gray-400">Loading stock…</div>
+        <>
+          <div className="md:hidden">
+            <CardListSkeleton count={5} />
+          </div>
+          <div className="hidden md:block">
+            <TableSkeleton rows={8} columns={6} />
+          </div>
+        </>
       ) : rows.length === 0 ? (
         <div className="py-16 text-center">
           <FaBoxOpen className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -231,12 +259,12 @@ const Stock = () => {
       ) : (
         <>
           {/* Mobile: cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 md:hidden stagger-list">
             {rows.map((row) => (
               <Link
                 key={row.id}
                 to={`/stock/${row.id}`}
-                className="block rounded-2xl border border-gray-200/60 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] p-4"
+                className="press-scale block rounded-2xl border border-gray-200/60 dark:border-emerald-900/30 bg-white dark:bg-[#161d1a] p-4"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">

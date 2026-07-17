@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { FaExclamationTriangle, FaTimes } from "react-icons/fa";
 import "./ConfirmationModal.css";
@@ -51,23 +52,26 @@ const ConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-container" ref={modalRef}>
-        <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+  // Portal to <body>: ancestors with transform/backdrop-filter (sticky header,
+  // page-enter animation) would otherwise become the containing block for
+  // position:fixed and clip the overlay.
+  return createPortal(
+    <div className="confirm-modal-overlay">
+      <div className="confirm-modal-container" ref={modalRef}>
+        <button className="confirm-modal-close-btn" onClick={onClose} aria-label="Close">
           <FaTimes />
         </button>
 
-        <div className={`modal-header modal-${type}`}>
-          <FaExclamationTriangle className="modal-icon" />
+        <div className={`confirm-modal-header confirm-modal-${type}`}>
+          <FaExclamationTriangle className="confirm-modal-icon" />
           <h3>{title}</h3>
         </div>
 
-        <div className="modal-body">
+        <div className="confirm-modal-body">
           <p>{message}</p>
         </div>
 
-        <div className="modal-footer">
+        <div className="confirm-modal-footer">
           <button className="btn-secondary" onClick={onClose}>
             {cancelText}
           </button>
@@ -82,7 +86,8 @@ const ConfirmationModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

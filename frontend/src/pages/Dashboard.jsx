@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { FaPlus, FaBoxes, FaUsers, FaMoneyBillWave, FaExclamationCircle, FaArrowRight, FaChartLine, FaReceipt, FaChevronLeft, FaChevronRight, FaBalanceScale, FaWeight } from "react-icons/fa";
 import { orderAPI } from "../services/api";
 import { formatCurrency } from "../utils/formatters";
+import { useToast } from "../context/ToastContext";
 import OrderList from "../components/orders/OrderList";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 // Geometric pattern SVG for backgrounds
 const GridPattern = ({ className = "" }) => (
@@ -245,6 +247,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const toast = useToast();
 
   // Calculate paginated orders
   const paginatedOrders = useMemo(() => {
@@ -329,15 +333,15 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm("Are you sure you want to delete this order?")) {
-      try {
-        await orderAPI.delete(orderId);
-        setAllOrders((prev) => prev.filter((order) => order.id !== orderId));
-      } catch (err) {
-        console.error("Error deleting order:", err);
-        setError("Failed to delete order. Please try again.");
-      }
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    try {
+      await orderAPI.delete(orderToDelete);
+      setAllOrders((prev) => prev.filter((order) => order.id !== orderToDelete));
+      toast.success("Order deleted");
+    } catch (err) {
+      console.error("Error deleting order:", err);
+      toast.error("Failed to delete order. Please try again.");
     }
   };
 
@@ -544,7 +548,7 @@ const Dashboard = () => {
         <div className="p-3 sm:p-5">
           {paginatedOrders.length > 0 ? (
             <>
-              <OrderList orders={paginatedOrders} onDelete={handleDeleteOrder} showSummary={false} />
+              <OrderList orders={paginatedOrders} onDelete={setOrderToDelete} showSummary={false} />
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
@@ -616,6 +620,17 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={orderToDelete !== null}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={confirmDeleteOrder}
+        title="Delete order"
+        message="This will permanently remove the order and its items. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

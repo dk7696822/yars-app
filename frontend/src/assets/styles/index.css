@@ -3,21 +3,23 @@
 @tailwind utilities;
 
 @layer base {
+  /* HSL triples — tailwind.config wraps these in hsl(var(--x)), so the
+     values must be bare H S% L% numbers, not hex. */
   :root {
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #3b82f6;
-    --background: #ffffff;
-    --foreground: #0f172a;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 159 84% 24%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --border: rgba(16, 185, 129, 0.12);
-    --input: rgba(16, 185, 129, 0.12);
-    --ring: #10b981;
-    --background: #0d1210;
-    --foreground: #f0fdf4;
+    --border: 220 30% 14%;
+    --input: 220 30% 12%;
+    --ring: 160 84% 39%;
+    --background: 224 50% 4%;
+    --foreground: 210 40% 96%;
   }
 }
 
@@ -27,11 +29,16 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -133,5 +140,134 @@
 
   .badge-warning {
     @apply border-transparent bg-yellow-100 text-yellow-800;
+  }
+
+  /* Page scaffolding */
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8;
+  }
+
+  .page-title {
+    @apply text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 font-display tracking-tight;
+  }
+
+  .section-title {
+    @apply text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 font-display;
+  }
+
+  .stat-card {
+    @apply relative overflow-hidden rounded-xl p-5 md:p-6 bg-white border border-gray-100;
+  }
+
+  .dark .stat-card {
+    background: linear-gradient(145deg, hsl(224 40% 9%) 0%, hsl(224 50% 5%) 100%);
+    border-color: hsl(220 30% 13%);
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 4px 12px -2px rgba(0, 0, 0, 0.08),
+      0 8px 24px -4px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Tap feedback for card-style links and rows */
+  .press-scale {
+    @apply transition-transform duration-150 ease-out active:scale-[0.98];
+  }
+
+  /* Safe-area padding for the mobile tab bar (iPhone home indicator) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Fade in animation for page transitions */
+.page-enter {
+  animation: pageEnter 0.4s ease-out forwards;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered entrance for lists of cards/rows.
+   Put .stagger-list on the container; children animate in sequence.
+   (fadeInUp keyframes live in styles/page-animations.css.) */
+.stagger-list > * {
+  animation: fadeInUp 0.35s ease-out both;
+}
+.stagger-list > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-list > *:nth-child(n + 9) { animation-delay: 320ms; }
+
+/* Bottom sheet (mobile "More" menu) */
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-up {
+  animation: sheetUp 0.28s cubic-bezier(0.32, 0.72, 0.24, 1) both;
+}
+
+/* Toast notifications */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+.toast-in { animation: toastIn 0.25s ease-out both; }
+.toast-out { animation: toastOut 0.2s ease-in both; }
+
+/* No lift on touch devices */
+@media (hover: none) {
+  .hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .stagger-list > *,
+  .sheet-up,
+  .toast-in,
+  .toast-out {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

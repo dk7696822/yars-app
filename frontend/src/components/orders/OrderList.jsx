@@ -58,7 +58,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 p-8 text-center">
+      <div className="rounded-xl bg-gray-50 dark:bg-[#161d1a] border border-gray-200 dark:border-emerald-900/30 p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">No orders found. Try adjusting your filters or create a new order.</p>
       </div>
     );
@@ -67,14 +67,14 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
   return (
     <div className="w-full">
       {/* Mobile Card View */}
-      <div className="block md:hidden space-y-3">
+      <div className="block md:hidden space-y-3 stagger-list">
         {orders.map((order) => (
           <div
             key={order.id}
-            className="bg-white dark:bg-gray-800/60 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden"
+            className="bg-white dark:bg-[#161d1a] rounded-xl border border-gray-200 dark:border-emerald-900/30 overflow-hidden"
           >
             {/* Card Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700/50">
+            <div className="p-4 border-b border-gray-100 dark:border-emerald-900/30">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{order.customer.name}</h3>
@@ -119,7 +119,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
               </div>
 
               {/* Total Amount */}
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+              <div className="pt-3 border-t border-gray-100 dark:border-emerald-900/30 flex items-center justify-between">
                 <span className="text-sm text-gray-500 dark:text-gray-400">Total Amount</span>
                 <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(order.total_amount || 0)}</span>
               </div>
@@ -138,11 +138,11 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
 
             {/* Expanded Details */}
             {expandedOrderId === order.id && (
-              <div className="border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/30 p-4">
+              <div className="border-t border-gray-100 dark:border-emerald-900/30 bg-gray-50/50 dark:bg-[#0d1411] p-4">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Order Items</h4>
                 <div className="space-y-2">
                   {order.orderProductSizes.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700/30 last:border-0">
+                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-emerald-900/20 last:border-0">
                       <div>
                         <span className="text-gray-900 dark:text-gray-100 font-medium">{item.productSize.size_label}</span>
                         <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">({item.quantity_kg} kg)</span>
@@ -150,7 +150,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                       <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(item.quantity_kg * (item.rate_per_kg || item.productSize.rate_per_kg))}</span>
                     </div>
                   ))}
-                  <div className="flex items-center justify-between py-2 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg px-3 mt-2">
+                  <div className="flex items-center justify-between py-2 bg-gray-100/50 dark:bg-[#161d1a] rounded-lg px-3 mt-2">
                     <span className="text-gray-700 dark:text-gray-200 font-medium">Plate Charge</span>
                     <span className="text-gray-700 dark:text-gray-200">{formatCurrency(order.custom_plate_charge || order.plateType.charge)}</span>
                   </div>
@@ -178,7 +178,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block [&_.border-b]:border-gray-200 [&_.border-b]:dark:border-gray-700 [&_tbody]:divide-y [&_tbody]:divide-gray-100 [&_tbody]:dark:divide-gray-700 [&_tr]:border-0">
+      <div className="hidden md:block [&_.border-b]:border-gray-200 [&_.border-b]:dark:border-emerald-900/30 [&_tbody]:divide-y [&_tbody]:divide-gray-100 [&_tbody]:dark:divide-emerald-900/20 [&_tr]:border-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -195,7 +195,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
           <TableBody>
             {orders.map((order) => (
               <>
-                <TableRow key={order.id} className={expandedOrderId === order.id ? "bg-gray-50/50 dark:bg-gray-700/30" : ""}>
+                <TableRow key={order.id} className={expandedOrderId === order.id ? "bg-gray-50/50 dark:bg-emerald-500/5" : ""}>
                   <TableCell className="font-medium text-gray-900 dark:text-gray-100">{order.customer.name}</TableCell>
                   <TableCell className="text-gray-700 dark:text-gray-300">{formatDate(order.order_date)}</TableCell>
                   <TableCell>
@@ -242,12 +242,12 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                   </TableCell>
                 </TableRow>
                 {expandedOrderId === order.id && (
-                  <TableRow className="bg-gray-50/50 dark:bg-gray-800/40">
+                  <TableRow className="bg-gray-50/50 dark:bg-emerald-500/5">
                     <TableCell colSpan={8} className="p-0">
                       <div className="p-4">
                         <h4 className="text-sm font-semibold mb-3 text-gray-900 dark:text-gray-100">Order Details</h4>
-                        <div className="border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden bg-white dark:bg-gray-800/50">
-                          <div className="[&_.border-b]:border-gray-200 [&_.border-b]:dark:border-gray-700 [&_tbody]:divide-y [&_tbody]:divide-gray-100 [&_tbody]:dark:divide-gray-700 [&_tr]:border-0">
+                        <div className="border border-gray-200 dark:border-emerald-900/30 rounded-xl overflow-hidden bg-white dark:bg-[#161d1a]">
+                          <div className="[&_.border-b]:border-gray-200 [&_.border-b]:dark:border-emerald-900/30 [&_tbody]:divide-y [&_tbody]:divide-gray-100 [&_tbody]:dark:divide-emerald-900/20 [&_tr]:border-0">
                             <Table>
                               <TableHeader>
                                 <TableRow>
@@ -266,7 +266,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                                     <TableCell className="text-right text-gray-900 dark:text-gray-100">{formatCurrency(item.quantity_kg * (item.rate_per_kg || item.productSize.rate_per_kg))}</TableCell>
                                   </TableRow>
                                 ))}
-                                <TableRow className="bg-gray-50/50 dark:bg-gray-700/20">
+                                <TableRow className="bg-gray-50/50 dark:bg-emerald-500/5">
                                   <TableCell colSpan={3} className="font-medium text-gray-700 dark:text-gray-200">
                                     Plate Charge ({order.plateType.type_name}){order.custom_plate_charge && <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Custom)</span>}
                                   </TableCell>
@@ -280,7 +280,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                                     <TableCell className="text-right text-orange-700 dark:text-orange-400">-{formatCurrency(Math.abs(parseFloat(order.round_off_amount)))}</TableCell>
                                   </TableRow>
                                 )}
-                                <TableRow className="bg-gray-50/50 dark:bg-gray-700/20">
+                                <TableRow className="bg-gray-50/50 dark:bg-emerald-500/5">
                                   <TableCell colSpan={3} className="font-medium text-gray-800 dark:text-gray-100">
                                     Total Order Amount
                                   </TableCell>

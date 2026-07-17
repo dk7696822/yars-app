@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FaPlus, FaSearch, FaExclamationCircle, FaCheckCircle } from "react-icons/fa";
 import { productSizeAPI } from "../services/api";
 import ProductSizeList from "../components/productSizes/ProductSizeList";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const ProductSizes = () => {
   const location = useLocation();
@@ -11,6 +12,7 @@ const ProductSizes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -52,16 +54,17 @@ const ProductSizes = () => {
     }
   }, [searchTerm, productSizes]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product size?")) {
-      try {
-        await productSizeAPI.delete(id);
-        setProductSizes((prev) => prev.filter((productSize) => productSize.id !== id));
-        setSuccessMessage("Product size deleted successfully");
-      } catch (err) {
-        console.error("Error deleting product size:", err);
-        setError("Failed to delete product size. Please try again.");
-      }
+  const handleDelete = (id) => setDeleteTarget(id);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await productSizeAPI.delete(deleteTarget);
+      setProductSizes((prev) => prev.filter((productSize) => productSize.id !== deleteTarget));
+      setSuccessMessage("Product size deleted successfully");
+    } catch (err) {
+      console.error("Error deleting product size:", err);
+      setError("Failed to delete product size. Please try again.");
     }
   };
 
@@ -120,6 +123,17 @@ const ProductSizes = () => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete product size"
+        message="This will permanently remove the product size. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { orderAPI, paymentAPI } from "../services/api";
 import OrderPaymentSummary from "../components/payments/OrderPaymentSummary";
 import PaymentForm from "../components/payments/PaymentForm";
 import Modal from "../components/common/Modal";
+import ConfirmationModal from "../components/common/ConfirmationModal";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -401,26 +402,25 @@ const OrderDetails = () => {
 
       {/* Payment Modal */}
       <Modal isOpen={paymentModalOpen} title={isEditMode ? "Edit Payment" : "Record Payment"} onClose={handlePaymentCancel} size="md">
-        {paymentError && <Alert type="danger" message={paymentError} className="mb-4" />}
+        {paymentError && (
+          <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-3 text-sm text-red-700 dark:text-red-300">
+            {paymentError}
+          </div>
+        )}
         <PaymentForm payment={editingPayment} order={order} onSubmit={handlePaymentSubmit} onCancel={handlePaymentCancel} isEditing={isEditMode} />
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={deleteConfirmOpen} title="Delete Payment" onClose={cancelDeletePayment} size="sm">
-        <div className="p-4">
-          <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Are you sure you want to delete this payment of {paymentToDelete && formatCurrency(paymentToDelete.amount)}? This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-2">
-            <Button variant="secondary" onClick={cancelDeletePayment}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDeletePayment}>
-              Delete Payment
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmationModal
+        isOpen={deleteConfirmOpen}
+        onClose={cancelDeletePayment}
+        onConfirm={confirmDeletePayment}
+        title="Delete payment"
+        message={`This will permanently remove the payment of ${paymentToDelete ? formatCurrency(paymentToDelete.amount) : ""}. This cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Keep it"
+        type="danger"
+      />
     </div>
   );
 };

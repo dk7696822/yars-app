@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaSearch, FaFileInvoice } from "react-icons/fa";
+import { FaPlus, FaFileInvoice } from "react-icons/fa";
 import { purchaseOrderAPI, supplierAPI } from "../services/inventoryAPI";
 import { formatCurrency, formatDate } from "../utils/formatters";
 import Pagination from "../components/common/Pagination";
+import FilterBar from "../components/common/FilterBar";
+import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 
 const STATUSES = ["PENDING", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"];
 
@@ -92,34 +94,46 @@ const PurchaseOrders = () => {
         </Link>
       </div>
 
-      <div className="space-y-3">
-        <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search PO number…"
-            className={`w-full pl-11 pr-4 ${inputClasses}`}
-          />
-        </div>
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search PO number…"
+        activeCount={(supplierId ? 1 : 0) + (status ? 1 : 0)}
+        chips={[
+          supplierId && {
+            key: "supplier",
+            label: suppliers.find((supplier) => supplier.id === supplierId)?.name || "Supplier",
+            onRemove: () => setSupplierId(""),
+          },
+          status && { key: "status", label: status.replace(/_/g, " "), onRemove: () => setStatus("") },
+        ].filter(Boolean)}
+        onClearAll={() => {
+          setSupplierId("");
+          setStatus("");
+        }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Supplier</label>
+            <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`w-full ${inputClasses}`}>
+              <option value="">All suppliers</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex gap-3">
-          <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`flex-1 ${inputClasses}`}>
-            <option value="">All suppliers</option>
-            {suppliers.map((supplier) => (
-              <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-            ))}
-          </select>
-
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className={`flex-1 ${inputClasses}`}>
-            <option value="">All statuses</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={`w-full ${inputClasses}`}>
+              <option value="">All statuses</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      </FilterBar>
 
       {error && (
         <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 text-sm text-red-700 dark:text-red-300">
@@ -128,7 +142,14 @@ const PurchaseOrders = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 dark:text-gray-400">Loading purchase orders…</div>
+        <>
+          <div className="md:hidden">
+            <CardListSkeleton count={5} />
+          </div>
+          <div className="hidden md:block">
+            <TableSkeleton rows={8} columns={5} />
+          </div>
+        </>
       ) : rows.length === 0 ? (
         <div className="py-16 text-center">
           <FaFileInvoice className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -140,7 +161,7 @@ const PurchaseOrders = () => {
       ) : (
         <>
           {/* Mobile: cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 md:hidden stagger-list">
             {rows.map((po) => (
               <Link
                 key={po.id}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaExclamationCircle, FaFileInvoiceDollar, FaFilter, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaPlus, FaExclamationCircle, FaFileInvoiceDollar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { invoiceAPI, customerAPI } from "../services/api";
 import { formatDateForAPI } from "../utils/formatters";
 import InvoiceFilter from "../components/invoices/InvoiceFilter";
@@ -14,7 +14,6 @@ const Invoices = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filters, setFilters] = useState({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState(null);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -72,7 +71,6 @@ const Invoices = () => {
   const totalPages = Math.ceil(invoices.length / INVOICES_PER_PAGE);
 
   const handleFilter = (filterParams) => {
-    setFilters(filterParams);
     setCurrentPage(1); // Reset to first page when filters change
     fetchInvoices(filterParams);
   };
@@ -153,21 +151,8 @@ const Invoices = () => {
         </Link>
       </div>
 
-      {/* Filter section */}
-      <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
-        {/* Ambient glow */}
-        <div className="hidden dark:block absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative flex items-center justify-between border-b border-gray-100 dark:border-emerald-900/20 px-5 py-4">
-          <h2 className="section-title flex items-center gap-2">
-            <FaFilter className="w-4 h-4 text-gray-400 dark:text-emerald-500/50" />
-            Filter Invoices
-          </h2>
-        </div>
-        <div className="relative p-4 md:p-5">
-          <InvoiceFilter customers={customers} onFilter={handleFilter} />
-        </div>
-      </div>
+      {/* Filters — collapsed by default, search always visible */}
+      <InvoiceFilter customers={customers} onFilter={handleFilter} />
 
       {/* Invoices list */}
       <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">

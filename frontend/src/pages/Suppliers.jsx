@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FaPlus, FaSearch, FaCheckCircle, FaTruck, FaEdit, FaTrash } from "react-icons/fa";
 import { supplierAPI } from "../services/inventoryAPI";
 import Pagination from "../components/common/Pagination";
+import { CardListSkeleton, TableSkeleton } from "../components/common/Skeleton";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 
 const inputClasses =
@@ -115,7 +116,14 @@ const Suppliers = () => {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 dark:text-gray-400">Loading suppliers…</div>
+        <>
+          <div className="md:hidden">
+            <CardListSkeleton count={5} />
+          </div>
+          <div className="hidden md:block">
+            <TableSkeleton rows={8} columns={5} />
+          </div>
+        </>
       ) : rows.length === 0 ? (
         <div className="py-16 text-center">
           <FaTruck className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -127,7 +135,7 @@ const Suppliers = () => {
       ) : (
         <>
           {/* Mobile: cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 md:hidden stagger-list">
             {rows.map((supplier) => (
               <div
                 key={supplier.id}
