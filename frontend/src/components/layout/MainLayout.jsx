@@ -36,7 +36,7 @@ const MainLayout = () => {
       {!location.pathname.startsWith("/assistant") && (
         <button
           type="button"
-          aria-label="Ask the assistant"
+          aria-label="Ask Jarvis"
           onClick={() => navigate("/assistant")}
           className="fixed bottom-24 lg:bottom-6 right-4 z-40 flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-all"
         >

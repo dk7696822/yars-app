@@ -35,6 +35,11 @@ const AssistantMarkdown = ({ text }) => {
   );
 };
 
+// On touch devices the keyboard's return key must insert a newline, not send —
+// sending is the button's job. Desktop keeps Enter-to-send (Shift+Enter = newline).
+const isCoarsePointer =
+  typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+
 const Assistant = () => {
   const [conversations, setConversations] = useState([]);
   const [listLoading, setListLoading] = useState(true);
@@ -45,6 +50,7 @@ const Assistant = () => {
   const [statusLine, setStatusLine] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -64,6 +70,16 @@ const Assistant = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, statusLine]);
+
+  // When the mobile keyboard opens/closes the visual viewport resizes and the
+  // conversation would stay scrolled behind it — follow it to the bottom.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => bottomRef.current?.scrollIntoView({ block: "end" });
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
 
   const openConversation = async (id) => {
     const res = await assistantAPI.getConversation(id);
@@ -105,6 +121,7 @@ const Assistant = () => {
       setActiveId(id);
     }
     setInput("");
+    if (inputRef.current) inputRef.current.style.height = "auto";
     setStreaming(true);
     setMessages((prev) => [...prev, { role: "user", content: text }, { role: "assistant", content: "" }]);
 
@@ -147,7 +164,7 @@ const Assistant = () => {
       <div className="p-4 sm:p-6 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div className="hidden sm:block">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50">Assistant</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50">Jarvis</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Ask about your data or how to use the app</p>
           </div>
           <button
@@ -167,7 +184,7 @@ const Assistant = () => {
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-emerald-900/40 p-8 text-center space-y-2">
             <FaMagic className="mx-auto w-6 h-6 text-gray-400" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              No conversations yet. Ask things like “how much stock of 60 GSM fabric?” or “how do I record
+              Hi, I’m Jarvis. Ask me things like “how much stock of 60 GSM fabric?” or “how do I record
               wastage?”
             </p>
           </div>
@@ -221,7 +238,7 @@ const Assistant = () => {
         >
           <FaArrowLeft className="w-4 h-4" />
         </button>
-        <h1 className="text-base font-semibold text-gray-900 dark:text-emerald-50">Assistant</h1>
+        <h1 className="text-base font-semibold text-gray-900 dark:text-emerald-50">Jarvis</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -257,16 +274,23 @@ const Assistant = () => {
       <div className="p-3 border-t border-gray-200 dark:border-emerald-900/40 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="flex items-end gap-2">
           <textarea
+            ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              // auto-grow up to the max height, shrink back when cleared
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 96)}px`;
+            }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey && !isCoarsePointer) {
                 e.preventDefault();
                 send();
               }
             }}
+            onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 300)}
             rows={1}
-            placeholder="Ask anything…"
+            placeholder="Ask Jarvis…"
             className="flex-1 resize-none max-h-24 min-h-[44px] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50"
           />
           <button
