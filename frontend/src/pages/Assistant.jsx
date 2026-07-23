@@ -86,13 +86,6 @@ const useVisualViewportHeight = () => {
   return height;
 };
 
-const SUGGESTIONS = [
-  "Which items are low on stock?",
-  "Which customers have pending payments?",
-  "What is this month's total expense?",
-  "How do I record wastage?",
-];
-
 const Assistant = () => {
   const [conversations, setConversations] = useState([]);
   const [listLoading, setListLoading] = useState(true);
@@ -233,27 +226,12 @@ const Assistant = () => {
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-emerald-50">Hi, I’m Jarvis 👋</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Ask me about stock, dues, expenses — or how to do anything in the app.
+                I can look up your live business data — pending payments, stock levels, orders,
+                expenses — and guide you step-by-step through anything in the app. Ask me in
+                English, Hindi, or Hinglish.
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Suggestion chips — tap to start a chat with the question prefilled */}
-        <div className="flex flex-wrap gap-2">
-          {SUGGESTIONS.map((q) => (
-            <button
-              key={q}
-              type="button"
-              onClick={() => {
-                setInput(q);
-                startNew();
-              }}
-              className="px-3.5 min-h-[40px] rounded-full border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-700 dark:text-emerald-100 shadow-sm active:scale-95 transition-all"
-            >
-              {q}
-            </button>
-          ))}
         </div>
 
         <button
@@ -274,7 +252,7 @@ const Assistant = () => {
             <CardListSkeleton />
           ) : conversations.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400 py-3">
-              Nothing yet — tap a question above to get started.
+              Nothing yet — start a conversation above.
             </p>
           ) : (
             <div className="space-y-2">
