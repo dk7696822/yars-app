@@ -52,6 +52,7 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - Responses: `success(res, code, msg, data)` / `error(...)` from `backend/src/utils/response.js`. Paginated payloads: rows at `response.data.data.data`, metadata at `...data.pagination` (frontend uses `unwrapPaginated`).
 - Active-name uniqueness via **partial unique indexes** (`WHERE is_archived = false`) — archived names are reusable.
 - Migrations: `YYYYMMDD…` prefix; inventory ones are `20260711000001–11`. `ALTER TYPE ... ADD VALUE` cannot run in a transaction (see migration 000010).
+- **Auth (added 2026-07-23)**: all `/api` routes require `Authorization: Bearer <JWT>` (30-day expiry, signed with `JWT_SECRET` env var — server refuses to boot without it). Public exceptions: `POST /api/auth/login`, `GET /api/health`. Users live in the `users` table (bcrypt hashes); manage them with `node backend/scripts/create-user.js <username> <password> <displayName>` (idempotent). Frontend stores the token in localStorage; both axios clients attach it and auto-logout on 401.
 
 ## Deployment — direct from local, NO GitHub push involved
 
@@ -84,7 +85,6 @@ Live at **https://yars-dashboard.web.app**. `VITE_API_URL` comes from `frontend/
 
 ## Known issues / debt (pre-existing, deliberately out of scope so far)
 
-- **No real auth**: login is a hardcoded username/password in `frontend/src/context/AuthContext.jsx`, shipped in the JS bundle; the backend validates nothing. Anyone with the API URL can read/write everything.
 - **Live credentials committed**: `backend/src/config/supabase.js` and `backend/render.yaml` contain real connection strings/secrets in git history.
 - Stale CORS entries (Vercel/Netlify/Amplify) in `server.js`.
 - Original modules do client-side pagination (fetch-all).
