@@ -3,7 +3,7 @@
 const { AssistantConversation, AssistantMessage } = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
-const { runAgent } = require("../services/assistant/assistantService");
+const { runAgent, formatWait } = require("../services/assistant/assistantService");
 
 const listConversations = async (req, res) => {
   try {
@@ -98,7 +98,11 @@ const sendMessage = async (req, res) => {
       });
     } catch (err) {
       console.error("agent failed:", err);
-      sendEvent(res, "error", { message: "The assistant is busy right now — try again in a minute." });
+      const message =
+        err.name === "QuotaExhaustedError"
+          ? `The assistant's free daily quota is used up for now. Please try again in about ${formatWait(err.retryAfterSeconds)}.`
+          : "The assistant is busy right now — try again in a minute.";
+      sendEvent(res, "error", { message });
       return res.end();
     }
 

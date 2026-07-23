@@ -1,6 +1,6 @@
 "use strict";
 
-const { runAgent, MAX_ROUNDS } = require("../src/services/assistant/assistantService");
+const { runAgent, MAX_ROUNDS, formatWait } = require("../src/services/assistant/assistantService");
 
 // Helper: a fake generateStream that yields the given chunks per round.
 // Each chunk mimics @google/genai stream chunks: { text, functionCalls }.
@@ -101,6 +101,13 @@ describe("assistantService.runAgent", () => {
     expect(modelTurn.parts).toEqual([signedPart]);
     const responseTurn = secondRequest[secondRequest.length - 1];
     expect(responseTurn.parts[0].functionResponse.id).toBe("fc-1");
+  });
+
+  test("formatWait renders human-friendly durations", () => {
+    expect(formatWait(45)).toBe("a minute");
+    expect(formatWait(300)).toBe("5 minutes");
+    expect(formatWait(3600)).toBe("an hour");
+    expect(formatWait(7200)).toBe("2 hours");
   });
 
   test("round cap: stops calling tools after MAX_ROUNDS", async () => {

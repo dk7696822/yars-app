@@ -18,6 +18,31 @@ const STICKY_MS = 10 * 60 * 1000; // retry the better models again after 10 min
 
 let preferredIndex = 0;
 let downgradedAt = 0;
+// When EVERY model in the chain is quota-exhausted we stop calling Gemini
+// entirely until this timestamp — burning requests against a known-exhausted
+// quota only wastes what little resets.
+let chainExhaustedUntil = 0;
+
+class QuotaExhaustedError extends Error {
+  constructor(retryAfterSeconds) {
+    super("Gemini quota exhausted on all models");
+    this.name = "QuotaExhaustedError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+// Google 429s usually carry RetryInfo like `"retryDelay": "37s"`.
+const parseRetrySeconds = (err) => {
+  const m = String(err?.message).match(/retryDelay[^0-9]*(\d+)/i);
+  return m ? Math.max(parseInt(m[1], 10), 30) : 120;
+};
+
+const formatWait = (seconds) => {
+  if (seconds < 90) return "a minute";
+  if (seconds < 3600) return `${Math.ceil(seconds / 60)} minutes`;
+  const hours = Math.ceil(seconds / 3600);
+  return hours === 1 ? "an hour" : `${hours} hours`;
+};
 const MAX_ROUNDS = 6;
 
 const FUNCTION_DECLARATIONS = [
@@ -51,6 +76,9 @@ const isQuotaError = (err) =>
 // errors. Quota errors can only surface at request time (before streaming), so
 // a mid-stream failure is never silently retried on another model.
 async function* realGenerateStream({ contents, allowTools }) {
+  if (Date.now() < chainExhaustedUntil) {
+    throw new QuotaExhaustedError(Math.ceil((chainExhaustedUntil - Date.now()) / 1000));
+  }
   if (preferredIndex > 0 && Date.now() - downgradedAt > STICKY_MS) {
     preferredIndex = 0; // periodically try the better models again
   }
@@ -71,7 +99,14 @@ async function* realGenerateStream({ contents, allowTools }) {
       break;
     } catch (err) {
       lastErr = err;
-      if (!isQuotaError(err) || i === MODELS.length - 1) throw err;
+      if (!isQuotaError(err)) throw err;
+      if (i === MODELS.length - 1) {
+        // Whole chain exhausted — cool down and tell the user how long.
+        const retry = parseRetrySeconds(err);
+        chainExhaustedUntil = Date.now() + retry * 1000;
+        console.warn(`assistant: all models quota-exhausted, cooling down ${retry}s`);
+        throw new QuotaExhaustedError(retry);
+      }
       console.warn(`assistant: ${MODELS[i]} quota exhausted, falling back to ${MODELS[i + 1]}`);
       preferredIndex = i + 1;
       downgradedAt = Date.now();
@@ -167,4 +202,4 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
   return finalText || "I could not finish answering that — please try rephrasing.";
 };
 
-module.exports = { runAgent, MAX_ROUNDS, FUNCTION_DECLARATIONS };
+module.exports = { runAgent, MAX_ROUNDS, FUNCTION_DECLARATIONS, QuotaExhaustedError, formatWait };
