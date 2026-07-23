@@ -47,6 +47,7 @@ import EditSupplier from "./pages/EditSupplier";
 import SupplierDetail from "./pages/SupplierDetail";
 import InventoryCategories from "./pages/InventoryCategories";
 import ItemAttributes from "./pages/ItemAttributes";
+import Assistant from "./pages/Assistant";
 import NotFound from "./pages/NotFound";
 import "./assets/styles/index.css";
 import "./styles/button-override.css";
@@ -69,6 +70,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="assistant" element={<Assistant />} />
 
                 <Route path="orders">
                   <Route index element={<Orders />} />
