@@ -45,6 +45,7 @@ const TABLES = [
   "inventory_items",
   "inventory_categories",
   "suppliers",
+  "users",
 ];
 
 beforeEach(async () => {
