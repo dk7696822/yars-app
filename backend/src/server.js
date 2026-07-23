@@ -8,6 +8,10 @@
 require("dotenv").config(
   process.env.NODE_ENV === "test" ? { path: __dirname + "/../.env.test" } : {}
 );
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET is not set — refusing to start.");
+  process.exit(1);
+}
 const express = require("express");
 const cors = require("cors");
 const path = require("path");

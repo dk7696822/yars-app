@@ -3,6 +3,8 @@
 const express = require("express");
 const router = express.Router();
 
+const authRoutes = require("./authRoutes");
+const authMiddleware = require("../middleware/authMiddleware");
 const customerRoutes = require("./customerRoutes");
 const productSizeRoutes = require("./productSizeRoutes");
 const plateTypeRoutes = require("./plateTypeRoutes");
@@ -21,6 +23,16 @@ const purchaseOrderRoutes = require("./purchaseOrderRoutes");
 const goodsReceiptRoutes = require("./goodsReceiptRoutes");
 const stockIssueRoutes = require("./stockIssueRoutes");
 const stockRoutes = require("./stockRoutes");
+const assistantRoutes = require("./assistantRoutes");
+
+// Public routes — no token required
+router.use("/auth", authRoutes);
+router.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "API is running" });
+});
+
+// Everything below requires a valid JWT
+router.use(authMiddleware);
 
 router.use("/customers", customerRoutes);
 router.use("/product-sizes", productSizeRoutes);
@@ -40,8 +52,6 @@ router.use("/purchase-orders", purchaseOrderRoutes);
 router.use("/goods-receipts", goodsReceiptRoutes);
 router.use("/stock-issues", stockIssueRoutes);
 router.use("/stock", stockRoutes);
-router.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK", message: "API is running" });
-});
+router.use("/assistant", assistantRoutes);
 
 module.exports = router;

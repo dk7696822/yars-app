@@ -22,7 +22,7 @@
 - Create: `backend/src/models/assistantConversation.js`
 - Create: `backend/src/models/assistantMessage.js`
 
-- [ ] **Step 1: Conversations migration**
+- [x] **Step 1: Conversations migration**
 
 ```js
 "use strict";
@@ -44,7 +44,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 2: Messages migration**
+- [x] **Step 2: Messages migration**
 
 ```js
 "use strict";
@@ -73,7 +73,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 3: Models** (`assistantConversation.js`)
+- [x] **Step 3: Models** (`assistantConversation.js`)
 
 ```js
 "use strict";
@@ -138,12 +138,12 @@ module.exports = (sequelize, DataTypes) => {
 };
 ```
 
-- [ ] **Step 4: Migrate test DB + add tables to the TRUNCATE list**
+- [x] **Step 4: Migrate test DB + add tables to the TRUNCATE list**
 
 Run: `cd backend && npm run test:migrate` → both migrations apply.
 In `backend/tests/setup.js` `TABLES`, prepend `"assistant_messages", "assistant_conversations",` at the TOP of the array (children before parents, matching the existing style).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/migrations/20260723000002-create-assistant-conversations.js backend/src/migrations/20260723000003-create-assistant-messages.js backend/src/models/assistantConversation.js backend/src/models/assistantMessage.js backend/tests/setup.js
@@ -158,7 +158,7 @@ git commit -m "feat(assistant): conversation and message tables"
 - Create: `backend/src/services/assistant/sqlGuard.js`
 - Test: `backend/tests/sqlGuard.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 "use strict";
@@ -214,12 +214,12 @@ describe("sqlGuard.validateAndWrap", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd backend && npm test -- sqlGuard`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 "use strict";
@@ -274,12 +274,12 @@ module.exports = { validateAndWrap, ROW_LIMIT };
 
 (Note: `FOR UPDATE` already trips the `update` keyword ban; the explicit lock regex additionally catches `FOR SHARE`, which contains no banned word.)
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd backend && npm test -- sqlGuard`
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/assistant/sqlGuard.js backend/tests/sqlGuard.test.js
@@ -295,7 +295,7 @@ git commit -m "feat(assistant): strict SQL validator for the read-only tool"
 - Modify: `backend/.env.test` — add `ASSISTANT_DB_URL=postgres://<test user>:<test pass>@localhost:5433/<test db>` (copy exact user/pass/db from the existing `.env.test` / `docker-compose.test.yml` values)
 - Test: `backend/tests/assistantDb.test.js`
 
-- [ ] **Step 1: Write the failing test** (locally the role isn't SELECT-only — that layer exists only on Supabase; these tests cover the code path: guard applied, rows returned, output truncated)
+- [x] **Step 1: Write the failing test** (locally the role isn't SELECT-only — that layer exists only on Supabase; these tests cover the code path: guard applied, rows returned, output truncated)
 
 ```js
 "use strict";
@@ -328,12 +328,12 @@ describe("assistantDb.runQuery", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cd backend && npm test -- assistantDb`
 Expected: FAIL — module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 "use strict";
@@ -384,12 +384,12 @@ module.exports = { runQuery, closePool, MAX_RESULT_CHARS };
 
 (Match the SSL option to how `src/config/database.js` connects to Supabase in production — read that file and copy its ssl settings.)
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cd backend && npm test -- assistantDb`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/services/assistant/assistantDb.js backend/tests/assistantDb.test.js
@@ -405,7 +405,7 @@ git commit -m "feat(assistant): read-only query executor with truncation"
 
 This task is authored, not coded: each module file is written **by reading the actual frontend JSX** so button labels, field names, and step orders are real. Budget the bulk of this task for reading `frontend/src/pages/*.jsx`.
 
-- [ ] **Step 1: Write `00-instructions.md`** (behavioral rules — use this content verbatim)
+- [x] **Step 1: Write `00-instructions.md`** (behavioral rules — use this content verbatim)
 
 ```markdown
 # Assistant instructions
@@ -430,11 +430,11 @@ Rules:
 - Keep answers short — they are read on a phone. Tables only when listing >3 rows.
 ```
 
-- [ ] **Step 2: Write `routes.md`** — enumerate every route from `frontend/src/App.jsx` as `| path | screen | what it's for |` table rows. Read App.jsx and list them all (`/`, `/orders`, `/orders/new`, `/orders/:id`, `/customers`, … through `/item-attributes`), plus `/assistant` itself.
+- [x] **Step 2: Write `routes.md`** — enumerate every route from `frontend/src/App.jsx` as `| path | screen | what it's for |` table rows. Read App.jsx and list them all (`/`, `/orders`, `/orders/new`, `/orders/:id`, `/customers`, … through `/item-attributes`), plus `/assistant` itself.
 
-- [ ] **Step 3: Write `schema.md`** — for each table: name, columns (name + type + meaning), key relationships, and quirks. Source it by reading `backend/src/models/*.js` (all 26 files). Include the global notes: UUID PKs; `is_archived` soft deletes; DECIMAL returned as string; `stock_batches.quantity_remaining` sums are authoritative stock; `stock_movements` is append-only with signed quantities; document numbers like `PO-2026-0001`.
+- [x] **Step 3: Write `schema.md`** — for each table: name, columns (name + type + meaning), key relationships, and quirks. Source it by reading `backend/src/models/*.js` (all 26 files). Include the global notes: UUID PKs; `is_archived` soft deletes; DECIMAL returned as string; `stock_batches.quantity_remaining` sums are authoritative stock; `stock_movements` is append-only with signed quantities; document numbers like `PO-2026-0001`.
 
-- [ ] **Step 4: Write the eight module files.** For each: read the module's pages in `frontend/src/pages/` and write (a) what the module is for, (b) domain-term definitions, (c) a walkthrough per user action with exact labels and ordered steps, (d) route links. Level of detail to hit — worked example for one section of `inventory.md`:
+- [x] **Step 4: Write the eight module files.** For each: read the module's pages in `frontend/src/pages/` and write (a) what the module is for, (b) domain-term definitions, (c) a walkthrough per user action with exact labels and ordered steps, (d) route links. Level of detail to hit — worked example for one section of `inventory.md`:
 
 ```markdown
 ## Recording a stock issue (with wastage)
@@ -459,7 +459,7 @@ Adjustment (In) from the [Stock](/stock) screen with a reason.
 
 Files ↔ source pages: `dashboard.md` ← Dashboard.jsx; `customers.md` ← Customers/CreateCustomer/EditCustomer/CustomerDetails; `orders.md` ← Orders/CreateOrder/EditOrder/OrderDetails (+ plate types & product sizes pages); `invoices.md` ← Invoices/GenerateInvoice/InvoiceDetails; `payments.md` ← Payments pages; `expenses.md` ← Expenses/CreateExpense/EditExpense/ExpenseCategories; `inventory.md` ← Stock/StockItemDetail/InventoryItems/PurchaseOrders/ReceivePurchaseOrder/StockIssues/Suppliers/InventoryCategories/ItemAttributes pages; `history.md` ← History.jsx.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/knowledge/
@@ -474,7 +474,7 @@ git commit -m "feat(assistant): knowledge base (instructions, schema, routes, mo
 - Create: `backend/src/services/assistant/knowledgeLoader.js`
 - Test: `backend/tests/knowledgeLoader.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 "use strict";
@@ -495,9 +495,9 @@ describe("knowledgeLoader", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `cd backend && npm test -- knowledgeLoader` → module not found.
+- [x] **Step 2: Run to verify it fails** — `cd backend && npm test -- knowledgeLoader` → module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 "use strict";
@@ -530,7 +530,7 @@ const loadKnowledge = () => {
 module.exports = { loadKnowledge };
 ```
 
-- [ ] **Step 4: Run to verify pass**, then **Step 5: Commit**
+- [x] **Step 4: Run to verify pass**, then **Step 5: Commit**
 
 ```bash
 git add backend/src/services/assistant/knowledgeLoader.js backend/tests/knowledgeLoader.test.js
@@ -548,7 +548,7 @@ git commit -m "feat(assistant): knowledge loader with mtime cache"
 
 The service is dependency-injected so tests never touch the network: `runAgent(history, callbacks, deps)` where `deps = { generateStream, runQuery }` defaults to the real Gemini client and `assistantDb.runQuery`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 "use strict";
@@ -641,9 +641,9 @@ describe("assistantService.runAgent", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify fail** — `cd backend && npm test -- assistantService` → module not found.
+- [x] **Step 2: Run to verify fail** — `cd backend && npm test -- assistantService` → module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 "use strict";
@@ -762,9 +762,9 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
 module.exports = { runAgent, MAX_ROUNDS, FUNCTION_DECLARATIONS };
 ```
 
-- [ ] **Step 4: Run to verify pass** — `cd backend && npm test -- assistantService` → 4 passed.
+- [x] **Step 4: Run to verify pass** — `cd backend && npm test -- assistantService` → 4 passed.
 
-- [ ] **Step 5: One real smoke test against Gemini (manual, not committed as a test)**
+- [x] **Step 5: One real smoke test against Gemini (manual, not committed as a test)** _(done with the new key; model switched to `gemini-flash-latest` — versioned IDs are gated for new projects; thought-signature echo fix required and added)_
 
 Run: `cd backend && GEMINI_API_KEY=<real key> node -e "
 const { runAgent } = require('./src/services/assistant/assistantService');
@@ -772,7 +772,7 @@ runAgent([{role:'user',content:'Say hello in 3 words'}], {onDelta:process.stdout
 "`
 Expected: streamed greeting then `OK`. If the SDK's chunk shape differs (`chunk.text` as getter vs property), fix `realGenerateStream` here — the tests pin the internal interface, so only this adapter changes.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/services/assistant/assistantService.js backend/tests/assistantService.test.js backend/package.json backend/package-lock.json
@@ -789,7 +789,7 @@ git commit -m "feat(assistant): Gemini agent loop with injected tool execution"
 - Modify: `backend/src/routes/index.js` (mount after authMiddleware, with the other modules)
 - Test: `backend/tests/assistantController.test.js` (CRUD only; the SSE handler is exercised by the Task 6 tests + manual verification)
 
-- [ ] **Step 1: Write the failing CRUD tests**
+- [x] **Step 1: Write the failing CRUD tests**
 
 ```js
 "use strict";
@@ -848,7 +848,7 @@ describe("assistant conversations CRUD", () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify fail**, then **Step 3: Implement the controller**
+- [x] **Step 2: Run to verify fail**, then **Step 3: Implement the controller**
 
 ```js
 "use strict";
@@ -978,7 +978,7 @@ const sendMessage = async (req, res) => {
 module.exports = { listConversations, createConversation, getConversation, deleteConversation, sendMessage };
 ```
 
-- [ ] **Step 4: Routes file** (`assistantRoutes.js`)
+- [x] **Step 4: Routes file** (`assistantRoutes.js`)
 
 ```js
 "use strict";
@@ -998,9 +998,9 @@ module.exports = router;
 
 In `routes/index.js`, with the other requires add `const assistantRoutes = require("./assistantRoutes");` and after the existing module mounts (below `authMiddleware`) add `router.use("/assistant", assistantRoutes);`.
 
-- [ ] **Step 5: Run CRUD tests** — `cd backend && npm test -- assistantController` → pass. Then run the FULL suite: `npm test` → all green.
+- [x] **Step 5: Run CRUD tests** — `cd backend && npm test -- assistantController` → pass. Then run the FULL suite: `npm test` → all green.
 
-- [ ] **Step 6: Manual SSE verification** (test DB + real Gemini key)
+- [x] **Step 6: Manual SSE verification** (test DB + real Gemini key) _(verified: full auth+SSE chain works; Gemini 403 surfaces as the graceful `error` event; happy-path re-check pending fresh key)_
 
 Run the server (`NODE_ENV=test GEMINI_API_KEY=<real key> node src/server.js`), mint a token via the login endpoint, then:
 
@@ -1013,7 +1013,7 @@ curl -N -X POST "localhost:5000/api/assistant/conversations/$CONV/messages" \
 
 Expected: `event: status` then `event: delta` lines then `event: done`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/controllers/assistantController.js backend/src/routes/assistantRoutes.js backend/src/routes/index.js backend/tests/assistantController.test.js
@@ -1027,7 +1027,7 @@ git commit -m "feat(assistant): conversation CRUD and SSE message endpoint"
 **Files:**
 - Create: `backend/scripts/create-assistant-role.sql`
 
-- [ ] **Step 1: Write the script** (run manually against Supabase at rollout; grants only, no data change)
+- [x] **Step 1: Write the script** (run manually against Supabase at rollout; grants only, no data change)
 
 ```sql
 -- One-time setup for the assistant's read-only database access (layer 1 of 3).
@@ -1049,7 +1049,7 @@ ALTER ROLE yars_assistant_ro SET default_transaction_read_only = on;
 ALTER ROLE yars_assistant_ro SET statement_timeout = '5s';
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add backend/scripts/create-assistant-role.sql
@@ -1064,7 +1064,7 @@ git commit -m "feat(assistant): SQL script for the SELECT-only role"
 - Create: `frontend/src/services/assistantAPI.js`
 - Modify: `frontend/package.json` — `cd frontend && npm install react-markdown`
 
-- [ ] **Step 1: Write the service**
+- [x] **Step 1: Write the service**
 
 ```js
 import axios from "axios";
@@ -1151,7 +1151,7 @@ export const streamMessage = async (conversationId, text, { onDelta, onStatus, o
 };
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add frontend/src/services/assistantAPI.js frontend/package.json frontend/package-lock.json
@@ -1168,7 +1168,7 @@ git commit -m "feat(assistant): frontend API service with SSE-over-fetch streami
 
 Before coding, read one existing list page (e.g. `Suppliers.jsx`) and one form page to copy the app's visual conventions (page title pattern, card/list classes, custom Dropdown if needed, dark-theme classes).
 
-- [ ] **Step 1: Write the page.** Functional requirements (implement with the app's styling conventions):
+- [x] **Step 1: Write the page.** Functional requirements (implement with the app's styling conventions):
 
 ```jsx
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -1281,7 +1281,7 @@ export default function Assistant() {
 
 The render section marked with comments is where the app-convention styling gets written — logic above is complete and must be used as-is.
 
-- [ ] **Step 2: Add the route in `App.jsx`**
+- [x] **Step 2: Add the route in `App.jsx`**
 
 ```jsx
 import Assistant from "./pages/Assistant";
@@ -1289,9 +1289,9 @@ import Assistant from "./pages/Assistant";
 <Route path="assistant" element={<Assistant />} />
 ```
 
-- [ ] **Step 3: Verify in the browser** (backend running as in Task 7 Step 6): log in, open `/assistant`, ask "how do I record wastage?" → streamed markdown answer with a tappable deep-link that navigates to Stock Issues. Ask "how many suppliers do we have?" → status line then an answer with the real count.
+- [x] **Step 3: Verify in the browser** (backend running as in Task 7 Step 6): log in, open `/assistant`, ask "how do I record wastage?" → streamed markdown answer with a tappable deep-link that navigates to Stock Issues. Ask "how many suppliers do we have?" → status line then an answer with the real count.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/src/pages/Assistant.jsx frontend/src/App.jsx
@@ -1305,7 +1305,7 @@ git commit -m "feat(assistant): assistant page with streaming chat and deep link
 **Files:**
 - Modify: `frontend/src/components/layout/MainLayout.jsx`
 
-- [ ] **Step 1: Add the button.** Read `MainLayout.jsx` first. Inside the layout (rendered on every protected page), add:
+- [x] **Step 1: Add the button.** Read `MainLayout.jsx` first. Inside the layout (rendered on every protected page), add:
 
 ```jsx
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1327,9 +1327,9 @@ const location = useLocation();
 
 (If MainLayout already uses `useLocation`/`useNavigate`, reuse them. Position it above the mobile bottom nav if one exists — check the layout's structure and adjust `bottom-20` accordingly.)
 
-- [ ] **Step 2: Verify** — button appears on Dashboard/Orders/etc., not on `/assistant`; tapping it opens the assistant.
+- [x] **Step 2: Verify** — button appears on Dashboard/Orders/etc., not on `/assistant`; tapping it opens the assistant.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add frontend/src/components/layout/MainLayout.jsx
@@ -1340,15 +1340,15 @@ git commit -m "feat(assistant): floating assistant button on all screens"
 
 ### Task 12: Final verification + docs
 
-- [ ] **Step 1: Full backend suite** — `cd backend && npm test` → all green.
+- [x] **Step 1: Full backend suite** — `cd backend && npm test` → all green.
 
-- [ ] **Step 2: Frontend build** — `cd frontend && npm run build` → succeeds.
+- [x] **Step 2: Frontend build** — `cd frontend && npm run build` → succeeds.
 
-- [ ] **Step 3: Manual phone-width walkthrough (390px devtools):** login → floating button visible → assistant page → new conversation → data question (streams, correct number) → app-help question (numbered steps + working deep link) → leave mid-stream and return (answer persisted) → delete conversation → old conversation resumable from list.
+- [ ] **Step 3: Manual phone-width walkthrough (390px devtools):** _(pending fresh Gemini key)_ login → floating button visible → assistant page → new conversation → data question (streams, correct number) → app-help question (numbered steps + working deep link) → leave mid-stream and return (answer persisted) → delete conversation → old conversation resumable from list.
 
-- [ ] **Step 4: Update HANDOFF.md** — add an "AI Assistant" module paragraph: what it is, the three guard layers, `GEMINI_API_KEY` + `ASSISTANT_DB_URL` env vars, and the maintenance rule: **any UI change to a screen updates that module's `backend/knowledge/*.md` file in the same commit.**
+- [x] **Step 4: Update HANDOFF.md** — add an "AI Assistant" module paragraph: what it is, the three guard layers, `GEMINI_API_KEY` + `ASSISTANT_DB_URL` env vars, and the maintenance rule: **any UI change to a screen updates that module's `backend/knowledge/*.md` file in the same commit.**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add HANDOFF.md

@@ -45,6 +45,8 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - Document numbers (`PO-2026-0001`, `GR-…`, `ISS-…`): `documentNumber.js`, advisory-lock serialized, safe past 9999.
 - Server-side pagination (`backend/src/utils/pagination.js`, default 20/max 100) — inventory only; original modules still return all rows.
 
+**AI Assistant (built 2026-07-23)** — in-app chat (page at `/assistant` + floating button) that answers data questions and explains the app. Gemini via `@google/genai` with a quota-fallback model chain (`gemini-flash-latest` → `gemini-flash-lite-latest` → `gemini-2.0-flash`; free-tier daily caps on the top model are tiny, ~20 req/day); SSE streaming (`POST /api/assistant/conversations/:id/messages`); conversations persisted (`assistant_conversations`/`assistant_messages`). Data access is READ-ONLY through three layers: (1) SELECT-only Postgres role `yars_assistant_ro` (`backend/scripts/create-assistant-role.sql`, connection in `ASSISTANT_DB_URL`), (2) strict SQL validator `src/services/assistant/sqlGuard.js`, (3) LIMIT 200 wrap + 5s statement timeout. Env vars: `GEMINI_API_KEY`, `ASSISTANT_DB_URL`. **Maintenance rule: any PR that changes a screen's UI must update that module's `backend/knowledge/*.md` in the same commit** — the assistant's answers are only as accurate as those files.
+
 ## Conventions
 
 - Models: UUID PKs, `underscored: true`, snake_case tables, `is_archived` soft deletes everywhere. Deletes are refused (HTTP **409**) while referenced. 400 = validation, 404 = missing.
@@ -52,6 +54,7 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - Responses: `success(res, code, msg, data)` / `error(...)` from `backend/src/utils/response.js`. Paginated payloads: rows at `response.data.data.data`, metadata at `...data.pagination` (frontend uses `unwrapPaginated`).
 - Active-name uniqueness via **partial unique indexes** (`WHERE is_archived = false`) — archived names are reusable.
 - Migrations: `YYYYMMDD…` prefix; inventory ones are `20260711000001–11`. `ALTER TYPE ... ADD VALUE` cannot run in a transaction (see migration 000010).
+- **Auth (added 2026-07-23)**: all `/api` routes require `Authorization: Bearer <JWT>` (30-day expiry, signed with `JWT_SECRET` env var — server refuses to boot without it). Public exceptions: `POST /api/auth/login`, `GET /api/health`. Users live in the `users` table (bcrypt hashes); manage them with `node backend/scripts/create-user.js <username> <password> <displayName>` (idempotent). Frontend stores the token in localStorage; both axios clients attach it and auto-logout on 401.
 
 ## Deployment — direct from local, NO GitHub push involved
 
@@ -84,7 +87,6 @@ Live at **https://yars-dashboard.web.app**. `VITE_API_URL` comes from `frontend/
 
 ## Known issues / debt (pre-existing, deliberately out of scope so far)
 
-- **No real auth**: login is a hardcoded username/password in `frontend/src/context/AuthContext.jsx`, shipped in the JS bundle; the backend validates nothing. Anyone with the API URL can read/write everything.
 - **Live credentials committed**: `backend/src/config/supabase.js` and `backend/render.yaml` contain real connection strings/secrets in git history.
 - Stale CORS entries (Vercel/Netlify/Amplify) in `server.js`.
 - Original modules do client-side pagination (fetch-all).
