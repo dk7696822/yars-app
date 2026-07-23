@@ -40,7 +40,8 @@ const MainLayout = () => {
           onClick={() => navigate("/assistant")}
           className="fixed bottom-24 lg:bottom-6 right-4 z-40 flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-all"
         >
-          <FaMagic className="w-4 h-4" />
+          <span aria-hidden className="jarvis-ring absolute inset-0 rounded-full bg-primary/50" />
+          <FaMagic className="jarvis-wiggle w-4 h-4 relative" />
         </button>
       )}
 

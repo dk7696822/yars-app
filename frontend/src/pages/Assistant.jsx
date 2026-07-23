@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { FaPlus, FaArrowLeft, FaTrash, FaPaperPlane, FaMagic } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
@@ -63,10 +64,18 @@ const useVisualViewportHeight = () => {
   return height;
 };
 
+const SUGGESTIONS = [
+  "Which items are low on stock?",
+  "Which customers have pending payments?",
+  "What is this month's total expense?",
+  "How do I record wastage?",
+];
+
 const Assistant = () => {
   const [conversations, setConversations] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [activeId, setActiveId] = useState(null);
+  const [draft, setDraft] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -111,14 +120,18 @@ const Assistant = () => {
     setMessages(res.data.data.messages.map((m) => ({ role: m.role, content: m.content })));
   };
 
-  const startNew = async () => {
-    const res = await assistantAPI.createConversation();
-    setActiveId(res.data.data.id);
+  // Opens an empty chat WITHOUT creating anything server-side — the
+  // conversation row is created on first send (send() handles activeId null),
+  // so abandoned "New" taps never litter the history.
+  const startNew = () => {
+    setActiveId(null);
     setMessages([]);
+    setDraft(true);
   };
 
   const backToList = () => {
     setActiveId(null);
+    setDraft(false);
     setMessages([]);
     loadConversations();
   };
@@ -183,38 +196,67 @@ const Assistant = () => {
   };
 
   // ---------- View 1: conversation list ----------
-  if (activeId === null) {
+  if (activeId === null && !draft) {
     return (
-      <div className="p-4 sm:p-6 space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="hidden sm:block">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-emerald-50">Jarvis</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Ask about your data or how to use the app</p>
+      <div className="p-4 sm:p-6 space-y-5 max-w-2xl mx-auto">
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5">
+          <div className="flex items-center gap-4">
+            <div className="relative flex items-center justify-center h-14 w-14 shrink-0">
+              <span aria-hidden className="jarvis-ring absolute inset-0 rounded-full bg-primary/40" />
+              <div className="jarvis-float relative flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30">
+                <FaMagic className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-emerald-50">Hi, I’m Jarvis 👋</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Ask me about stock, dues, expenses — or how to do anything in the app.
+              </p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={startNew}
-            className="flex items-center gap-2 min-h-[44px] px-4 rounded-xl bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/25 active:scale-95 transition-all"
-          >
-            <FaPlus className="w-3 h-3" />
-            <span className="hidden sm:inline">New conversation</span>
-            <span className="sm:hidden">New</span>
-          </button>
         </div>
 
-        {listLoading ? (
-          <CardListSkeleton />
-        ) : conversations.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 dark:border-emerald-900/40 p-8 text-center space-y-2">
-            <FaMagic className="mx-auto w-6 h-6 text-gray-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Hi, I’m Jarvis. Ask me things like “how much stock of 60 GSM fabric?” or “how do I record
-              wastage?”
+        {/* Suggestion chips — tap to start a chat with the question prefilled */}
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTIONS.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => {
+                setInput(q);
+                startNew();
+              }}
+              className="px-3.5 min-h-[40px] rounded-full border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-700 dark:text-emerald-100 shadow-sm active:scale-95 transition-all"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={startNew}
+          className="w-full flex items-center justify-center gap-2 min-h-[48px] rounded-2xl bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/25 active:scale-[0.98] transition-all"
+        >
+          <FaPlus className="w-3 h-3" />
+          Start a new conversation
+        </button>
+
+        {/* Recent conversations */}
+        <div className="space-y-2 pt-1">
+          <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            Recent conversations
+          </h2>
+          {listLoading ? (
+            <CardListSkeleton />
+          ) : conversations.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400 py-3">
+              Nothing yet — tap a question above to get started.
             </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {conversations.map((c) => (
+          ) : (
+            <div className="space-y-2">
+              {conversations.map((c) => (
               <div
                 key={c.id}
                 className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] p-4"
@@ -232,9 +274,10 @@ const Assistant = () => {
                   <FaTrash className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
 
         <ConfirmationModal
           isOpen={!!deleteTarget}
@@ -251,14 +294,8 @@ const Assistant = () => {
   const lastMessage = messages[messages.length - 1];
   const showTyping = streaming && lastMessage?.role === "assistant" && lastMessage.content === "";
 
-  return (
-    // Phones: a full-screen overlay (WhatsApp-style) sized to the VISUAL
-    // viewport, so the input bar always sits right above the keyboard.
-    // Desktop: embedded in the normal layout.
-    <div
-      className="fixed inset-x-0 top-0 z-50 flex flex-col bg-gray-50 dark:bg-[#0d1210] lg:static lg:z-auto lg:bg-transparent lg:h-[calc(100dvh-6rem)]"
-      style={isDesktop() ? undefined : { height: viewportHeight ? `${viewportHeight}px` : "100dvh" }}
-    >
+  const chatInner = (
+    <>
       <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-emerald-900/40">
         <button
           type="button"
@@ -301,8 +338,8 @@ const Assistant = () => {
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-3 border-t border-gray-200 dark:border-emerald-900/40 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-end gap-2">
+      <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gray-50 dark:bg-[#0d1210]">
+        <div className="flex items-end gap-1.5 rounded-[26px] border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] shadow-sm px-2 py-1.5 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15 transition-all">
           <textarea
             ref={inputRef}
             value={input}
@@ -321,20 +358,38 @@ const Assistant = () => {
             onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 300)}
             rows={1}
             placeholder="Ask Jarvis…"
-            className="flex-1 resize-none max-h-24 min-h-[44px] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-base lg:text-sm text-gray-900 dark:text-emerald-50"
+            className="flex-1 resize-none max-h-24 min-h-[40px] px-3 py-2 bg-transparent border-0 outline-none focus:ring-0 text-base lg:text-sm text-gray-900 dark:text-emerald-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
           <button
             type="button"
             aria-label="Send"
             onClick={send}
             disabled={streaming || !input.trim()}
-            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-xl bg-primary text-white disabled:opacity-40 active:scale-95 transition-all"
+            className="mb-0.5 flex items-center justify-center h-9 w-9 shrink-0 rounded-full bg-primary text-white shadow-md shadow-primary/25 disabled:opacity-35 disabled:shadow-none active:scale-90 transition-all"
           >
-            <FaPaperPlane className="w-4 h-4" />
+            <FaPaperPlane className="w-3.5 h-3.5 -translate-x-px" />
           </button>
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  // Desktop: embedded in the normal layout. Phones: PORTALED to <body> — the
+  // page-enter wrapper animates a CSS transform, and a transformed ancestor
+  // becomes the containing block for position:fixed, which trapped the overlay
+  // inside the scroll area. The portal escapes the layout tree entirely; the
+  // overlay is sized to the visual viewport so the input rides the keyboard.
+  if (isDesktop()) {
+    return <div className="flex flex-col h-[calc(100dvh-6rem)]">{chatInner}</div>;
+  }
+  return createPortal(
+    <div
+      className="fixed inset-x-0 top-0 z-50 flex flex-col bg-gray-50 dark:bg-[#0d1210]"
+      style={{ height: viewportHeight ? `${viewportHeight}px` : "100dvh" }}
+    >
+      {chatInner}
+    </div>,
+    document.body
   );
 };
 
