@@ -29,10 +29,41 @@
   inventory_*, purchase_*, goods_*, stock_*, item_attribute*). They are linked
   only via `stock_issues.order_id` / `stock_movements.order_id` (optional tags).
 - `orders` has **no** `total_amount` column — the API computes it:
-  `SUM(ops.quantity_kg * ops.rate_per_kg)` + plate charge
-  (`orders.custom_plate_charge`, else `plate_types.charge`) −
-  `orders.round_off_amount`. Amount received = `orders.advance_received` +
-  `SUM(payments.amount)`; outstanding = total − received.
+  `SUM(ops.quantity_kg * COALESCE(ops.rate_per_kg, product_sizes.rate_per_kg))`
+  + plate charge (`COALESCE(orders.custom_plate_charge, plate_types.charge)`)
+  − `COALESCE(orders.round_off_amount, 0)`.
+- **Advance rule — tricky, do not improvise:** an order's advance is EITHER the
+  sum of its `payments` rows with `payment_type = 'ADVANCE'` (when any exist) OR
+  the legacy `orders.advance_received` column — NEVER both. Many old orders have
+  the same advance recorded in both places, so adding them double-counts.
+  Paid = `SUM(payments.amount)` where `payment_type <> 'ADVANCE'`.
+  Pending = total − paid − advance.
+- **For ANY pending / outstanding / due / balance question, use exactly this
+  query** (it matches the app's dashboard to the rupee). Aggregate the final
+  SELECT differently as needed (total, per customer, top N) but never change
+  the balance computation inside `order_calc`:
+
+  WITH order_calc AS (
+    SELECT o.customer_id,
+      COALESCE((SELECT SUM(ops.quantity_kg * COALESCE(ops.rate_per_kg, ps.rate_per_kg))
+                FROM order_product_sizes ops JOIN product_sizes ps ON ps.id = ops.product_size_id
+                WHERE ops.order_id = o.id), 0)
+      + COALESCE(o.custom_plate_charge, pt.charge, 0)
+      - COALESCE(o.round_off_amount, 0)
+      - COALESCE((SELECT SUM(p.amount) FROM payments p
+                  WHERE p.order_id = o.id AND p.payment_type <> 'ADVANCE'), 0)
+      - CASE WHEN COALESCE((SELECT SUM(p.amount) FROM payments p
+                            WHERE p.order_id = o.id AND p.payment_type = 'ADVANCE'), 0) > 0
+             THEN (SELECT SUM(p.amount) FROM payments p
+                   WHERE p.order_id = o.id AND p.payment_type = 'ADVANCE')
+             ELSE COALESCE(o.advance_received, 0) END AS balance
+    FROM orders o
+    LEFT JOIN plate_types pt ON pt.id = o.plate_type_id
+    WHERE o.is_archived = false
+  )
+  SELECT c.name, ROUND(SUM(oc.balance), 2) AS pending
+  FROM order_calc oc JOIN customers c ON c.id = oc.customer_id
+  GROUP BY c.name HAVING SUM(oc.balance) > 0 ORDER BY pending DESC
 - Active-name uniqueness on master tables is via partial unique indexes
   (`WHERE is_archived = false`) — archived names can be reused.
 
