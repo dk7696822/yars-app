@@ -228,7 +228,7 @@ const Assistant = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 I can look up your live business data — pending payments, stock levels, orders,
                 expenses — and guide you step-by-step through anything in the app. Ask me in
-                English, Hindi, or Hinglish.
+                English, or Hindi.
               </p>
             </div>
           </div>
