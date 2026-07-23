@@ -23,6 +23,7 @@ const purchaseOrderRoutes = require("./purchaseOrderRoutes");
 const goodsReceiptRoutes = require("./goodsReceiptRoutes");
 const stockIssueRoutes = require("./stockIssueRoutes");
 const stockRoutes = require("./stockRoutes");
+const assistantRoutes = require("./assistantRoutes");
 
 // Public routes — no token required
 router.use("/auth", authRoutes);
@@ -51,5 +52,6 @@ router.use("/purchase-orders", purchaseOrderRoutes);
 router.use("/goods-receipts", goodsReceiptRoutes);
 router.use("/stock-issues", stockIssueRoutes);
 router.use("/stock", stockRoutes);
+router.use("/assistant", assistantRoutes);
 
 module.exports = router;
