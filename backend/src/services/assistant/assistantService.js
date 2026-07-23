@@ -4,7 +4,9 @@ const { GoogleGenAI, Type } = require("@google/genai");
 const { loadKnowledge } = require("./knowledgeLoader");
 const { runQuery: dbRunQuery } = require("./assistantDb");
 
-const MODEL = "gemini-2.5-flash";
+// Stable alias tracking the current Flash model — hardcoded versions (e.g.
+// gemini-2.5-flash) get gated off for new Google projects.
+const MODEL = "gemini-flash-latest";
 const MAX_ROUNDS = 6;
 
 const FUNCTION_DECLARATIONS = [
@@ -41,7 +43,14 @@ async function* realGenerateStream({ contents, allowTools }) {
     },
   });
   for await (const chunk of stream) {
-    yield { text: chunk.text, functionCalls: chunk.functionCalls };
+    // parts carries the raw content parts (incl. thoughtSignature) — newer
+    // Gemini models reject the follow-up request unless the model turn is
+    // echoed back verbatim, signatures included.
+    yield {
+      text: chunk.text,
+      functionCalls: chunk.functionCalls,
+      parts: chunk.candidates?.[0]?.content?.parts,
+    };
   }
 }
 
@@ -66,6 +75,7 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
     const allowTools = round < MAX_ROUNDS;
     let roundText = "";
     const calls = [];
+    const roundParts = [];
 
     for await (const chunk of generateStream({ contents, allowTools })) {
       if (chunk.text) {
@@ -73,6 +83,7 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
         onDelta(chunk.text);
       }
       if (chunk.functionCalls) calls.push(...chunk.functionCalls);
+      if (chunk.parts) roundParts.push(...chunk.parts);
     }
 
     if (calls.length === 0) {
@@ -83,12 +94,17 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
     // Text emitted before a tool call is preamble — keep it in the final answer.
     finalText += roundText;
 
+    // Echo the model turn back VERBATIM when we have the raw parts (they carry
+    // thought signatures the API requires); fall back to reconstruction for
+    // injected test streams that don't provide parts.
     contents.push({
       role: "model",
-      parts: [
-        ...(roundText ? [{ text: roundText }] : []),
-        ...calls.map((fc) => ({ functionCall: { name: fc.name, args: fc.args } })),
-      ],
+      parts: roundParts.length
+        ? roundParts
+        : [
+            ...(roundText ? [{ text: roundText }] : []),
+            ...calls.map((fc) => ({ functionCall: { name: fc.name, args: fc.args } })),
+          ],
     });
 
     onStatus("Looking at the database…");
@@ -102,7 +118,11 @@ const runAgent = async (history, { onDelta, onStatus }, deps = {}) => {
         result = JSON.stringify({ error: err.message });
       }
       responseParts.push({
-        functionResponse: { name: fc.name, response: { result } },
+        functionResponse: {
+          name: fc.name,
+          response: { result },
+          ...(fc.id ? { id: fc.id } : {}),
+        },
       });
     }
     contents.push({ role: "user", parts: responseParts });

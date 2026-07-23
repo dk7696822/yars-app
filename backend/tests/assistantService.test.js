@@ -72,6 +72,37 @@ describe("assistantService.runAgent", () => {
     expect(final).toBe("Sorry, I could not find that.");
   });
 
+  test("raw parts (with thought signatures) are echoed back verbatim", async () => {
+    const signedPart = {
+      functionCall: { name: "run_query", args: { query: "SELECT 1" } },
+      thoughtSignature: "sig-abc-123",
+    };
+    const seenContents = [];
+    let call = 0;
+    const generateStream = async function* ({ contents }) {
+      seenContents.push(JSON.parse(JSON.stringify(contents)));
+      call += 1;
+      if (call === 1) {
+        yield {
+          functionCalls: [{ name: "run_query", args: { query: "SELECT 1" }, id: "fc-1" }],
+          parts: [signedPart],
+        };
+      } else {
+        yield { text: "done" };
+      }
+    };
+    const runQuery = jest.fn().mockResolvedValue("{}");
+    const { callbacks } = collect();
+    await runAgent([{ role: "user", content: "q" }], callbacks, { generateStream, runQuery });
+
+    // Second request must contain the signed part verbatim and the call id.
+    const secondRequest = seenContents[1];
+    const modelTurn = secondRequest.find((c) => c.role === "model");
+    expect(modelTurn.parts).toEqual([signedPart]);
+    const responseTurn = secondRequest[secondRequest.length - 1];
+    expect(responseTurn.parts[0].functionResponse.id).toBe("fc-1");
+  });
+
   test("round cap: stops calling tools after MAX_ROUNDS", async () => {
     const runQuery = jest.fn().mockResolvedValue('{"rowCount":0,"rows":[]}');
     const toolRound = [{ functionCalls: [{ name: "run_query", args: { query: "SELECT 1" } }] }];
