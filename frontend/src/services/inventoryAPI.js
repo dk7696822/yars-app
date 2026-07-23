@@ -1,4 +1,5 @@
 import axios from "axios";
+import { attachAuthInterceptors } from "./api";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -6,6 +7,7 @@ const api = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
 });
+attachAuthInterceptors(api);
 
 /**
  * Unwrap a paginated response.

@@ -9,6 +9,35 @@ const api = axios.create({
   },
 });
 
+export const TOKEN_KEY = "yars_token";
+export const USER_KEY = "yars_user";
+
+export const authAPI = {
+  login: (username, password) => api.post("/auth/login", { username, password }),
+};
+
+export const attachAuthInterceptors = (client) => {
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+  client.interceptors.response.use(
+    (response) => response,
+    (err) => {
+      const isLoginCall = err.config?.url?.includes("/auth/login");
+      if (err.response?.status === 401 && !isLoginCall) {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        if (window.location.pathname !== "/login") window.location.assign("/login");
+      }
+      return Promise.reject(err);
+    }
+  );
+};
+
+attachAuthInterceptors(api);
+
 // Customer API
 export const customerAPI = {
   getAll: (params) => api.get("/customers", { params }),
