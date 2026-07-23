@@ -1344,7 +1344,7 @@ git commit -m "feat(assistant): floating assistant button on all screens"
 
 - [x] **Step 2: Frontend build** — `cd frontend && npm run build` → succeeds.
 
-- [ ] **Step 3: Manual phone-width walkthrough (390px devtools):** _(pending fresh Gemini key)_ login → floating button visible → assistant page → new conversation → data question (streams, correct number) → app-help question (numbered steps + working deep link) → leave mid-stream and return (answer persisted) → delete conversation → old conversation resumable from list.
+- [x] **Step 3: Manual phone-width walkthrough (390px devtools):** _(performed by the user on 2026-07-23 — confirmed working)_ login → floating button visible → assistant page → new conversation → data question (streams, correct number) → app-help question (numbered steps + working deep link) → leave mid-stream and return (answer persisted) → delete conversation → old conversation resumable from list.
 
 - [x] **Step 4: Update HANDOFF.md** — add an "AI Assistant" module paragraph: what it is, the three guard layers, `GEMINI_API_KEY` + `ASSISTANT_DB_URL` env vars, and the maintenance rule: **any UI change to a screen updates that module's `backend/knowledge/*.md` file in the same commit.**
 
