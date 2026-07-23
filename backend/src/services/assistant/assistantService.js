@@ -4,9 +4,20 @@ const { GoogleGenAI, Type } = require("@google/genai");
 const { loadKnowledge } = require("./knowledgeLoader");
 const { runQuery: dbRunQuery } = require("./assistantDb");
 
-// Stable alias tracking the current Flash model — hardcoded versions (e.g.
-// gemini-2.5-flash) get gated off for new Google projects.
-const MODEL = "gemini-flash-latest";
+// Fallback chain, best first. Free-tier daily caps on the top Flash model are
+// tiny (~20 requests/day); the lite/older models have much higher caps and are
+// still fine for SQL + walkthrough answers. On a quota error (429) we step down
+// and remember the working model for a while (aliases only — versioned IDs get
+// gated off for new Google projects).
+const MODELS = [
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-2.0-flash",
+];
+const STICKY_MS = 10 * 60 * 1000; // retry the better models again after 10 min
+
+let preferredIndex = 0;
+let downgradedAt = 0;
 const MAX_ROUNDS = 6;
 
 const FUNCTION_DECLARATIONS = [
@@ -32,16 +43,41 @@ const getAi = () => {
   return ai;
 };
 
+const isQuotaError = (err) =>
+  err?.status === 429 || err?.code === 429 || /RESOURCE_EXHAUSTED|429/.test(String(err?.message));
+
 // Real Gemini stream, matching the injectable interface used in tests.
+// Tries the model chain from the current preferred model; steps down on quota
+// errors. Quota errors can only surface at request time (before streaming), so
+// a mid-stream failure is never silently retried on another model.
 async function* realGenerateStream({ contents, allowTools }) {
-  const stream = await getAi().models.generateContentStream({
-    model: MODEL,
-    contents,
-    config: {
-      systemInstruction: loadKnowledge(),
-      tools: allowTools ? [{ functionDeclarations: FUNCTION_DECLARATIONS }] : undefined,
-    },
-  });
+  if (preferredIndex > 0 && Date.now() - downgradedAt > STICKY_MS) {
+    preferredIndex = 0; // periodically try the better models again
+  }
+
+  let stream = null;
+  let lastErr = null;
+  for (let i = preferredIndex; i < MODELS.length; i += 1) {
+    try {
+      stream = await getAi().models.generateContentStream({
+        model: MODELS[i],
+        contents,
+        config: {
+          systemInstruction: loadKnowledge(),
+          tools: allowTools ? [{ functionDeclarations: FUNCTION_DECLARATIONS }] : undefined,
+        },
+      });
+      preferredIndex = i;
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (!isQuotaError(err) || i === MODELS.length - 1) throw err;
+      console.warn(`assistant: ${MODELS[i]} quota exhausted, falling back to ${MODELS[i + 1]}`);
+      preferredIndex = i + 1;
+      downgradedAt = Date.now();
+    }
+  }
+  if (!stream) throw lastErr;
   for await (const chunk of stream) {
     // parts carries the raw content parts (incl. thoughtSignature) — newer
     // Gemini models reject the follow-up request unless the model turn is
