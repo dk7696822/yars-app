@@ -34,6 +34,8 @@ beforeAll(() => {
 // here. The blast radius therefore grows implicitly as the schema evolves, which is
 // exactly why the beforeAll guard above must stay.
 const TABLES = [
+  "assistant_messages",
+  "assistant_conversations",
   "stock_movements",
   "stock_issue_items",
   "stock_issues",
