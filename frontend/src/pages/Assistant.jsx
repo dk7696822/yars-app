@@ -40,6 +40,29 @@ const AssistantMarkdown = ({ text }) => {
 const isCoarsePointer =
   typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
 
+const isDesktop = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(min-width: 1024px)").matches;
+
+// The keyboard-proof height for the chat overlay: on browsers where the layout
+// viewport doesn't shrink with the keyboard (iOS < 16, some Androids), the
+// visualViewport does — so we size the chat to it directly.
+const useVisualViewportHeight = () => {
+  const [height, setHeight] = useState(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setHeight(vv.height);
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+  return height;
+};
+
 const Assistant = () => {
   const [conversations, setConversations] = useState([]);
   const [listLoading, setListLoading] = useState(true);
@@ -51,6 +74,7 @@ const Assistant = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const viewportHeight = useVisualViewportHeight();
 
   const loadConversations = useCallback(async () => {
     try {
@@ -228,7 +252,13 @@ const Assistant = () => {
   const showTyping = streaming && lastMessage?.role === "assistant" && lastMessage.content === "";
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-8rem)] sm:h-[calc(100dvh-6rem)]">
+    // Phones: a full-screen overlay (WhatsApp-style) sized to the VISUAL
+    // viewport, so the input bar always sits right above the keyboard.
+    // Desktop: embedded in the normal layout.
+    <div
+      className="fixed inset-x-0 top-0 z-50 flex flex-col bg-gray-50 dark:bg-[#0d1210] lg:static lg:z-auto lg:bg-transparent lg:h-[calc(100dvh-6rem)]"
+      style={isDesktop() ? undefined : { height: viewportHeight ? `${viewportHeight}px` : "100dvh" }}
+    >
       <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-emerald-900/40">
         <button
           type="button"
@@ -291,7 +321,7 @@ const Assistant = () => {
             onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 300)}
             rows={1}
             placeholder="Ask Jarvis…"
-            className="flex-1 resize-none max-h-24 min-h-[44px] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-sm text-gray-900 dark:text-emerald-50"
+            className="flex-1 resize-none max-h-24 min-h-[44px] px-3 py-2.5 rounded-xl border border-gray-200 dark:border-emerald-900/40 bg-white dark:bg-[#161d1a] text-base lg:text-sm text-gray-900 dark:text-emerald-50"
           />
           <button
             type="button"

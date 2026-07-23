@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/company_logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- maximum-scale=1 stops iOS auto-zoom on input focus (which shifts the
+         viewport and hides chat inputs behind the keyboard); interactive-widget
+         makes the layout viewport shrink with the keyboard on modern browsers -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#0d1210" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
