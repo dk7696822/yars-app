@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { FaPlus, FaArrowLeft, FaTrash, FaPaperPlane, FaMagic } from "react-icons/fa";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { assistantAPI, streamMessage } from "../services/assistantAPI";
 import { CardListSkeleton } from "../components/common/Skeleton";
 import ConfirmationModal from "../components/common/ConfirmationModal";
@@ -11,9 +12,30 @@ import ConfirmationModal from "../components/common/ConfirmationModal";
 const AssistantMarkdown = ({ text }) => {
   const navigate = useNavigate();
   return (
-    <div className="assistant-markdown text-sm leading-relaxed space-y-2 [&_table]:text-xs [&_table]:w-full [&_th]:text-left [&_th]:py-1 [&_td]:py-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_code]:text-xs [&_code]:bg-black/10 dark:[&_code]:bg-white/10 [&_code]:rounded [&_code]:px-1">
+    <div className="assistant-markdown text-sm leading-relaxed space-y-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_code]:text-xs [&_code]:bg-black/10 dark:[&_code]:bg-white/10 [&_code]:rounded [&_code]:px-1">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
+          // Tables: scroll horizontally instead of breaking the bubble width,
+          // with readable bordered rows on a 390px screen.
+          table: ({ children }) => (
+            <div className="overflow-x-auto -mx-1 my-1 rounded-lg border border-gray-200 dark:border-emerald-900/40">
+              <table className="min-w-full text-xs border-collapse">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-gray-50 dark:bg-emerald-950/30">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="text-left font-semibold px-3 py-2 border-b border-gray-200 dark:border-emerald-900/40 whitespace-nowrap">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-2 border-b border-gray-100 dark:border-emerald-900/20 last:border-b-0 align-top whitespace-nowrap">
+              {children}
+            </td>
+          ),
           a: ({ href, children }) =>
             href?.startsWith("/") ? (
               <button
