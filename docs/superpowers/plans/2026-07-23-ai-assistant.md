@@ -764,7 +764,7 @@ module.exports = { runAgent, MAX_ROUNDS, FUNCTION_DECLARATIONS };
 
 - [x] **Step 4: Run to verify pass** — `cd backend && npm test -- assistantService` → 4 passed.
 
-- [ ] **Step 5: One real smoke test against Gemini (manual, not committed as a test)** _(BLOCKED: current key's Google project returns 403 PERMISSION_DENIED on generateContent — needs a fresh key)_
+- [x] **Step 5: One real smoke test against Gemini (manual, not committed as a test)** _(done with the new key; model switched to `gemini-flash-latest` — versioned IDs are gated for new projects; thought-signature echo fix required and added)_
 
 Run: `cd backend && GEMINI_API_KEY=<real key> node -e "
 const { runAgent } = require('./src/services/assistant/assistantService');
