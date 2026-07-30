@@ -96,7 +96,7 @@ const Orders = () => {
     }
   };
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
     try {
       const params = {};
 
@@ -127,8 +127,7 @@ const Orders = () => {
         }
       });
 
-      const downloadUrl = exportAPI.downloadDashboardData(params);
-      window.open(downloadUrl, "_blank");
+      await exportAPI.downloadDashboardData(params);
     } catch (err) {
       console.error("Error downloading Excel:", err);
       setError("Failed to download Excel file. Please try again.");

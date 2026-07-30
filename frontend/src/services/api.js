@@ -38,6 +38,21 @@ export const attachAuthInterceptors = (client) => {
 
 attachAuthInterceptors(api);
 
+// A plain link or window.open can't send the Authorization header, so file
+// downloads go through the axios client as blobs and save via a temp anchor.
+const downloadFile = async (url, params, fallbackName) => {
+  const res = await api.get(url, { params, responseType: "blob" });
+  const match = (res.headers["content-disposition"] || "").match(/filename="?([^";]+)"?/i);
+  const blobUrl = URL.createObjectURL(res.data);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = match?.[1] || fallbackName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+};
+
 // Customer API
 export const customerAPI = {
   getAll: (params) => api.get("/customers", { params }),
@@ -100,7 +115,8 @@ export const invoiceAPI = {
   generate: (data) => api.post("/invoices/generate", data),
   updateStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
   delete: (id) => api.delete(`/invoices/${id}`),
-  getPdfUrl: (id) => `${API_URL}/invoices/${id}/pdf`,
+  downloadPdf: (invoice) =>
+    downloadFile(`/invoices/${invoice.id}/pdf`, undefined, `invoice-${invoice.invoice_number || invoice.id}.pdf`),
 };
 
 // Payment API
@@ -114,16 +130,8 @@ export const paymentAPI = {
 
 // Export API
 export const exportAPI = {
-  downloadDashboardData: (params) => {
-    const queryString = new URLSearchParams(params).toString();
-    const url = `${API_URL}/export/dashboard?${queryString}`;
-    return url;
-  },
-  downloadExpensesData: (params) => {
-    const queryString = new URLSearchParams(params).toString();
-    const url = `${API_URL}/export/expenses?${queryString}`;
-    return url;
-  },
+  downloadDashboardData: (params) => downloadFile("/export/dashboard", params, "YARS_Orders.xlsx"),
+  downloadExpensesData: (params) => downloadFile("/export/expenses", params, "YARS_Expenses.xlsx"),
 };
 
 // Audit Log API

@@ -26,7 +26,9 @@ const PORT = process.env.PORT || 5000;
 app.use(
   cors({
     origin: process.env.NODE_ENV === "production" ? ["https://yars-app.firebaseapp.com", "https://yars-dashboard.web.app", "https://yars-app.vercel.app", "https://yars-app.netlify.app", "http://localhost:5173", "https://main.d34s1dbm0njr7r.amplifyapp.com"] : ["http://localhost:5173","http://localhost:8081", "https://yars-dashboard.web.app"],
-    credentials: true
+    credentials: true,
+    // Lets the browser read download filenames set by the PDF/Excel endpoints
+    exposedHeaders: ["Content-Disposition"]
   })
 );
 app.use(express.json());

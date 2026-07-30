@@ -62,9 +62,8 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
     }
   };
 
-  const handleDownloadPdf = (invoiceId) => {
-    const pdfUrl = invoiceAPI.getPdfUrl(invoiceId);
-    window.open(pdfUrl, "_blank");
+  const handleDownloadPdf = (invoice) => {
+    invoiceAPI.downloadPdf(invoice).catch((err) => console.error("Error downloading PDF:", err));
   };
 
   if (!invoices || invoices.length === 0) {
@@ -110,7 +109,7 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
                     <MobileActionDropdown
                       actions={[
                         { title: "View", icon: FaEye, iconColor: "text-gray-600 dark:text-gray-300", to: `/invoices/${invoice.id}` },
-                        { title: "Download PDF", icon: FaFileDownload, iconColor: "text-blue-500 dark:text-blue-400", onClick: () => handleDownloadPdf(invoice.id) },
+                        { title: "Download PDF", icon: FaFileDownload, iconColor: "text-blue-500 dark:text-blue-400", onClick: () => handleDownloadPdf(invoice) },
                         ...(invoice.status === "PENDING"
                           ? [
                               { title: "Mark as Paid", icon: FaCheckCircle, iconColor: "text-green-500 dark:text-green-400", onClick: () => onStatusChange(invoice.id, "PAID") },
@@ -188,7 +187,7 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
                   View
                 </Link>
                 <button
-                  onClick={() => handleDownloadPdf(invoice.id)}
+                  onClick={() => handleDownloadPdf(invoice)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
                 >
                   <FaFileDownload className="w-3 h-3" />
@@ -245,7 +244,7 @@ const InvoiceList = ({ invoices, onDelete, onStatusChange }) => {
                         title: "Download PDF",
                         icon: FaFileDownload,
                         iconColor: "text-blue-500 dark:text-blue-400",
-                        onClick: () => handleDownloadPdf(invoice.id),
+                        onClick: () => handleDownloadPdf(invoice),
                       },
                       ...(invoice.status === "PENDING"
                         ? [

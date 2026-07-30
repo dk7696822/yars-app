@@ -21,8 +21,7 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
   };
 
   const handleDownloadPdf = () => {
-    const pdfUrl = invoiceAPI.getPdfUrl(invoice.id);
-    window.open(pdfUrl, "_blank");
+    invoiceAPI.downloadPdf(invoice).catch((err) => console.error("Error downloading PDF:", err));
   };
 
   if (!invoice) {
