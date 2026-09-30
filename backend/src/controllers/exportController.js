@@ -4,6 +4,7 @@ const { Order, Customer, OrderProductSize, ProductSize, PlateType, Payment, Expe
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 const XLSX = require("xlsx");
+const { buildOrderExportRows } = require("../services/orderExport");
 
 const exportDashboardData = async (req, res) => {
   try {
@@ -104,114 +105,7 @@ const exportDashboardData = async (req, res) => {
       order: [["order_date", "DESC"]],
     });
 
-    const excelData = [];
-    let grandTotalAmount = 0;
-    let grandTotalQuantity = 0;
-    let grandTotalReceivable = 0;
-
-    for (const order of orders) {
-      let productAmount = 0;
-      for (const item of order.orderProductSizes) {
-        const itemTotal = parseFloat(item.quantity_kg) * parseFloat(item.rate_per_kg);
-        productAmount += itemTotal;
-      }
-
-      const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge);
-
-      const roundOffAmount = parseFloat(order.round_off_amount || 0);
-
-      const totalOrderAmount = productAmount + plateCharge - roundOffAmount;
-
-      const totalPaid = order.payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-      const remainingAmount = totalOrderAmount - totalPaid;
-
-      const orderTotalQuantity = order.orderProductSizes.reduce((sum, item) => sum + parseFloat(item.quantity_kg), 0);
-
-      grandTotalAmount += totalOrderAmount;
-      grandTotalQuantity += orderTotalQuantity;
-      grandTotalReceivable += remainingAmount;
-
-      let paymentStatusText = "PENDING";
-      if (totalPaid >= totalOrderAmount) {
-        paymentStatusText = "PAID";
-      } else if (totalPaid > 0) {
-        paymentStatusText = "PARTIAL";
-      }
-
-      const baseRowData = {
-        "Order ID": order.id,
-        "Order Date": new Date(order.order_date).toLocaleDateString(),
-        "Customer Name": order.customer.name,
-        "Company Name": order.customer.metadata?.company_name || "",
-        "Customer Phone": order.customer.metadata?.phone || "",
-        "Customer Email": order.customer.metadata?.email || "",
-        "Order Status": order.status,
-        "Payment Status": paymentStatusText,
-        "Plate Type": order.plateType.type_name,
-        "Plate Charge": plateCharge,
-        "Custom Plate Charge": order.custom_plate_charge ? "Yes" : "No",
-        "Round Off Amount": roundOffAmount,
-        "Product Amount": productAmount,
-        "Total Order Amount": totalOrderAmount,
-        "Advance Received": parseFloat(order.advance_received || 0),
-        "Total Paid": totalPaid,
-        "Remaining Amount": remainingAmount,
-        "Created At": new Date(order.created_at).toLocaleDateString(),
-      };
-
-      if (order.orderProductSizes.length > 0) {
-        for (let i = 0; i < order.orderProductSizes.length; i++) {
-          const item = order.orderProductSizes[i];
-          const rowData = { ...baseRowData };
-
-          rowData["Product Size"] = item.productSize.size_label;
-          rowData["Product Category"] = item.productSize.category || "";
-          rowData["Quantity (kg)"] = parseFloat(item.quantity_kg);
-          rowData["Rate per kg"] = parseFloat(item.rate_per_kg);
-          rowData["Custom Rate"] = item.rate_per_kg !== item.productSize.rate_per_kg ? "Yes" : "No";
-          rowData["Product Line Total"] = parseFloat(item.quantity_kg) * parseFloat(item.rate_per_kg);
-
-          excelData.push(rowData);
-        }
-      } else {
-        excelData.push({
-          ...baseRowData,
-          "Product Size": "",
-          "Product Category": "",
-          "Quantity (kg)": 0,
-          "Rate per kg": 0,
-          "Custom Rate": "No",
-          "Product Line Total": 0,
-        });
-      }
-    }
-
-    excelData.push({});
-    excelData.push({
-      "Order ID": "SUMMARY TOTALS",
-      "Order Date": "",
-      "Customer Name": "",
-      "Company Name": "",
-      "Customer Phone": "",
-      "Customer Email": "",
-      "Order Status": "",
-      "Payment Status": "",
-      "Plate Type": "",
-      "Plate Charge": "",
-      "Custom Plate Charge": "",
-      "Product Amount": "",
-      "Total Order Amount": grandTotalAmount,
-      "Advance Received": "",
-      "Total Paid": "",
-      "Remaining Amount": grandTotalReceivable,
-      "Created At": "",
-      "Product Size": "",
-      "Product Category": "",
-      "Quantity (kg)": grandTotalQuantity,
-      "Rate per kg": "",
-      "Custom Rate": "",
-      "Product Line Total": "",
-    });
+    const excelData = buildOrderExportRows(orders.map((order) => order.toJSON()));
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(excelData);
