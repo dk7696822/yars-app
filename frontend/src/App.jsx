@@ -49,8 +49,8 @@ const PurchaseOrdersPage = lazy(() => import("./features/inventory/PurchaseOrder
 const NewPurchaseOrderPage = lazy(() => import("./features/inventory/NewPurchaseOrderPage"));
 const PurchaseOrderPage = lazy(() => import("./features/inventory/PurchaseOrderPage"));
 const ReceivePage = lazy(() => import("./features/inventory/ReceivePage"));
-const StockIssues = lazy(() => import("./pages/StockIssues"));
-const CreateStockIssue = lazy(() => import("./pages/CreateStockIssue"));
+const StockIssuesPage = lazy(() => import("./features/inventory/StockIssuesPage"));
+const NewStockIssuePage = lazy(() => import("./features/inventory/NewStockIssuePage"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const CreateSupplier = lazy(() => import("./pages/CreateSupplier"));
 const EditSupplier = lazy(() => import("./pages/EditSupplier"));
@@ -146,8 +146,8 @@ function App() {
                         </Route>
 
                         <Route path="stock-issues">
-                          <Route index element={old(<StockIssues />)} />
-                          <Route path="new" element={old(<CreateStockIssue />)} />
+                          <Route index element={<StockIssuesPage />} />
+                          <Route path="new" element={<NewStockIssuePage />} />
                         </Route>
 
                         <Route path="suppliers">

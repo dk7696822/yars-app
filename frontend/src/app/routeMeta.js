@@ -39,8 +39,8 @@ const ROUTES = [
   [/^\/purchase-orders\/[^/]+$/, { title: "Purchase order", back: "/purchase-orders" }],
   [/^\/purchase-orders/, { title: "Purchase orders" }],
   // Not redesigned yet — titles as before.
-  [/^\/stock-issues\/new/, { title: "New Stock Issue" }],
-  [/^\/stock-issues/, { title: "Stock Issues" }],
+  [/^\/stock-issues\/new$/, { title: "Issue stock", hideNav: true }],
+  [/^\/stock-issues/, { title: "Stock issues" }],
   [/^\/stock\/[^/]+$/, { title: "Item stock", back: "/stock" }],
   [/^\/stock$/, { title: "Stock" }],
   [/^\/suppliers\/new/, { title: "New Supplier" }],
