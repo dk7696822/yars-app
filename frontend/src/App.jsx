@@ -42,9 +42,9 @@ const EditExpense = lazy(() => import("./pages/EditExpense"));
 const ExpenseCategories = lazy(() => import("./pages/ExpenseCategories"));
 const CreateExpenseCategory = lazy(() => import("./pages/CreateExpenseCategory"));
 const EditExpenseCategory = lazy(() => import("./pages/EditExpenseCategory"));
-const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage"));
 const GenerateInvoice = lazy(() => import("./pages/GenerateInvoice"));
-const InvoiceDetails = lazy(() => import("./pages/InvoiceDetails"));
+const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
 const History = lazy(() => import("./pages/History"));
 const Stock = lazy(() => import("./pages/Stock"));
 const StockItemDetail = lazy(() => import("./pages/StockItemDetail"));
@@ -125,9 +125,9 @@ function App() {
                         </Route>
 
                         <Route path="invoices">
-                          <Route index element={old(<Invoices />)} />
+                          <Route index element={<InvoicesPage />} />
                           <Route path="generate" element={old(<GenerateInvoice />)} />
-                          <Route path=":id" element={old(<InvoiceDetails />)} />
+                          <Route path=":id" element={<InvoicePage />} />
                         </Route>
 
                         <Route path="history" element={old(<History />)} />

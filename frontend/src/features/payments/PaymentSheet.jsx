@@ -31,8 +31,9 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
   const [overpay, setOverpay] = useState(0);
   const [more, setMore] = useState(Boolean(payment?.reference || payment?.notes));
 
+  // On an invoice, "due" is the invoice's due (GST included); the chosen order only decides where the money is saved.
   const picked = orderChoices?.find((o) => o.id === choice);
-  const currentDue = picked ? picked.due : due;
+  const currentDue = due;
   const currentReceived = picked ? picked.received : received;
   const text = SHEET_TEXT[mode];
   const check = () => validatePayment({ mode, form, due: currentDue, received: currentReceived });
@@ -78,7 +79,7 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
                 <button key={o.id} type="button" role="radio" aria-checked={o.id === choice} onClick={() => { setChoice(o.id); setOverpay(0); }}
                   className={`flex w-full justify-between rounded-2xl border px-3 py-2.5 text-sm ${o.id === choice ? "border-brass bg-brass/10 text-ink" : "border-line text-ink-2"}`}>
                   <span>{shortDate(o.orderDate)}</span>
-                  <span>due <Money value={o.due} /></span>
+                  {o.due > 0 ? <span>due <Money value={o.due} /></span> : <span>paid</span>}
                 </button>
               ))}
             </div>

@@ -115,6 +115,12 @@ export const expenseAPI = {
 // Invoice API
 export const invoiceAPI = {
   getAll: (params) => api.get("/invoices", { params }),
+  list: (params) => api.get("/invoices/list", { params }),
+  /** The PDF as a File (sent with the auth header), for sharing or saving. */
+  fetchPdf: async (invoice) => {
+    const res = await api.get(`/invoices/${invoice.id}/pdf`, { responseType: "blob" });
+    return new File([res.data], `invoice-${invoice.invoice_number || invoice.id}.pdf`, { type: "application/pdf" });
+  },
   getById: (id) => api.get(`/invoices/${id}`),
   generate: (data) => api.post("/invoices/generate", data),
   updateStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),

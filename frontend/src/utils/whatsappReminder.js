@@ -9,3 +9,10 @@ export const buildReminder = ({ name, amount, unpaidOrders }) => {
   lines.push("Kindly arrange the payment at your convenience. Thank you!");
   return lines.join("\n");
 };
+
+export const buildInvoiceReminder = ({ name, number, invoiceDate, amountDue }) =>
+  [
+    `Namaste ${name}, this is a gentle reminder from YARS Industries.`,
+    `Invoice #${number} dated ${shortDate(invoiceDate)} — balance due: ${inr(amountDue)}`,
+    "Kindly arrange the payment at your convenience. Thank you!",
+  ].join("\n");
