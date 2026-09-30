@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import DatePicker from "react-datepicker";
 import { FaPlus, FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
-import { formatCurrency } from "../../utils/formatters";
+import { formatCurrency, backfillMessage } from "../../utils/formatters";
+import { useToast } from "../../context/ToastContext";
 import Dropdown from "../ui/Dropdown";
 import OrderLineFields from "./OrderLineFields";
 import { emptyLine, lineFromOrderItem, previewLine, toPayloadLine } from "../../utils/orderFormLines";
@@ -22,6 +23,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     product_sizes: [emptyLine()],
   });
 
+  const toast = useToast();
   const [totalAmount, setTotalAmount] = useState(0);
   const [plateCharge, setPlateCharge] = useState(0);
   const [totalReceivable, setTotalReceivable] = useState(0);
@@ -107,6 +109,8 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     });
     const updated = response.data.data;
     onProductSizeUpdated(updated);
+    const filled = backfillMessage(updated.backfilled_lines);
+    if (filled) toast.success(filled);
     return updated;
   };
 

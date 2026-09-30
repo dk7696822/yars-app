@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { formatPiecePrice, perPiecePriceHint, perPieceWeightHint, formatSizePricing, formatLineQuantity, formatLineKg, formatInvoiceQty, formatInvoiceRate } from "./formatters";
+import { backfillMessage, formatPiecePrice, perPiecePriceHint, perPieceWeightHint, formatSizePricing, formatLineQuantity, formatLineKg, formatInvoiceQty, formatInvoiceRate } from "./formatters";
 
 describe("piece formatters", () => {
   test("price per 1 piece", () => expect(formatPiecePrice("0.5000", 1)).toBe("₹0.50/pc"));
@@ -27,5 +27,16 @@ describe("piece formatters", () => {
     expect(formatInvoiceQty({ unit: "KG", quantity: "50.00" })).toBe("50 kg");
     expect(formatInvoiceQty({ unit: "PIECES", quantity: "5000.00" })).toBe("5,000 pcs");
     expect(formatInvoiceRate({ unit: "PIECES", unit_price: "0.38", price_amount: "375.0000", price_pieces_count: 1000 })).toBe("₹375.00 / 1,000 pcs");
+  });
+});
+
+describe("back-fill message", () => {
+  test("names how many earlier lines got the weight", () => {
+    expect(backfillMessage(1)).toBe("Weight added to 1 earlier order line");
+    expect(backfillMessage(12)).toBe("Weight added to 12 earlier order lines");
+  });
+  test("nothing to say when no lines were filled", () => {
+    expect(backfillMessage(0)).toBeNull();
+    expect(backfillMessage(undefined)).toBeNull();
   });
 });

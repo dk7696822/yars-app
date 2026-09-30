@@ -43,7 +43,8 @@ Domain terms:
      **Weight** "N pcs weigh W kg" is pre-filled from the size; typing your own
      makes it a measured weight (shown as "measured"). If the size has no
      weight, an amber note says so and offers **Set weight for <size>** — saving
-     it updates the size and fills in earlier pieces lines that had no weight.
+     it updates the size and fills in earlier pieces lines that had no weight
+     (a message says how many).
      Skipping is fine; the order still saves.
    The **Amount** updates live (plus "≈ N kg" for pieces). Tap **Add Product
    Size** for more lines; the trash button removes a line (at least one line

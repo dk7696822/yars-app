@@ -102,3 +102,7 @@ export const formatInvoiceRate = (item) => {
   if (item.unit === "KG") return `${formatCurrency(item.unit_price)}/kg`;
   return formatCurrency(item.unit_price);
 };
+
+/** Shown after saving a size weight that back-filled earlier pieces lines; null when none. */
+export const backfillMessage = (count) =>
+  count > 0 ? `Weight added to ${count} earlier order line${count === 1 ? "" : "s"}` : null;
