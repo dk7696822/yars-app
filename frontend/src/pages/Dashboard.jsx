@@ -5,7 +5,7 @@ import { dashboardAPI } from "../services/dashboardAPI";
 import { loadPeriod, savePeriod } from "../utils/periodPrefs";
 import { latestOnly } from "../utils/latestOnly";
 import { rangeText } from "../utils/dashboardFormat";
-import { DEFINITIONS } from "../components/dashboard/definitions";
+import { DEFINITIONS, infoExtras } from "../components/dashboard/definitions";
 import HeroDues from "../components/dashboard/HeroDues";
 import CollectList from "../components/dashboard/CollectList";
 import PeriodBar from "../components/dashboard/PeriodBar";
@@ -24,6 +24,8 @@ export default function Dashboard() {
   const [periodData, setPeriodData] = useState(null);
   const [period, setPeriod] = useState(loadPeriod);
   const [failed, setFailed] = useState(false);
+  const [periodLoading, setPeriodLoading] = useState(false);
+  const [periodError, setPeriodError] = useState(null);
   const [info, setInfo] = useState(null);
   const latest = useRef(latestOnly()).current;
 
@@ -39,11 +41,17 @@ export default function Dashboard() {
   }, []);
 
   const loadPeriodData = useCallback(async (p) => {
+    setPeriodLoading(true);
     try {
       const res = await latest(dashboardAPI.period(p));
-      if (res !== latestOnly.STALE) setPeriodData(res.data.data);
-    } catch {
-      setFailed(true);
+      if (res === latestOnly.STALE) return;
+      setPeriodData(res.data.data);
+      setPeriodError(null);
+      setPeriodLoading(false);
+    } catch (err) {
+      // Show the failure in the period section — never a silent endless skeleton.
+      setPeriodError(err.response?.data?.message || "Check your connection and try again.");
+      setPeriodLoading(false);
     }
   }, [latest]);
 
@@ -60,14 +68,7 @@ export default function Dashboard() {
   const infoContent = useMemo(() => {
     if (!info) return null;
     const def = DEFINITIONS[info];
-    const extra = [];
-    if (info !== "toCollect" && periodData) {
-      extra.push(`Period: ${rangeText(periodData.range)}${periodData.compare ? `, compared with ${rangeText(periodData.compare)}` : ""}.`);
-      if (info === "collected" && periodData.excluded.deletedOrderPayments.count > 0) {
-        extra.push(`Excludes ₹${periodData.excluded.deletedOrderPayments.amount.toLocaleString("en-IN")} received on ${periodData.excluded.deletedOrderPayments.count} payment(s) of deleted orders.`);
-      }
-    }
-    return { ...def, body: [...def.body, ...extra] };
+    return { ...def, body: [...def.body, ...infoExtras(info, periodData)] };
   }, [info, periodData]);
 
   if (failed && !overview) return <main className="mx-auto max-w-6xl bg-canvas px-4 py-4"><LoadError onRetry={() => { loadNow(); loadPeriodData(period); }} /></main>;
@@ -86,8 +87,24 @@ export default function Dashboard() {
           </div>
           <div className="mt-4 space-y-1 lg:mt-0">
             <PeriodBar value={period} onChange={changePeriod} />
-            {periodData ? (
-              <>
+            {periodData && (
+              <p className="px-1 pt-2 text-xs text-ink-2" aria-live="polite">
+                Showing {rangeText(periodData.range)}{periodData.compare ? ` · compared with ${rangeText(periodData.compare)}` : ""}
+                {periodLoading && " · updating…"}
+              </p>
+            )}
+            {periodError && (
+              <div className="mt-3 rounded-2xl bg-surface p-4 text-sm" role="alert">
+                <p className="font-semibold text-ink">Couldn&apos;t load this period.</p>
+                <p className="mt-1 text-ink-2">{periodError}</p>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => loadPeriodData(period)} className="rounded-xl bg-brass px-4 py-2 font-semibold text-brass-on">Try again</button>
+                  <button type="button" onClick={() => changePeriod({ preset: "all" })} className="rounded-xl border border-line px-4 py-2 font-semibold text-ink">Show All time</button>
+                </div>
+              </div>
+            )}
+            {periodData && !periodError ? (
+              <div className={`transition-opacity duration-200 ${periodLoading ? "opacity-50" : ""}`} aria-busy={periodLoading}>
                 <div className="pt-3"><KpiGrid period={periodData} onInfo={setInfo} /></div>
                 {periodData.sales.orders === 0 && periodData.collected.value === 0 && periodData.expenses.value === 0 && (
                   <p className="rounded-2xl bg-surface p-4 text-sm text-ink-2">No orders in this period.</p>
@@ -95,8 +112,8 @@ export default function Dashboard() {
                 <SalesCollectedChart months={trends.months} />
                 <KgChart months={trends.months} topSizes={periodData.topSizes} />
                 <ExpenseCategories categories={periodData.expenses.byCategory} />
-              </>
-            ) : <div className="pt-3"><Skeleton /></div>}
+              </div>
+            ) : !periodError && <div className="pt-3"><Skeleton /></div>}
             <div className="lg:hidden"><RecentOrders orders={overview.recentOrders} inProgress={overview.inProgress} /></div>
           </div>
         </>

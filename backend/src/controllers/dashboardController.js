@@ -19,7 +19,7 @@ const period = async (req, res) => {
   try {
     const today = todayIST();
     const ledger = await loadLedger(models);
-    const { range, compare } = resolvePeriod(req.query, today, ledger.earliest);
+    const { range, compare } = resolvePeriod(req.query, today, ledger.earliest, ledger.latest);
     return success(res, 200, "Dashboard period", computePeriod(ledger, range, compare));
   } catch (err) {
     if (err instanceof PeriodError) return error(res, 400, err.message);

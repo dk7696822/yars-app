@@ -31,6 +31,10 @@ const loadLedger = async (models) => {
     raw: true,
   });
 
+  // Payments recorded against no order (invoice-only) — never part of Collected,
+  // but reported so money received can't disappear silently.
+  const unlinkedPayments = await Payment.findAll({ where: { order_id: null }, attributes: ["amount", "payment_date"], raw: true });
+
   const expenses = (
     await Expense.findAll({
       where: { is_archived: false },
@@ -48,7 +52,7 @@ const loadLedger = async (models) => {
     ...expenses.map((e) => e.bill_date),
   ].filter(Boolean).sort();
 
-  return { orders, deletedOrderPayments, expenses, earliest: dates[0] || null };
+  return { orders, deletedOrderPayments, unlinkedPayments, expenses, earliest: dates[0] || null, latest: dates[dates.length - 1] || null };
 };
 
 module.exports = { loadLedger };

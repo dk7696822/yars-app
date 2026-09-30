@@ -20,6 +20,9 @@ of numbers.
 ## Period section
 - Chips: **All time · This month · Last month · This FY · Custom…** (sticky; the
   last choice is remembered on the phone; opens on All time the first time).
+- Under the chips: "Showing <dates> · compared with <dates>" — the exact range
+  the figures below came from (dimmed with "updating…" while a new period loads;
+  a failed load shows "Couldn't load this period" with Try again / Show All time).
 - Tiles: **Sales** (orders dated in the period), **Collected** (payments received
   in the period, including on older orders), **Kg sold** (+ pieces, ≈ kg from
   pieces), **Expenses** (bills dated in the period). Badges compare with the
@@ -32,6 +35,8 @@ of numbers.
   many months.
 
 ## Answering "why is the dashboard different from …"
-- Dashboard excludes orders with status Cancelled; the Orders list includes them.
-- Collected excludes payments recorded on deleted orders.
+- Dashboard excludes orders with status Cancelled; the Orders list includes them
+  (the Sales tile and its ⓘ say how many were excluded).
+- Collected excludes payments recorded on deleted orders and payments not linked
+  to any order; the Collected ⓘ lists both amounts when present.
 - For kg/pieces and dues SQL, use the canonical queries in schema.md.

@@ -17,3 +17,15 @@ export const savePeriod = (p) => {
     /* ignore */
   }
 };
+
+const DAY_MS = 86400000;
+const MAX_SPAN_DAYS = 5 * 366; // same limit as the server
+
+/** Why a custom range can't be used (null when it's fine) — mirrors the server's checks. */
+export const customRangeError = (from, to) => {
+  if (!from || !to) return "Choose both dates.";
+  if (from > to) return "From date must be on or before To date.";
+  const span = Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS) + 1;
+  if (span > MAX_SPAN_DAYS) return "A custom period can be at most 5 years.";
+  return null;
+};

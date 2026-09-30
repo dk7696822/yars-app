@@ -85,6 +85,18 @@ describe("dashboard endpoints", () => {
     expect(body.data.months[5].month).toBe(today.slice(0, 7));
   });
 
+  test("a future-dated order still reconciles in All time; unlinked payments are disclosed", async () => {
+    const c = await createCustomer("Delta");
+    const plate = await createPlateType("0.00");
+    const size = await createSize({ rate_per_kg: "100.00" });
+    await createOrderWithLines({ customer: c, plateType: plate, order_date: addDays(today, 2), lines: [{ product_size_id: size.id, unit: "KG", quantity_kg: "1.00", rate_per_kg: "100.00" }] });
+    await db.Payment.create({ order_id: null, customer_id: c.id, amount: "40.00", payment_type: "PARTIAL", payment_date: today });
+    const o = (await call(overview)).body.data;
+    const p = (await call(period, { query: { preset: "all" } })).body.data;
+    expect(Math.round((p.sales.value - p.collected.value) * 100)).toBe(Math.round((o.toCollect - o.credit) * 100));
+    expect(p.excluded.unlinkedPayments).toEqual({ count: 1, amount: 40 });
+  });
+
   test("all-time period matches overview (sales − collected = to collect − credit)", async () => {
     const o = (await call(overview)).body.data;
     const p = (await call(period, { query: { preset: "all" } })).body.data;

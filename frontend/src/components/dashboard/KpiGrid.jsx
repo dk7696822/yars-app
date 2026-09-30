@@ -22,7 +22,7 @@ export default function KpiGrid({ period, onInfo }) {
   const v = period.volume;
   return (
     <div className="grid grid-cols-2 gap-2">
-      <Tile label="Sales" onInfo={() => onInfo("sales")} badge={<Badge d={delta(period.sales.value, period.sales.previous)} />} note={`${period.sales.orders} orders`}>
+      <Tile label="Sales" onInfo={() => onInfo("sales")} badge={<Badge d={delta(period.sales.value, period.sales.previous)} />} note={`${period.sales.orders} orders${period.excluded?.cancelled?.count > 0 ? ` · excl. ${period.excluded.cancelled.count} cancelled` : ""}`}>
         <AnimatedNumber value={period.sales.value} format={inr} duration={0.4} />
       </Tile>
       <Tile label="Collected" onInfo={() => onInfo("collected")} badge={<Badge d={delta(period.collected.value, period.collected.previous)} />}>

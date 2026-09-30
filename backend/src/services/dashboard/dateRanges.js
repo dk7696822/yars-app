@@ -45,12 +45,15 @@ const lastMonths = (today, n) => Array.from({ length: n }, (_, i) => shiftMonth(
 
 const agingBand = (days) => (days <= 30 ? "0-30" : days <= 60 ? "31-60" : days <= 90 ? "61-90" : "90+");
 
-const resolvePeriod = ({ preset = "all", from, to } = {}, today, earliest) => {
+const resolvePeriod = ({ preset = "all", from, to } = {}, today, earliest, latest) => {
   const day = Number(today.slice(8));
   switch (preset) {
     case "all": {
       const start = earliest && earliest < today ? earliest : today;
-      return { range: { from: start, to: today, label: LABELS.all }, compare: null };
+      // Reach any future-dated record (a date-picker slip) so All time always
+      // reconciles with To collect, which counts every live order.
+      const end = latest && latest > today ? latest : today;
+      return { range: { from: start, to: end, label: LABELS.all }, compare: null };
     }
     case "this_month": {
       const prev = shiftMonth(today, -1);

@@ -24,7 +24,7 @@ const verifyDashboard = async (sequelize, models, today = todayIST()) => {
   const q = (sql) => sequelize.query(sql).then(([rows]) => rows);
   const ledger = await loadLedger(models);
   const overview = computeOverview(ledger, today);
-  const { range, compare } = resolvePeriod({ preset: "all" }, today, ledger.earliest);
+  const { range, compare } = resolvePeriod({ preset: "all" }, today, ledger.earliest, ledger.latest);
   const all = computePeriod(ledger, range, compare);
   const problems = [];
 
@@ -58,7 +58,8 @@ const verifyDashboard = async (sequelize, models, today = todayIST()) => {
     ok: problems.length === 0,
     problems,
     summary: { asOf: today, sales: all.sales.value, collected: all.collected.value, toCollect: overview.toCollect, credit: overview.credit,
-               customersOwing: overview.customersOwing, aging: overview.aging, expenses: all.expenses.value },
+               customersOwing: overview.customersOwing, aging: overview.aging, expenses: all.expenses.value,
+               unlinkedPayments: all.excluded.unlinkedPayments, deletedOrderPayments: all.excluded.deletedOrderPayments },
   };
 };
 

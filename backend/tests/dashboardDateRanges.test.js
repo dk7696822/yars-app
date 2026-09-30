@@ -27,6 +27,11 @@ describe("dashboard date ranges (IST)", () => {
     expect(d.resolvePeriod({}, "2026-09-30", null).range.from).toBe("2026-09-30");
   });
 
+  test("all time reaches a future-dated record so totals still reconcile", () => {
+    expect(d.resolvePeriod({ preset: "all" }, "2026-09-30", "2025-03-24", "2026-10-02").range)
+      .toEqual({ from: "2025-03-24", to: "2026-10-02", label: "All time" });
+  });
+
   test("this month compares with the same days last month", () => {
     expect(d.resolvePeriod({ preset: "this_month" }, "2026-09-30", null))
       .toEqual({ range: { from: "2026-09-01", to: "2026-09-30", label: "This month" }, compare: { from: "2026-08-01", to: "2026-08-30" } });

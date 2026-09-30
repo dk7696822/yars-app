@@ -101,4 +101,14 @@ describe("latestOnly", () => {
     resolveSlow("old");
     await expect(slow).resolves.toBe(latestOnly.STALE);
   });
+
+  test("an overtaken request's failure is ignored, the latest one's failure is not", async () => {
+    const latest = latestOnly();
+    let rejectSlow;
+    const slow = latest(new Promise((_, rej) => { rejectSlow = rej; }));
+    const fast = latest(Promise.reject(new Error("latest failed")));
+    await expect(fast).rejects.toThrow("latest failed");
+    rejectSlow(new Error("old failed"));
+    await expect(slow).resolves.toBe(latestOnly.STALE);
+  });
 });

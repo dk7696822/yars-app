@@ -101,8 +101,15 @@ describe("computePeriod", () => {
     expect(out.expenses).toEqual({ value: 420.5, previous: 80, byCategory: [{ name: "Raw Material", amount: 300 }, { name: "Ink", amount: 120.5 }] });
   });
 
+  test("payments not linked to any order are reported, never silently dropped", () => {
+    const withUnlinked = { ...L, unlinkedPayments: [{ amount: "250.00", payment_date: "2026-09-15" }, { amount: "5.00", payment_date: "2026-08-01" }] };
+    const p = m.computePeriod(withUnlinked, { ...sep, label: "This month" }, aug);
+    expect(p.excluded.unlinkedPayments).toEqual({ count: 1, amount: 250 });
+    expect(p.collected.value).toBe(550);
+  });
+
   test("exclusions reported", () => {
-    expect(out.excluded).toEqual({ cancelled: { count: 1, amount: 1000 }, deletedOrderPayments: { count: 1, amount: 70 } });
+    expect(out.excluded).toEqual({ cancelled: { count: 1, amount: 1000 }, deletedOrderPayments: { count: 1, amount: 70 }, unlinkedPayments: { count: 0, amount: 0 } });
     expect(out.checks.ok).toBe(true);
   });
 

@@ -140,6 +140,7 @@ const computePeriod = (ledger, range, compare) => {
 
   const cancelled = ledger.orders.filter((o) => !isCounted(o) && inRange(o.order_date, range));
   const deleted = ledger.deletedOrderPayments.filter((p) => inRange(p.payment_date, range));
+  const unlinked = (ledger.unlinkedPayments || []).filter((p) => inRange(p.payment_date, range));
   const categoriesPaise = [...byCategory.values()];
 
   return {
@@ -160,6 +161,7 @@ const computePeriod = (ledger, range, compare) => {
     excluded: {
       cancelled: { count: cancelled.length, amount: rupees(sum(cancelled, (o) => orderFacts(o).totalPaise)) },
       deletedOrderPayments: { count: deleted.length, amount: rupees(sum(deleted, (p) => toPaise(p.amount))) },
+      unlinkedPayments: { count: unlinked.length, amount: rupees(sum(unlinked, (p) => toPaise(p.amount))) },
     },
     checks: { ok: categoriesPaise.reduce((s, x) => s + x, 0) === cur.expensesPaise },
   };
