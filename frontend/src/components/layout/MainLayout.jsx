@@ -11,7 +11,7 @@ const MainLayout = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="main-layout flex h-screen bg-gray-50 dark:bg-[#0d1210] overflow-hidden">
+    <div className="main-layout flex h-screen bg-canvas overflow-hidden">
       {/* Desktop sidebar — on phones, navigation lives in the bottom tab bar */}
       <div className="hidden lg:block flex-shrink-0">
         <Sidebar isCollapsed={isSidebarCollapsed} />
