@@ -1,97 +1,39 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaBoxes, FaUsers, FaMoneyBillWave, FaLayerGroup, FaRuler, FaFileInvoiceDollar, FaHistory, FaWarehouse, FaTruck, FaClipboardList, FaDolly, FaTags } from "react-icons/fa";
 import PropTypes from "prop-types";
+import { NAV_GROUPS } from "../../app/navItems";
 
-/** Desktop-only navigation — phones use the bottom tab bar instead. */
+/** Desktop navigation, grouped by what the work is about. */
 const Sidebar = ({ isCollapsed = false }) => {
-  const navItems = [
-    { to: "/", icon: FaHome, label: "Dashboard" },
-    { to: "/orders", icon: FaBoxes, label: "Orders" },
-    { to: "/customers", icon: FaUsers, label: "Customers" },
-    { to: "/plate-types", icon: FaLayerGroup, label: "Plate Types" },
-    { to: "/product-sizes", icon: FaRuler, label: "Product Sizes" },
-    { to: "/expenses", icon: FaMoneyBillWave, label: "Expenses" },
-    { to: "/stock", icon: FaWarehouse, label: "Stock" },
-    { to: "/stock-issues", icon: FaDolly, label: "Stock Issues" },
-    { to: "/purchase-orders", icon: FaClipboardList, label: "Purchase Orders" },
-    { to: "/inventory-items", icon: FaTags, label: "Inventory Items" },
-    { to: "/suppliers", icon: FaTruck, label: "Suppliers" },
-    { to: "/invoices", icon: FaFileInvoiceDollar, label: "Invoices" },
-    { to: "/history", icon: FaHistory, label: "History" },
-  ];
-
-  const navLinkClasses = ({ isActive }) =>
-    `group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-      isActive
-        ? "bg-primary/10 text-primary dark:bg-emerald-500/15 dark:text-emerald-400 shadow-sm dark:shadow-emerald-500/5"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-emerald-500/10 hover:text-gray-900 dark:hover:text-emerald-300"
-    }`;
-
+  const linkClass = ({ isActive }) =>
+    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+      isActive ? "bg-brass/15 text-brass" : "text-ink-2 hover:bg-raised hover:text-ink"}`;
   return (
-    <aside
-      className={`
-        ${isCollapsed ? "w-20" : "w-72"}
-        h-full flex flex-col
-        bg-white dark:bg-[#0a0f0d]
-        border-r border-gray-200/80 dark:border-emerald-900/20
-        transition-all duration-300 ease-out
-      `}
-    >
-      {/* Header */}
-      <div className={`${isCollapsed ? "px-4 py-5" : "px-6 py-6"} border-b border-gray-100 dark:border-emerald-900/20 transition-all duration-300`}>
-        {isCollapsed ? (
-          <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-700 rounded-xl flex items-center justify-center shadow-md shadow-primary/20 mx-auto">
-            <span className="text-xl font-bold text-white font-display">Y</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary-700 rounded-xl flex items-center justify-center shadow-md shadow-primary/20 flex-shrink-0">
-              <span className="text-lg font-bold text-white font-display">Y</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white font-display tracking-tight">YARS</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-500">Non Woven Bags</p>
-            </div>
-          </div>
-        )}
+    <aside className={`${isCollapsed ? "w-20" : "w-64"} flex h-full flex-col border-r border-line bg-surface transition-[width] duration-300`}>
+      <div className={`flex items-center gap-3 border-b border-line ${isCollapsed ? "justify-center px-3 py-5" : "px-5 py-5"}`}>
+        <span className="grid h-10 w-10 place-items-center rounded-xl bg-brass font-num text-lg font-bold text-brass-on">Y</span>
+        {!isCollapsed && <div><p className="font-num text-lg font-semibold text-ink">YARS</p><p className="text-xs text-ink-2">Non-woven bags</p></div>}
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 no-scrollbar">
-        <ul className="space-y-1">
-          {navItems.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                className={navLinkClasses}
-                title={isCollapsed ? item.label : undefined}
-              >
-                <item.icon className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? "mx-auto" : ""} transition-transform group-hover:scale-110`} />
-                {!isCollapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* Footer */}
-      {!isCollapsed && (
-        <div className="px-6 py-4 border-t border-gray-100 dark:border-emerald-900/20">
-          <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-emerald-500/5 rounded-xl border border-transparent dark:border-emerald-500/10">
-            <div className="w-2 h-2 rounded-full bg-primary dark:bg-emerald-400 animate-pulse dark:shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-            <span className="text-xs text-gray-500 dark:text-emerald-300/70">System Active</span>
+      <nav aria-label="Main" className="no-scrollbar flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title}>
+            {!isCollapsed && <p className="px-3 pb-1 text-xs font-semibold text-ink-2">{group.title}</p>}
+            <ul className="space-y-0.5">
+              {group.items.map((item) => (
+                <li key={item.to}>
+                  <NavLink to={item.to} end={item.to === "/"} className={linkClass} title={isCollapsed ? item.label : undefined}>
+                    <item.icon className={`h-[18px] w-[18px] shrink-0 ${isCollapsed ? "mx-auto" : ""}`} aria-hidden="true" />
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="text-[10px] text-gray-400 dark:text-gray-600 text-center mt-3">
-            &copy; {new Date().getFullYear()} YARS
-          </p>
-        </div>
-      )}
+        ))}
+      </nav>
     </aside>
   );
 };
 
-Sidebar.propTypes = {
-  isCollapsed: PropTypes.bool,
-};
+Sidebar.propTypes = { isCollapsed: PropTypes.bool };
 
 export default Sidebar;

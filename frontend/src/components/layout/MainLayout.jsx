@@ -1,33 +1,28 @@
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { FaMagic } from "react-icons/fa";
+import { Sparkles } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import BottomNav from "./BottomNav";
 import { PageSkeleton } from "../../ui/States";
+import { routeMeta } from "../../app/routeMeta";
 
 const MainLayout = () => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const { pathname } = useLocation();
   const navigate = useNavigate();
+  // Forms have their own sticky save bar: no tab bar or floating button over it.
+  const { hideNav } = routeMeta(pathname);
 
   return (
-    <div className="main-layout flex h-screen bg-canvas overflow-hidden">
-      {/* Desktop sidebar — on phones, navigation lives in the bottom tab bar */}
-      <div className="hidden lg:block flex-shrink-0">
-        <Sidebar isCollapsed={isSidebarCollapsed} />
+    <div className="main-layout flex h-screen overflow-hidden bg-canvas text-ink">
+      <div className="hidden flex-shrink-0 lg:block">
+        <Sidebar isCollapsed={collapsed} />
       </div>
-
-      {/* Main content area */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Header
-          onSidebarToggle={() => setIsSidebarCollapsed((value) => !value)}
-          isSidebarCollapsed={isSidebarCollapsed}
-        />
-
-        {/* Main content with page transition; bottom padding clears the mobile tab bar */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <Header onSidebarToggle={() => setCollapsed((v) => !v)} />
         <main className="flex-1 overflow-y-auto">
-          <div className="page-enter pb-24 lg:pb-0">
+          <div className={`page-enter ${hideNav ? "" : "pb-24"} lg:pb-0`}>
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />
             </Suspense>
@@ -35,21 +30,15 @@ const MainLayout = () => {
         </main>
       </div>
 
-      {/* Floating assistant button — hidden while already on the assistant */}
-      {!location.pathname.startsWith("/assistant") && (
-        <button
-          type="button"
-          aria-label="Ask Jarvis"
-          onClick={() => navigate("/assistant")}
-          className="fixed bottom-24 lg:bottom-6 right-4 z-40 flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 transition-all"
-        >
-          <span aria-hidden className="jarvis-ring absolute inset-0 rounded-full bg-primary/50" />
-          <FaMagic className="jarvis-wiggle w-4 h-4 relative" />
+      {!hideNav && !pathname.startsWith("/assistant") && (
+        <button type="button" aria-label="Ask Jarvis" onClick={() => navigate("/assistant")}
+          className="fixed bottom-24 right-4 z-40 grid h-12 w-12 place-items-center rounded-full bg-brass text-brass-on shadow-lg shadow-black/30 transition active:scale-95 lg:bottom-6">
+          <span aria-hidden="true" className="jarvis-ring absolute inset-0 rounded-full bg-brass/50" />
+          <Sparkles className="jarvis-wiggle relative h-5 w-5" aria-hidden="true" />
         </button>
       )}
 
-      {/* Mobile bottom tab bar */}
-      <BottomNav />
+      {!hideNav && <BottomNav />}
     </div>
   );
 };
