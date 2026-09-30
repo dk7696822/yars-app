@@ -6,6 +6,7 @@ const { buildLineRow } = require("../services/orderLines");
 const { LineError } = require("../services/pieceFields");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
+const { todayIST } = require("../services/dashboard/dateRanges");
 
 /** Attach computed money + volume fields to a plain order (shared by list and detail). */
 const withComputedFields = (orderData) => {
@@ -30,6 +31,21 @@ const withComputedFields = (orderData) => {
     },
   };
 };
+
+/**
+ * Every include is required:false — an archived size, plate or customer must
+ * never hide an order or one of its lines (a nested `where` would).
+ */
+const orderIncludes = () => [
+  { model: Customer, as: "customer", required: false },
+  { model: PlateType, as: "plateType", required: false },
+  {
+    model: OrderProductSize, as: "orderProductSizes", required: false,
+    include: [{ model: ProductSize, as: "productSize", required: false }],
+  },
+  { model: Payment, as: "payments", required: false },
+  { model: Invoice, as: "invoice", attributes: ["id", "invoice_number"], required: false },
+];
 
 /** Validate + create every line of an order inside `transaction`. Throws LineError. */
 const createLines = async (orderId, productSizes, transaction) => {
@@ -64,7 +80,7 @@ const createOrder = async (req, res) => {
     const order = await Order.create(
       {
         customer_id,
-        order_date: order_date || new Date(),
+        order_date: order_date || todayIST(),
         advance_received: advance_received || 0,
         plate_type_id,
         status: status || "PENDING",
@@ -81,7 +97,7 @@ const createOrder = async (req, res) => {
           order_id: order.id,
           customer_id,
           amount: parseFloat(advance_received),
-          payment_date: order_date || new Date(),
+          payment_date: order_date || todayIST(),
           payment_method: "CASH", // Default to cash, can be updated later
           payment_type: "ADVANCE",
           notes: "Advance payment at order creation",
@@ -95,17 +111,7 @@ const createOrder = async (req, res) => {
     await transaction.commit();
 
     // Fetch the complete order with associations
-    const createdOrder = await Order.findByPk(order.id, {
-      include: [
-        { model: Customer, as: "customer" },
-        { model: PlateType, as: "plateType" },
-        {
-          model: OrderProductSize,
-          as: "orderProductSizes",
-          include: [{ model: ProductSize, as: "productSize" }],
-        },
-      ],
-    });
+    const createdOrder = await Order.findByPk(order.id, { include: orderIncludes() });
 
     return success(res, 201, "Order created successfully", createdOrder);
   } catch (err) {
@@ -163,46 +169,10 @@ const getAllOrders = async (req, res) => {
       orderWhere.status = status;
     }
 
-    // Build the include array with customer filtering if needed
-    const includeArray = [
-      {
-        model: Customer,
-        as: "customer",
-        where: {
-          is_archived: false,
-          ...(customerName && {
-            name: {
-              [Op.iLike]: `%${customerName}%`,
-            },
-          }),
-        },
-      },
-      {
-        model: PlateType,
-        as: "plateType",
-        where: {
-          is_archived: false,
-        },
-      },
-      {
-        model: OrderProductSize,
-        as: "orderProductSizes",
-        include: [
-          {
-            model: ProductSize,
-            as: "productSize",
-            where: {
-              is_archived: false,
-            },
-          },
-        ],
-      },
-      {
-        model: Payment,
-        as: "payments",
-        required: false,
-      },
-    ];
+    const includeArray = orderIncludes();
+    if (customerName) {
+      includeArray[0] = { model: Customer, as: "customer", required: true, where: { name: { [Op.iLike]: `%${customerName}%` } } };
+    }
 
     const orders = await Order.findAll({
       where: orderWhere,
@@ -235,41 +205,7 @@ const getOrderById = async (req, res) => {
         id,
         is_archived: false,
       },
-      include: [
-        {
-          model: Customer,
-          as: "customer",
-          where: {
-            is_archived: false,
-          },
-        },
-        {
-          model: PlateType,
-          as: "plateType",
-          where: {
-            is_archived: false,
-          },
-        },
-        {
-          model: OrderProductSize,
-          as: "orderProductSizes",
-          include: [
-            {
-              model: ProductSize,
-              as: "productSize",
-              where: {
-                is_archived: false,
-              },
-            },
-          ],
-        },
-        {
-          model: Payment,
-          as: "payments",
-          required: false,
-        },
-        { model: Invoice, as: "invoice", attributes: ["id", "invoice_number"], required: false },
-      ],
+      include: orderIncludes(),
     });
 
     if (!order) {
@@ -355,7 +291,7 @@ const updateOrder = async (req, res) => {
             order_id: id,
             customer_id: customer_id || order.customer_id,
             amount: newAdvance,
-            payment_date: order_date || new Date(),
+            payment_date: order_date || todayIST(),
             payment_method: "CASH",
             payment_type: "ADVANCE",
             notes: "Advance payment updated",
@@ -384,40 +320,7 @@ const updateOrder = async (req, res) => {
         id,
         is_archived: false,
       },
-      include: [
-        {
-          model: Customer,
-          as: "customer",
-          where: {
-            is_archived: false,
-          },
-        },
-        {
-          model: PlateType,
-          as: "plateType",
-          where: {
-            is_archived: false,
-          },
-        },
-        {
-          model: OrderProductSize,
-          as: "orderProductSizes",
-          include: [
-            {
-              model: ProductSize,
-              as: "productSize",
-              where: {
-                is_archived: false,
-              },
-            },
-          ],
-        },
-        {
-          model: Payment,
-          as: "payments",
-          required: false,
-        },
-      ],
+      include: orderIncludes(),
     });
 
     return success(res, 200, "Order updated successfully", updatedOrder);

@@ -1,29 +1,37 @@
 "use strict";
 
 /**
- * One read of everything the dashboard needs. Every include is required:false
- * so no order line is ever dropped because a size/customer/plate was archived.
+ * Live orders with everything money needs. Every include is required:false so
+ * no order or line is ever dropped because a size/customer/plate was archived.
  */
-const loadLedger = async (models) => {
-  const { Order, Customer, PlateType, OrderProductSize, ProductSize, Payment, Expense, ExpenseCategory } = models;
-
+const loadOrders = async (models, where = { is_archived: false }) => {
+  const { Order, Customer, PlateType, OrderProductSize, ProductSize, Payment } = models;
   const rows = await Order.findAll({
-    where: { is_archived: false },
-    attributes: ["id", "customer_id", "order_date", "created_at", "status", "custom_plate_charge", "round_off_amount", "advance_received"],
+    where,
+    attributes: ["id", "customer_id", "order_date", "created_at", "status", "custom_plate_charge", "round_off_amount", "advance_received", "invoice_id", "is_archived"],
     include: [
       { model: Customer, as: "customer", attributes: ["id", "name", "metadata"], required: false },
-      { model: PlateType, as: "plateType", attributes: ["charge"], required: false },
+      { model: PlateType, as: "plateType", attributes: ["charge", "type_name"], required: false },
       {
         model: OrderProductSize, as: "orderProductSizes", required: false,
         include: [{ model: ProductSize, as: "productSize", attributes: ["rate_per_kg", "size_label"], required: false }],
       },
-      { model: Payment, as: "payments", attributes: ["amount", "payment_type", "payment_date"], required: false },
+      {
+        model: Payment, as: "payments", required: false,
+        attributes: ["id", "amount", "payment_type", "payment_date", "payment_method", "reference_number", "notes", "invoice_id"],
+      },
     ],
   });
-  const orders = rows.map((r) => {
+  return rows.map((r) => {
     const o = r.toJSON();
     return { ...o, customerName: o.customer?.name || "Unknown customer", customerPhone: o.customer?.metadata?.phone || null };
   });
+};
+
+/** One read of everything the dashboard needs. */
+const loadLedger = async (models) => {
+  const { Order, Payment, Expense, ExpenseCategory } = models;
+  const orders = await loadOrders(models);
 
   const deletedOrderPayments = await Payment.findAll({
     attributes: ["amount", "payment_date"],
@@ -55,4 +63,4 @@ const loadLedger = async (models) => {
   return { orders, deletedOrderPayments, unlinkedPayments, expenses, earliest: dates[0] || null, latest: dates[dates.length - 1] || null };
 };
 
-module.exports = { loadLedger };
+module.exports = { loadLedger, loadOrders };

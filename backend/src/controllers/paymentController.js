@@ -2,6 +2,7 @@
 
 const { Payment, Invoice, Customer, Order, PlateType, OrderProductSize, ProductSize, sequelize } = require("../models");
 const { orderTotal, paymentPosition } = require("../services/orderMath");
+const { todayIST } = require("../services/dashboard/dateRanges");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
@@ -26,7 +27,7 @@ const createPayment = async (req, res) => {
     let customer_id;
     let paymentData = {
       amount,
-      payment_date: payment_date || new Date(),
+      payment_date: payment_date || todayIST(),
       payment_method: payment_method || "CASH",
       payment_type,
       reference_number,

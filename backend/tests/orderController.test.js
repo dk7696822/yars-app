@@ -130,3 +130,49 @@ describe("orders with pieces lines", () => {
     expect(metrics.total_amount).toBe(2500 + 500);
   });
 });
+
+describe("orders survive archived master data", () => {
+  test("an order whose size, plate and customer were archived still shows every line", async () => {
+    const customer = await createCustomer("Archived Co");
+    const plate = await createPlateType("100.00");
+    const size = await createSize({ rate_per_kg: "50.00" });
+    const created = await call(createOrder, { body: {
+      customer_id: customer.id, plate_type_id: plate.id, order_date: "2026-09-10",
+      product_sizes: [{ product_size_id: size.id, unit: "KG", quantity_kg: "2.00", rate_per_kg: "50.00" }],
+    } });
+    const id = created.body.data.id;
+    await size.update({ is_archived: true });
+    await plate.update({ is_archived: true });
+    await customer.update({ is_archived: true });
+
+    const one = await call(getOrderById, { params: { id } });
+    expect(one.status).toBe(200);
+    expect(one.body.data.orderProductSizes).toHaveLength(1);
+    expect(one.body.data.total_amount).toBe(200);
+
+    const all = await call(getAllOrders, { query: {} });
+    expect(all.body.data.map((o) => o.id)).toContain(id);
+  });
+});
+
+describe("dates default to India's today", () => {
+  const { todayIST } = require("../src/services/dashboard/dateRanges");
+  afterEach(() => jest.useRealTimers());
+
+  test("an order without a date is dated today in India, even at 1:30 am IST", async () => {
+    // 20:00 UTC on 30 Sept = 01:30 IST on 1 Oct.
+    jest.useFakeTimers({ now: new Date("2026-09-30T20:00:00Z"), doNotFake: ["nextTick", "setImmediate", "clearImmediate", "setTimeout", "setInterval", "clearTimeout", "clearInterval", "queueMicrotask", "performance", "hrtime"] }); // only Date is faked
+    const customer = await createCustomer();
+    const plate = await createPlateType("0.00");
+    const size = await createSize({ rate_per_kg: "10.00" });
+    const res = await call(createOrder, { body: {
+      customer_id: customer.id, plate_type_id: plate.id, advance_received: "5",
+      product_sizes: [{ product_size_id: size.id, unit: "KG", quantity_kg: "1.00", rate_per_kg: "10.00" }],
+    } });
+    expect(res.status).toBe(201);
+    expect(todayIST()).toBe("2026-10-01");
+    const saved = await db.Order.findByPk(res.body.data.id, { include: [{ model: db.Payment, as: "payments" }] });
+    expect(saved.order_date).toBe("2026-10-01");
+    expect(saved.payments[0].payment_date).toBe("2026-10-01");
+  });
+});

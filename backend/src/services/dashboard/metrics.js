@@ -6,29 +6,16 @@
  * totals come only from orderMath (the same code as the Orders screen).
  */
 
-const { orderTotal, paymentPosition, volumeSummary, lineKg } = require("../orderMath");
+const { volumeSummary, lineKg } = require("../orderMath");
+const { toPaise, rupees, isCounted, signedPaise, hasAdvanceRows, orderFacts } = require("../orderFacts");
 const { BANDS, agingBand, daysBetween, lastMonths, monthEnd } = require("./dateRanges");
 
-const toPaise = (x) => Math.round(Number(x) * 100);
-const rupees = (p) => p / 100;
 const inRange = (d, r) => Boolean(d) && d >= r.from && d <= r.to;
-const isCounted = (o) => o.status !== "CANCELLED";
 const sum = (list, f) => list.reduce((s, x) => s + f(x), 0);
-
-/** Paise facts for one order. remaining = rounded total − received, so sums reconcile by construction. */
-const orderFacts = (order) => {
-  const total = orderTotal(order);
-  const totalPaise = toPaise(total);
-  const receivedPaise = toPaise(paymentPosition(order, total).totalReceived);
-  return { totalPaise, receivedPaise, remainingPaise: totalPaise - receivedPaise };
-};
-
-const hasAdvanceRows = (order) => sum((order.payments || []).filter((p) => p.payment_type === "ADVANCE"), (p) => Number(p.amount)) > 0;
 
 /** Money received for this order inside the range: dated payments (refunds negative) + a legacy column-only advance at the order date. */
 const receivedInRange = (order, range) => {
-  const signed = (p) => (p.payment_type === "REFUND" ? -1 : 1) * toPaise(p.amount);
-  let paise = sum((order.payments || []).filter((p) => inRange(p.payment_date, range)), signed);
+  let paise = sum((order.payments || []).filter((p) => inRange(p.payment_date, range)), signedPaise);
   if (!hasAdvanceRows(order) && Number(order.advance_received || 0) > 0 && inRange(order.order_date, range)) {
     paise += toPaise(order.advance_received);
   }
