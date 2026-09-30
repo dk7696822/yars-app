@@ -22,6 +22,10 @@ describe("routeMeta", () => {
     ["/plate-types", { title: "Plate types", back: null, hideNav: false }],
     ["/plate-types/new", { title: "New plate type", back: null, hideNav: true }],
     ["/plate-types/edit/p1", { title: "Edit plate type", back: null, hideNav: true }],
+    ["/expenses", { title: "Expenses", back: null, hideNav: false }],
+    ["/expenses/new", { title: "New expense", back: null, hideNav: true }],
+    ["/expenses/edit/e1", { title: "Edit expense", back: null, hideNav: true }],
+    ["/expense-categories", { title: "Expense categories", back: null, hideNav: false }],
     ["/nowhere", { title: "YARS", back: null, hideNav: false }],
   ])("%s", (path, meta) => expect(routeMeta(path)).toEqual(meta));
 });

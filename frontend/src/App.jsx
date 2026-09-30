@@ -34,9 +34,8 @@ const PlateTypesPage = lazy(() => import("./features/catalog/PlateTypesPage"));
 const PlateFormPage = lazy(() => import("./features/catalog/PlateFormPage"));
 const SizesPage = lazy(() => import("./features/catalog/SizesPage"));
 const SizeFormPage = lazy(() => import("./features/catalog/SizeFormPage"));
-const Expenses = lazy(() => import("./pages/Expenses"));
-const CreateExpense = lazy(() => import("./pages/CreateExpense"));
-const EditExpense = lazy(() => import("./pages/EditExpense"));
+const ExpensesPage = lazy(() => import("./features/expenses/ExpensesPage"));
+const ExpenseFormPage = lazy(() => import("./features/expenses/ExpenseFormPage"));
 const ExpenseCategories = lazy(() => import("./pages/ExpenseCategories"));
 const CreateExpenseCategory = lazy(() => import("./pages/CreateExpenseCategory"));
 const EditExpenseCategory = lazy(() => import("./pages/EditExpenseCategory"));
@@ -111,9 +110,9 @@ function App() {
                         </Route>
 
                         <Route path="expenses">
-                          <Route index element={old(<Expenses />)} />
-                          <Route path="new" element={old(<CreateExpense />)} />
-                          <Route path="edit/:id" element={old(<EditExpense />)} />
+                          <Route index element={<ExpensesPage />} />
+                          <Route path="new" element={<ExpenseFormPage />} />
+                          <Route path="edit/:id" element={<ExpenseFormPage />} />
                         </Route>
 
                         <Route path="expense-categories">

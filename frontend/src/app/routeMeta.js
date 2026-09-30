@@ -24,11 +24,11 @@ const ROUTES = [
   [/^\/product-sizes\/new$/, { title: "New size", hideNav: true }],
   [/^\/product-sizes\/edit\/[^/]+$/, { title: "Edit size", hideNav: true }],
   [/^\/product-sizes/, { title: "Sizes" }],
-  // Not redesigned yet — titles as before.
-  [/^\/expense-categories/, { title: "Expense Categories" }],
-  [/^\/expenses\/new/, { title: "New Expense" }],
-  [/^\/expenses\/edit/, { title: "Edit Expense" }],
+  [/^\/expenses\/new$/, { title: "New expense", hideNav: true }],
+  [/^\/expenses\/edit\/[^/]+$/, { title: "Edit expense", hideNav: true }],
   [/^\/expenses/, { title: "Expenses" }],
+  [/^\/expense-categories/, { title: "Expense categories" }],
+  // Not redesigned yet — titles as before.
   [/^\/history/, { title: "History" }],
   [/^\/stock-issues\/new/, { title: "New Stock Issue" }],
   [/^\/stock-issues/, { title: "Stock Issues" }],
