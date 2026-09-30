@@ -16,6 +16,12 @@ describe("routeMeta", () => {
     ["/dues", { title: "Dues", back: null, hideNav: false }],
     ["/stock-issues/new", { title: "New Stock Issue", back: null, hideNav: false }],
     ["/stock", { title: "Stock", back: null, hideNav: false }],
+    ["/product-sizes", { title: "Sizes", back: null, hideNav: false }],
+    ["/product-sizes/new", { title: "New size", back: null, hideNav: true }],
+    ["/product-sizes/edit/s1", { title: "Edit size", back: null, hideNav: true }],
+    ["/plate-types", { title: "Plate types", back: null, hideNav: false }],
+    ["/plate-types/new", { title: "New plate type", back: null, hideNav: true }],
+    ["/plate-types/edit/p1", { title: "Edit plate type", back: null, hideNav: true }],
     ["/nowhere", { title: "YARS", back: null, hideNav: false }],
   ])("%s", (path, meta) => expect(routeMeta(path)).toEqual(meta));
 });

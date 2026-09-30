@@ -8,23 +8,13 @@ import Button from "../../../ui/Button";
 import { Money } from "../../../ui/Money";
 import { INPUT, INPUT_INVALID } from "../../../ui/styles";
 import SizePicker from "./SizePicker";
+import Pair from "../../../ui/Pair";
 import { linePreview, unitPriceHint, pickSize } from "./draft";
 import { applySizeWeight } from "../../../utils/orderFormLines";
-import { formatSizePricing, formatKg, formatCurrency, perPiecePriceHint, perPieceWeightHint } from "../../../utils/formatters";
+import { formatKg, formatCurrency, perPiecePriceHint, perPieceWeightHint } from "../../../utils/formatters";
+import { sizePricingText } from "../../catalog/sizeForm";
 import { parseNumber } from "../../../utils/numberInput";
 import { errorText } from "../../../lib/errors";
-
-function Pair({ legend, error, hint, children }) {
-  return (
-    <fieldset className="space-y-1.5">
-      <legend className="text-[0.8rem] font-semibold text-ink-2">{legend}</legend>
-      <div className="flex items-center gap-2">{children}</div>
-      {error ? <p role="alert" className="text-xs font-medium text-status-critical">{error}</p> : hint ? <p className="text-xs text-ink-2">{hint}</p> : null}
-    </fieldset>
-  );
-}
-
-Pair.propTypes = { legend: PropTypes.node.isRequired, error: PropTypes.string, hint: PropTypes.node, children: PropTypes.node };
 
 export default function LineCard({ line, index, sizes, errors, onChange, onRemove, canRemove, onSaveSizeWeight }) {
   const [picking, setPicking] = useState(false);
@@ -69,7 +59,7 @@ export default function LineCard({ line, index, sizes, errors, onChange, onRemov
           <ChevronDown className="h-4 w-4 shrink-0 text-ink-2" aria-hidden="true" />
         </button>
       </Field>
-      {size && <p className="-mt-2 text-xs text-ink-2">{formatSizePricing(size)}</p>}
+      {size && <p className="-mt-2 text-xs text-ink-2">{sizePricingText(size)}</p>}
 
       <div role="radiogroup" aria-label={`Sold by — size ${n}`} className="inline-flex rounded-2xl bg-raised p-1">
         {[["KG", "Kg"], ["PIECES", "Pcs"]].map(([value, label]) => (

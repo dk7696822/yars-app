@@ -30,12 +30,10 @@ const OrderPage = lazy(() => import("./features/orders/OrderPage"));
 const CustomersPage = lazy(() => import("./features/customers/CustomersPage"));
 const CustomerFormPage = lazy(() => import("./features/customers/CustomerFormPage"));
 const CustomerPage = lazy(() => import("./features/customers/CustomerPage"));
-const PlateTypes = lazy(() => import("./pages/PlateTypes"));
-const CreatePlateType = lazy(() => import("./pages/CreatePlateType"));
-const EditPlateType = lazy(() => import("./pages/EditPlateType"));
-const ProductSizes = lazy(() => import("./pages/ProductSizes"));
-const CreateProductSize = lazy(() => import("./pages/CreateProductSize"));
-const EditProductSize = lazy(() => import("./pages/EditProductSize"));
+const PlateTypesPage = lazy(() => import("./features/catalog/PlateTypesPage"));
+const PlateFormPage = lazy(() => import("./features/catalog/PlateFormPage"));
+const SizesPage = lazy(() => import("./features/catalog/SizesPage"));
+const SizeFormPage = lazy(() => import("./features/catalog/SizeFormPage"));
 const Expenses = lazy(() => import("./pages/Expenses"));
 const CreateExpense = lazy(() => import("./pages/CreateExpense"));
 const EditExpense = lazy(() => import("./pages/EditExpense"));
@@ -101,15 +99,15 @@ function App() {
                         </Route>
 
                         <Route path="plate-types">
-                          <Route index element={old(<PlateTypes />)} />
-                          <Route path="new" element={old(<CreatePlateType />)} />
-                          <Route path="edit/:id" element={old(<EditPlateType />)} />
+                          <Route index element={<PlateTypesPage />} />
+                          <Route path="new" element={<PlateFormPage />} />
+                          <Route path="edit/:id" element={<PlateFormPage />} />
                         </Route>
 
                         <Route path="product-sizes">
-                          <Route index element={old(<ProductSizes />)} />
-                          <Route path="new" element={old(<CreateProductSize />)} />
-                          <Route path="edit/:id" element={old(<EditProductSize />)} />
+                          <Route index element={<SizesPage />} />
+                          <Route path="new" element={<SizeFormPage />} />
+                          <Route path="edit/:id" element={<SizeFormPage />} />
                         </Route>
 
                         <Route path="expenses">

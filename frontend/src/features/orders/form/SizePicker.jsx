@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import SearchPicker from "../../../ui/SearchPicker";
-import { formatSizePricing } from "../../../utils/formatters";
+import { sizePricingText } from "../../catalog/sizeForm";
 
 export default function SizePicker({ open, sizes, onPick, onClose }) {
   const [query, setQuery] = useState("");
@@ -12,7 +12,7 @@ export default function SizePicker({ open, sizes, onPick, onClose }) {
       renderItem={(s) => (
         <span className="min-w-0 flex-1">
           <span className="block font-semibold text-ink">{s.size_label}</span>
-          <span className="block text-xs text-ink-2">{formatSizePricing(s)}</span>
+          <span className="block text-xs text-ink-2">{sizePricingText(s)}</span>
         </span>
       )}
       onPick={(s) => { onPick(s); setQuery(""); }} onClose={onClose}

@@ -17,12 +17,12 @@ specific record.
 | `/customers/new` | New customer | Name (with similar-name check), mobile, city; more details: email, address, GSTIN |
 | `/customers/edit/:id` | Edit customer | Same form, pre-filled |
 | `/customers/:id` | Customer | What they owe, total business, New order / Call / WhatsApp; tabs Orders · Payments · Details |
-| `/plate-types` | Plate Types | Master list of printing plate types (name + charge) |
-| `/plate-types/new` | Create Plate Type | Add a plate type |
-| `/plate-types/edit/:id` | Edit Plate Type | Update a plate type |
-| `/product-sizes` | Product Sizes | Master list of bag sizes (label, rate per kg and/or piece price, optional weight) |
-| `/product-sizes/new` | Create Product Size | Add a product size |
-| `/product-sizes/edit/:id` | Edit Product Size | Update a product size |
+| `/plate-types` | Plate types | Printing plate types with their charge; tap one to edit |
+| `/plate-types/new` | New plate type | Name + charge |
+| `/plate-types/edit/:id` | Edit plate type | Change name/charge, or delete |
+| `/product-sizes` | Sizes | Bag sizes with how each is priced (per kg / per pieces / weight); tap one to edit |
+| `/product-sizes/new` | New size | Size, rate per kg, piece price, weight |
+| `/product-sizes/edit/:id` | Edit size | Change prices/weight, or delete |
 | `/expenses` | Expenses | Expense list, filters, total card, Excel download |
 | `/expenses/new` | Create Expense | Add an expense |
 | `/expenses/edit/:id` | Edit Expense | Update an expense |

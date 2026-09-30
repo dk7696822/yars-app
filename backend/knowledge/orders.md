@@ -70,25 +70,27 @@ is already on an invoice, a warning says the invoice won't change: delete and
 regenerate the invoice to update it.
 
 ## Managing plate types
-1. Open [Plate Types](/plate-types). Tap **New Plate Type**.
-2. Fill **Type Name** and **Charge (₹)** (both required), tap
-   **Save Plate Type**.
-3. To edit: use the edit action on a row (`/plate-types/edit/:id`), same form.
-4. Delete via the row's delete action → "Delete plate type" modal. Soft delete.
-5. Search box: **Search plate types...**.
+1. Open [Plate types](/plate-types) (More → Plate types). Each row shows the
+   name and its charge; search at the top. Tap **New** to add one.
+2. Fill **Name** and **Charge** (₹0 is allowed) and tap **Save plate type**.
+3. Tap a row to edit it. Note: orders that use a plate type without their own
+   custom plate charge use the plate type's current charge — changing it also
+   changes those past orders' totals and dues.
+4. **Delete plate type** (on its edit page) asks first; it is no longer offered
+   for new orders. Soft delete.
 
-## Managing product sizes
-1. Open [Product Sizes](/product-sizes). Tap **New Product Size**.
-2. Fill **Size Label** (placeholder "Enter size label (e.g. 8x10)"), then any
-   of: **Rate per kg**; **Piece price** "[N] piece(s) cost ₹[X]" (N defaults to
-   1; e.g. 1 piece costs ₹0.50, or 100 pieces cost ₹250); **Weight** "[N]
-   piece(s) weigh [W] kg". At least one of rate per kg / piece price is
-   required. Tap **Save Product Size**. Saving a weight also fills it into
-   earlier pieces order lines of that size that had no weight (the success
-   message says how many). The list's **Pricing** column shows e.g.
-   "₹180.00/kg · ₹0.50/pc · 10 g/pc".
-3. Edit via the row's edit action (`/product-sizes/edit/:id`); delete via the
-   "Delete product size" modal. Soft delete.
+## Managing sizes
+1. Open [Sizes](/product-sizes) (More → Sizes). Each row shows the size and
+   how it is priced, e.g. "₹180/kg · ₹375 per 1,000 pcs · 10 g per piece", or
+   "Rate set on each order" when it has no saved price. Tap **New** to add one.
+2. Fill **Size** (e.g. 14 x 18), then any of: **Rate per kg** (leave empty or
+   0 if the rate is set on each order), **Piece price** "[N] pcs cost ₹[X]",
+   **Weight** "[N] pcs weigh [W] kg" (only used to estimate kg for pieces
+   orders). At least a rate per kg or a piece price is needed. Tap **Save size**.
+3. Tap a row to edit it. Changing prices affects new orders only. Saving a
+   weight also fills it into earlier pieces order lines of that size that had
+   no weight (a message says how many).
+4. **Delete size** (on its edit page) asks first. Soft delete.
 
 Rules the UI enforces:
 - Customer, order date, plate type and at least one size line are required;
