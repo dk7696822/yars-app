@@ -83,6 +83,7 @@ export const plateTypeAPI = {
 // Order API
 export const orderAPI = {
   getAll: (params) => api.get("/orders", { params }),
+  list: (params) => api.get("/orders/list", { params }),
   getById: (id) => api.get(`/orders/${id}`),
   create: (data) => api.post("/orders", data),
   update: (id, data) => api.put(`/orders/${id}`, data),

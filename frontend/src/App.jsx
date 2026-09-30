@@ -24,7 +24,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dues = lazy(() => import("./pages/Dues"));
 const Assistant = lazy(() => import("./pages/Assistant"));
-const Orders = lazy(() => import("./pages/Orders"));
+const OrdersPage = lazy(() => import("./features/orders/OrdersPage"));
 const CreateOrder = lazy(() => import("./pages/CreateOrder"));
 const EditOrder = lazy(() => import("./pages/EditOrder"));
 const OrderDetails = lazy(() => import("./pages/OrderDetails"));
@@ -89,7 +89,7 @@ function App() {
                         <Route path="dues" element={<Dues />} />
 
                         <Route path="orders">
-                          <Route index element={old(<Orders />)} />
+                          <Route index element={<OrdersPage />} />
                           <Route path="new" element={old(<CreateOrder />)} />
                           <Route path="edit/:id" element={old(<EditOrder />)} />
                           <Route path=":id" element={old(<OrderDetails />)} />
