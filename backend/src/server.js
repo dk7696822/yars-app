@@ -25,7 +25,13 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" ? ["https://yars-app.firebaseapp.com", "https://yars-dashboard.web.app", "https://yars-app.vercel.app", "https://yars-app.netlify.app", "http://localhost:5173", "https://main.d34s1dbm0njr7r.amplifyapp.com"] : ["http://localhost:5173","http://localhost:8081", "https://yars-dashboard.web.app"],
+    // Firebase Hosting serves the app on both domains; localhost:5173 lets a
+    // local frontend talk to production when needed. Dev also allows 8080,
+    // the port vite.config.js uses by default.
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://yars-dashboard.web.app", "https://yars-dashboard.firebaseapp.com", "http://localhost:5173"]
+        : ["http://localhost:5173", "http://localhost:8080", "http://localhost:8081", "https://yars-dashboard.web.app"],
     credentials: true,
     // Lets the browser read download filenames set by the PDF/Excel endpoints
     exposedHeaders: ["Content-Disposition"]
