@@ -13,7 +13,7 @@
    DARK MODE COLOR PALETTE
    ============================================ */
 
-.dark {
+.dark .legacy {
   /* Base backgrounds - Deep slate with green undertone */
   --color-base-deepest: #0a0f0d;      /* Deepest - almost black with green */
   --color-base-deep: #0d1210;          /* Main app background */
@@ -45,8 +45,8 @@
    ============================================ */
 
 /* App container / Main layout */
-.dark .app-container,
-.dark .main-layout,
+.dark .legacy .app-container,
+.dark .legacy .main-layout,
 .dark body {
   background: var(--color-base-deep);
   /* Subtle radial gradient for depth */
@@ -56,15 +56,15 @@
 }
 
 /* Sidebar */
-.dark .sidebar,
-.dark [class*="sidebar"] {
+.dark .legacy .sidebar,
+.dark .legacy [class*="sidebar"] {
   background: var(--color-base-deepest);
   border-color: var(--color-border-subtle);
 }
 
 /* Page content area */
-.dark .page-container,
-.dark .content-area {
+.dark .legacy .page-container,
+.dark .legacy .content-area {
   background: transparent;
 }
 
@@ -73,8 +73,8 @@
    ============================================ */
 
 /* Base card */
-.dark .card,
-.dark [class*="card"]:not([class*="hero"]) {
+.dark .legacy .card,
+.dark .legacy [class*="card"]:not([class*="hero"]) {
   background: var(--color-surface);
   border: 1px solid var(--color-border-default);
   box-shadow:
@@ -84,8 +84,8 @@
 }
 
 /* Card hover - subtle glow */
-.dark .card:hover,
-.dark [class*="card"]:hover:not([class*="hero"]) {
+.dark .legacy .card:hover,
+.dark .legacy [class*="card"]:hover:not([class*="hero"]) {
   border-color: var(--color-border-strong);
   box-shadow:
     0 8px 25px -5px rgba(0, 0, 0, 0.4),
@@ -94,10 +94,10 @@
 }
 
 /* Elevated card (modals, dropdowns) */
-.dark .card-elevated,
-.dark .modal,
-.dark .dropdown-menu,
-.dark [class*="dropdown"] ul {
+.dark .legacy .card-elevated,
+.dark .legacy .modal,
+.dark .legacy .dropdown-menu,
+.dark .legacy [class*="dropdown"] ul {
   background: var(--color-surface-overlay);
   border: 1px solid var(--color-border-strong);
   box-shadow:
@@ -109,15 +109,15 @@
    SECTION HEADERS & DIVIDERS
    ============================================ */
 
-.dark .section-header,
-.dark [class*="section-title"] {
+.dark .legacy .section-header,
+.dark .legacy [class*="section-title"] {
   color: var(--color-text-primary);
 }
 
-.dark hr,
-.dark .divider,
-.dark [class*="border-b"],
-.dark [class*="border-t"] {
+.dark .legacy hr,
+.dark .legacy .divider,
+.dark .legacy [class*="border-b"],
+.dark .legacy [class*="border-t"] {
   border-color: var(--color-border-subtle);
 }
 
@@ -126,38 +126,38 @@
    ============================================ */
 
 /* Buttons - Primary */
-.dark .btn-primary,
-.dark [class*="bg-primary"]:not([class*="bg-primary/"]) {
+.dark .legacy .btn-primary,
+.dark .legacy [class*="bg-primary"]:not([class*="bg-primary/"]) {
   box-shadow: var(--glow-primary);
 }
 
-.dark .btn-primary:hover,
-.dark [class*="bg-primary"]:hover:not([class*="bg-primary/"]) {
+.dark .legacy .btn-primary:hover,
+.dark .legacy [class*="bg-primary"]:hover:not([class*="bg-primary/"]) {
   box-shadow: var(--glow-primary-strong);
 }
 
 /* Input fields */
-.dark input,
-.dark textarea,
-.dark select,
-.dark .input {
+.dark .legacy input,
+.dark .legacy textarea,
+.dark .legacy select,
+.dark .legacy .input {
   background: var(--color-surface);
   border-color: var(--color-border-default);
   color: var(--color-text-primary);
 }
 
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus,
-.dark .input:focus {
+.dark .legacy input:focus,
+.dark .legacy textarea:focus,
+.dark .legacy select:focus,
+.dark .legacy .input:focus {
   border-color: rgba(16, 185, 129, 0.5);
   box-shadow:
     0 0 0 3px rgba(16, 185, 129, 0.1),
     var(--glow-primary);
 }
 
-.dark input::placeholder,
-.dark textarea::placeholder {
+.dark .legacy input::placeholder,
+.dark .legacy textarea::placeholder {
   color: var(--color-text-muted);
 }
 
@@ -165,24 +165,24 @@
    TABLE STYLING
    ============================================ */
 
-.dark table {
+.dark .legacy table {
   background: var(--color-surface);
 }
 
-.dark thead {
+.dark .legacy thead {
   background: var(--color-surface-raised);
 }
 
-.dark th {
+.dark .legacy th {
   color: var(--color-text-secondary);
   border-color: var(--color-border-subtle);
 }
 
-.dark td {
+.dark .legacy td {
   border-color: var(--color-border-subtle);
 }
 
-.dark tbody tr:hover {
+.dark .legacy tbody tr:hover {
   background: var(--color-surface-raised);
 }
 
@@ -191,16 +191,16 @@
    ============================================ */
 
 /* Success metrics (received, completed) */
-.dark .stat-success,
-.dark [class*="emerald"],
-.dark [class*="green"] {
+.dark .legacy .stat-success,
+.dark .legacy [class*="emerald"],
+.dark .legacy [class*="green"] {
   --card-glow: var(--glow-success);
 }
 
 /* Warning metrics (pending, outstanding) */
-.dark .stat-warning,
-.dark [class*="amber"],
-.dark [class*="yellow"] {
+.dark .legacy .stat-warning,
+.dark .legacy [class*="amber"],
+.dark .legacy [class*="yellow"] {
   --card-glow: var(--glow-warning);
 }
 
@@ -208,7 +208,7 @@
    SUBTLE NOISE TEXTURE (Optional)
    ============================================ */
 
-.dark .with-texture::before {
+.dark .legacy .with-texture::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -245,43 +245,43 @@
    ============================================ */
 
 /* Dashboard hero card - keep gradient but add glow */
-.dark .dashboard-hero-card,
-.dark [class*="hero-card"] {
+.dark .legacy .dashboard-hero-card,
+.dark .legacy [class*="hero-card"] {
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
     0 0 60px -15px rgba(16, 185, 129, 0.3);
 }
 
 /* History page cards */
-.dark .history-card {
+.dark .legacy .history-card {
   background: var(--color-surface);
   border-color: var(--color-border-default);
 }
 
 /* Sidebar nav items */
-.dark .nav-item:hover,
-.dark [class*="nav-link"]:hover {
+.dark .legacy .nav-item:hover,
+.dark .legacy [class*="nav-link"]:hover {
   background: var(--color-surface);
 }
 
-.dark .nav-item.active,
-.dark [class*="nav-link"].active {
+.dark .legacy .nav-item.active,
+.dark .legacy [class*="nav-link"].active {
   background: rgba(16, 185, 129, 0.1);
   border-left: 2px solid #10b981;
 }
 
 /* Badges */
-.dark .badge {
+.dark .legacy .badge {
   background: var(--color-surface-raised);
   border-color: var(--color-border-default);
 }
 
 /* Empty states */
-.dark .empty-state {
+.dark .legacy .empty-state {
   color: var(--color-text-muted);
 }
 
-.dark .empty-state-icon {
+.dark .legacy .empty-state-icon {
   background: var(--color-surface);
   border-color: var(--color-border-subtle);
 }
@@ -290,8 +290,8 @@
    LOADING STATES
    ============================================ */
 
-.dark .skeleton,
-.dark [class*="skeleton"] {
+.dark .legacy .skeleton,
+.dark .legacy [class*="skeleton"] {
   background: linear-gradient(
     90deg,
     var(--color-surface) 0%,
@@ -306,7 +306,7 @@
    ============================================ */
 
 /* Smooth dark mode transition */
-.dark * {
+.dark .legacy * {
   transition-property: background-color, border-color, box-shadow;
   transition-duration: 0.15s;
   transition-timing-function: ease-out;

@@ -1,55 +1,15 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { MotionConfig } from "motion/react";
+import { queryClient } from "./lib/queryClient";
 import MainLayout from "./components/layout/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Dues from "./pages/Dues";
-import Orders from "./pages/Orders";
-import CreateOrder from "./pages/CreateOrder";
-import EditOrder from "./pages/EditOrder";
-import OrderDetails from "./pages/OrderDetails";
-import Customers from "./pages/Customers";
-import CreateCustomer from "./pages/CreateCustomer";
-import CustomerDetails from "./pages/CustomerDetails";
-import EditCustomer from "./pages/EditCustomer";
-import PlateTypes from "./pages/PlateTypes";
-import CreatePlateType from "./pages/CreatePlateType";
-import EditPlateType from "./pages/EditPlateType";
-import ProductSizes from "./pages/ProductSizes";
-import CreateProductSize from "./pages/CreateProductSize";
-import EditProductSize from "./pages/EditProductSize";
-import Expenses from "./pages/Expenses";
-import CreateExpense from "./pages/CreateExpense";
-import EditExpense from "./pages/EditExpense";
-import ExpenseCategories from "./pages/ExpenseCategories";
-import CreateExpenseCategory from "./pages/CreateExpenseCategory";
-import EditExpenseCategory from "./pages/EditExpenseCategory";
-import Invoices from "./pages/Invoices";
-import GenerateInvoice from "./pages/GenerateInvoice";
-import InvoiceDetails from "./pages/InvoiceDetails";
-import History from "./pages/History";
-import Stock from "./pages/Stock";
-import StockItemDetail from "./pages/StockItemDetail";
-import InventoryItems from "./pages/InventoryItems";
-import CreateInventoryItem from "./pages/CreateInventoryItem";
-import EditInventoryItem from "./pages/EditInventoryItem";
-import PurchaseOrders from "./pages/PurchaseOrders";
-import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
-import PurchaseOrderDetail from "./pages/PurchaseOrderDetail";
-import ReceivePurchaseOrder from "./pages/ReceivePurchaseOrder";
-import StockIssues from "./pages/StockIssues";
-import CreateStockIssue from "./pages/CreateStockIssue";
-import Suppliers from "./pages/Suppliers";
-import CreateSupplier from "./pages/CreateSupplier";
-import EditSupplier from "./pages/EditSupplier";
-import SupplierDetail from "./pages/SupplierDetail";
-import InventoryCategories from "./pages/InventoryCategories";
-import ItemAttributes from "./pages/ItemAttributes";
-import Assistant from "./pages/Assistant";
-import NotFound from "./pages/NotFound";
+import Legacy from "./app/Legacy";
+import { PageSkeleton } from "./ui/States";
 import "./assets/styles/index.css";
 import "./styles/button-override.css";
 import "./styles/datepicker-override.css";
@@ -59,107 +19,164 @@ import "./styles/history-animations.css";
 import "./styles/page-animations.css";
 import "./styles/dark-theme.css";
 
+// Each page is its own chunk: opening the app only downloads what it shows.
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Dues = lazy(() => import("./pages/Dues"));
+const Assistant = lazy(() => import("./pages/Assistant"));
+const Orders = lazy(() => import("./pages/Orders"));
+const CreateOrder = lazy(() => import("./pages/CreateOrder"));
+const EditOrder = lazy(() => import("./pages/EditOrder"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CreateCustomer = lazy(() => import("./pages/CreateCustomer"));
+const CustomerDetails = lazy(() => import("./pages/CustomerDetails"));
+const EditCustomer = lazy(() => import("./pages/EditCustomer"));
+const PlateTypes = lazy(() => import("./pages/PlateTypes"));
+const CreatePlateType = lazy(() => import("./pages/CreatePlateType"));
+const EditPlateType = lazy(() => import("./pages/EditPlateType"));
+const ProductSizes = lazy(() => import("./pages/ProductSizes"));
+const CreateProductSize = lazy(() => import("./pages/CreateProductSize"));
+const EditProductSize = lazy(() => import("./pages/EditProductSize"));
+const Expenses = lazy(() => import("./pages/Expenses"));
+const CreateExpense = lazy(() => import("./pages/CreateExpense"));
+const EditExpense = lazy(() => import("./pages/EditExpense"));
+const ExpenseCategories = lazy(() => import("./pages/ExpenseCategories"));
+const CreateExpenseCategory = lazy(() => import("./pages/CreateExpenseCategory"));
+const EditExpenseCategory = lazy(() => import("./pages/EditExpenseCategory"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const GenerateInvoice = lazy(() => import("./pages/GenerateInvoice"));
+const InvoiceDetails = lazy(() => import("./pages/InvoiceDetails"));
+const History = lazy(() => import("./pages/History"));
+const Stock = lazy(() => import("./pages/Stock"));
+const StockItemDetail = lazy(() => import("./pages/StockItemDetail"));
+const InventoryItems = lazy(() => import("./pages/InventoryItems"));
+const CreateInventoryItem = lazy(() => import("./pages/CreateInventoryItem"));
+const EditInventoryItem = lazy(() => import("./pages/EditInventoryItem"));
+const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders"));
+const CreatePurchaseOrder = lazy(() => import("./pages/CreatePurchaseOrder"));
+const PurchaseOrderDetail = lazy(() => import("./pages/PurchaseOrderDetail"));
+const ReceivePurchaseOrder = lazy(() => import("./pages/ReceivePurchaseOrder"));
+const StockIssues = lazy(() => import("./pages/StockIssues"));
+const CreateStockIssue = lazy(() => import("./pages/CreateStockIssue"));
+const Suppliers = lazy(() => import("./pages/Suppliers"));
+const CreateSupplier = lazy(() => import("./pages/CreateSupplier"));
+const EditSupplier = lazy(() => import("./pages/EditSupplier"));
+const SupplierDetail = lazy(() => import("./pages/SupplierDetail"));
+const InventoryCategories = lazy(() => import("./pages/InventoryCategories"));
+const ItemAttributes = lazy(() => import("./pages/ItemAttributes"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+/** A page that hasn't been redesigned yet keeps its old look. */
+const old = (page) => <Legacy>{page}</Legacy>;
+
 function App() {
   return (
     <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+      <QueryClientProvider client={queryClient}>
+        <MotionConfig reducedMotion="user">
+          <ToastProvider>
+            <AuthProvider>
+              <Router>
+                <Suspense fallback={<PageSkeleton />}>
+                  <Routes>
+                    <Route path="/login" element={old(<Login />)} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="assistant" element={<Assistant />} />
+                    <Route element={<ProtectedRoute />}>
+                      <Route path="/" element={<MainLayout />}>
+                        <Route index element={<Dashboard />} />
+                        <Route path="assistant" element={old(<Assistant />)} />
+                        <Route path="dues" element={<Dues />} />
 
-                <Route path="orders">
-                  <Route index element={<Orders />} />
-                  <Route path="new" element={<CreateOrder />} />
-                  <Route path="edit/:id" element={<EditOrder />} />
-                  <Route path=":id" element={<OrderDetails />} />
-                </Route>
+                        <Route path="orders">
+                          <Route index element={old(<Orders />)} />
+                          <Route path="new" element={old(<CreateOrder />)} />
+                          <Route path="edit/:id" element={old(<EditOrder />)} />
+                          <Route path=":id" element={old(<OrderDetails />)} />
+                        </Route>
 
-                <Route path="customers">
-                  <Route index element={<Customers />} />
-                  <Route path="new" element={<CreateCustomer />} />
-                  <Route path="edit/:id" element={<EditCustomer />} />
-                  <Route path=":id" element={<CustomerDetails />} />
-                </Route>
+                        <Route path="customers">
+                          <Route index element={old(<Customers />)} />
+                          <Route path="new" element={old(<CreateCustomer />)} />
+                          <Route path="edit/:id" element={old(<EditCustomer />)} />
+                          <Route path=":id" element={old(<CustomerDetails />)} />
+                        </Route>
 
-                <Route path="plate-types">
-                  <Route index element={<PlateTypes />} />
-                  <Route path="new" element={<CreatePlateType />} />
-                  <Route path="edit/:id" element={<EditPlateType />} />
-                </Route>
+                        <Route path="plate-types">
+                          <Route index element={old(<PlateTypes />)} />
+                          <Route path="new" element={old(<CreatePlateType />)} />
+                          <Route path="edit/:id" element={old(<EditPlateType />)} />
+                        </Route>
 
-                <Route path="product-sizes">
-                  <Route index element={<ProductSizes />} />
-                  <Route path="new" element={<CreateProductSize />} />
-                  <Route path="edit/:id" element={<EditProductSize />} />
-                </Route>
+                        <Route path="product-sizes">
+                          <Route index element={old(<ProductSizes />)} />
+                          <Route path="new" element={old(<CreateProductSize />)} />
+                          <Route path="edit/:id" element={old(<EditProductSize />)} />
+                        </Route>
 
-                <Route path="expenses">
-                  <Route index element={<Expenses />} />
-                  <Route path="new" element={<CreateExpense />} />
-                  <Route path="edit/:id" element={<EditExpense />} />
-                </Route>
+                        <Route path="expenses">
+                          <Route index element={old(<Expenses />)} />
+                          <Route path="new" element={old(<CreateExpense />)} />
+                          <Route path="edit/:id" element={old(<EditExpense />)} />
+                        </Route>
 
-                <Route path="expense-categories">
-                  <Route index element={<ExpenseCategories />} />
-                  <Route path="new" element={<CreateExpenseCategory />} />
-                  <Route path="edit/:id" element={<EditExpenseCategory />} />
-                </Route>
+                        <Route path="expense-categories">
+                          <Route index element={old(<ExpenseCategories />)} />
+                          <Route path="new" element={old(<CreateExpenseCategory />)} />
+                          <Route path="edit/:id" element={old(<EditExpenseCategory />)} />
+                        </Route>
 
-                <Route path="invoices">
-                  <Route index element={<Invoices />} />
-                  <Route path="generate" element={<GenerateInvoice />} />
-                  <Route path=":id" element={<InvoiceDetails />} />
-                </Route>
+                        <Route path="invoices">
+                          <Route index element={old(<Invoices />)} />
+                          <Route path="generate" element={old(<GenerateInvoice />)} />
+                          <Route path=":id" element={old(<InvoiceDetails />)} />
+                        </Route>
 
-                <Route path="history" element={<History />} />
-                <Route path="dues" element={<Dues />} />
+                        <Route path="history" element={old(<History />)} />
 
-                <Route path="stock">
-                  <Route index element={<Stock />} />
-                  <Route path=":itemId" element={<StockItemDetail />} />
-                </Route>
+                        <Route path="stock">
+                          <Route index element={old(<Stock />)} />
+                          <Route path=":itemId" element={old(<StockItemDetail />)} />
+                        </Route>
 
-                <Route path="inventory-items">
-                  <Route index element={<InventoryItems />} />
-                  <Route path="new" element={<CreateInventoryItem />} />
-                  <Route path="edit/:id" element={<EditInventoryItem />} />
-                </Route>
+                        <Route path="inventory-items">
+                          <Route index element={old(<InventoryItems />)} />
+                          <Route path="new" element={old(<CreateInventoryItem />)} />
+                          <Route path="edit/:id" element={old(<EditInventoryItem />)} />
+                        </Route>
 
-                <Route path="purchase-orders">
-                  <Route index element={<PurchaseOrders />} />
-                  <Route path="new" element={<CreatePurchaseOrder />} />
-                  <Route path=":id" element={<PurchaseOrderDetail />} />
-                  <Route path=":id/receive" element={<ReceivePurchaseOrder />} />
-                </Route>
+                        <Route path="purchase-orders">
+                          <Route index element={old(<PurchaseOrders />)} />
+                          <Route path="new" element={old(<CreatePurchaseOrder />)} />
+                          <Route path=":id" element={old(<PurchaseOrderDetail />)} />
+                          <Route path=":id/receive" element={old(<ReceivePurchaseOrder />)} />
+                        </Route>
 
-                <Route path="stock-issues">
-                  <Route index element={<StockIssues />} />
-                  <Route path="new" element={<CreateStockIssue />} />
-                </Route>
+                        <Route path="stock-issues">
+                          <Route index element={old(<StockIssues />)} />
+                          <Route path="new" element={old(<CreateStockIssue />)} />
+                        </Route>
 
-                <Route path="suppliers">
-                  <Route index element={<Suppliers />} />
-                  <Route path="new" element={<CreateSupplier />} />
-                  <Route path="edit/:id" element={<EditSupplier />} />
-                  <Route path=":id" element={<SupplierDetail />} />
-                </Route>
+                        <Route path="suppliers">
+                          <Route index element={old(<Suppliers />)} />
+                          <Route path="new" element={old(<CreateSupplier />)} />
+                          <Route path="edit/:id" element={old(<EditSupplier />)} />
+                          <Route path=":id" element={old(<SupplierDetail />)} />
+                        </Route>
 
-                <Route path="inventory-categories" element={<InventoryCategories />} />
-                <Route path="item-attributes" element={<ItemAttributes />} />
+                        <Route path="inventory-categories" element={old(<InventoryCategories />)} />
+                        <Route path="item-attributes" element={old(<ItemAttributes />)} />
 
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Route>
-            </Routes>
-          </Router>
-        </AuthProvider>
-      </ToastProvider>
+                        <Route path="*" element={old(<NotFound />)} />
+                      </Route>
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </Router>
+            </AuthProvider>
+          </ToastProvider>
+        </MotionConfig>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

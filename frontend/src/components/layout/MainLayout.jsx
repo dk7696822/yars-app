@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { FaMagic } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import BottomNav from "./BottomNav";
+import { PageSkeleton } from "../../ui/States";
 
 const MainLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -27,7 +28,9 @@ const MainLayout = () => {
         {/* Main content with page transition; bottom padding clears the mobile tab bar */}
         <main className="flex-1 overflow-y-auto">
           <div className="page-enter pb-24 lg:pb-0">
-            <Outlet />
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>
