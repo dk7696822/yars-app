@@ -72,6 +72,7 @@ export const purchaseOrderAPI = {
   create: (data) => api.post("/purchase-orders", data),
   update: (id, data) => api.put(`/purchase-orders/${id}`, data),
   delete: (id) => api.delete(`/purchase-orders/${id}`),
+  cancel: (id) => api.post(`/purchase-orders/${id}/cancel`),
   receive: (id, data) => api.post(`/purchase-orders/${id}/receive`, data),
 };
 
