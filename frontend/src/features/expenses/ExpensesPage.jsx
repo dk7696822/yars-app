@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Ellipsis } from "lucide-react";
 import { useExpenses, useExpenseCategories } from "./api";
-import { EXPENSE_CHIPS, expenseParams, expenseTotals, groupExpenses } from "./expenseList";
+import { EXPENSE_CHIPS, expenseParams, cardTotals, groupExpenses } from "./expenseList";
 import PageHeader from "../../ui/PageHeader";
 import TextInput from "../../ui/TextInput";
 import Chips from "../../ui/Chips";
@@ -33,7 +33,7 @@ export default function ExpensesPage() {
   const list = useExpenses(query);
   const categories = useExpenseCategories();
   const expenses = useMemo(() => list.data?.expenses || [], [list.data]);
-  const totals = useMemo(() => expenseTotals(expenses), [expenses]);
+  const totals = useMemo(() => cardTotals({ expenses, isPlaceholderData: list.isPlaceholderData, isPending: list.isPending, hasData: Boolean(list.data) }), [expenses, list.isPlaceholderData, list.isPending, list.data]);
   const groups = useMemo(() => groupExpenses(expenses, today), [expenses, today]);
 
   const setParam = (key, value, fallback = "") =>
@@ -69,11 +69,17 @@ export default function ExpensesPage() {
 
       <section aria-label="Total" className="mt-4 rounded-3xl bg-gradient-to-b from-raised to-surface p-4 shadow-[inset_0_1px_0_rgb(var(--c-brass)/0.25)]">
         <p className="text-sm text-ink-2">{PERIOD_LABEL[chip]}{categoryId && categories.data ? ` · ${categories.data.find((c) => c.id === categoryId)?.name || ""}` : ""}</p>
-        <Money value={totals.total} className="block text-3xl font-bold text-ink" />
-        <p className="mt-1 text-sm text-ink-2">
-          {totals.count} expense{totals.count === 1 ? "" : "s"}
-          {totals.unpaid > 0 && <> · <span className="font-semibold text-status-warn">Unpaid <Money value={totals.unpaid} /></span></>}
-        </p>
+        {totals ? (
+          <>
+            <Money value={totals.total} className="block text-3xl font-bold text-ink" />
+            <p className="mt-1 text-sm text-ink-2">
+              {totals.count} expense{totals.count === 1 ? "" : "s"}
+              {totals.unpaid > 0 && <> · <span className="font-semibold text-status-warn">Unpaid <Money value={totals.unpaid} /></span></>}
+            </p>
+          </>
+        ) : (
+          <div aria-label="Loading total" className="mt-1 space-y-2"><div className="h-9 w-40 animate-pulse rounded-xl bg-raised" /><div className="h-4 w-28 animate-pulse rounded bg-raised" /></div>
+        )}
       </section>
 
       <div className={`mt-4 transition-opacity ${list.isPlaceholderData ? "opacity-60" : ""}`}>

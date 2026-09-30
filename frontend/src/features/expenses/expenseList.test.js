@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { expenseParams, expenseTotals, groupExpenses } from "./expenseList";
+import { expenseParams, expenseTotals, groupExpenses, cardTotals } from "./expenseList";
 
 describe("expenseParams", () => {
   test("period chips become date ranges (India dates)", () => {
@@ -24,5 +24,15 @@ describe("groupExpenses", () => {
   test("grouped by bill date", () => {
     const e = [{ id: 1, bill_date: "2026-09-30" }, { id: 2, bill_date: "2026-09-30" }, { id: 3, bill_date: "2026-09-29" }];
     expect(groupExpenses(e, "2026-09-30").map((g) => [g.label, g.rows.length])).toEqual([["Today", 2], ["Yesterday", 1]]);
+  });
+});
+
+describe("cardTotals", () => {
+  test("no figures while the previous filter's list is still on screen", () => {
+    const expenses = [{ total_cost: "100.00", payment_status: "UNPAID" }];
+    expect(cardTotals({ expenses, isPlaceholderData: true })).toBeNull();
+    expect(cardTotals({ expenses, isPlaceholderData: false })).toEqual({ total: 100, unpaid: 100, count: 1 });
+    expect(cardTotals({ expenses: [], isPlaceholderData: false, isPending: true })).toBeNull();
+    expect(cardTotals({ expenses: [], isPlaceholderData: false, isPending: false, hasData: false })).toBeNull();
   });
 });

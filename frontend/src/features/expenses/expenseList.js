@@ -38,4 +38,8 @@ export const expenseTotals = (expenses) => {
   return { total: total / 100, unpaid: unpaid / 100, count: expenses.length };
 };
 
+/** The total card's figures — none before the first load, after a failed load, or while the list on screen is still the previous filter's. */
+export const cardTotals = ({ expenses, isPlaceholderData, isPending, hasData = true }) =>
+  isPlaceholderData || isPending || !hasData ? null : expenseTotals(expenses);
+
 export const groupExpenses = (expenses, today) => groupByDay(expenses, today, (e) => e.bill_date);
