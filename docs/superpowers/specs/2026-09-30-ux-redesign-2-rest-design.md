@@ -23,7 +23,7 @@ class from them is used (checked by grep), `components/common/*`, the old `compo
   confirmed, sticky save bar, Back on every step of multi-step forms.
 - Logic (filters, grouping, form validation, payload building, labels) lives in
   pure modules with Vitest tests written first.
-- Deploy when done (backend unchanged except Jarvis knowledge docs).
+- Deploy when done (backend: Jarvis knowledge docs and the audit date filter).
 
 ## Current data (production copy)
 
@@ -40,9 +40,9 @@ sizes; paging stays where the API already pages.
   vendor). Total card for the filtered set: total ₹, count, unpaid ₹. ⋯ →
   Download Excel (same export params as today). Tap row → edit.
 - **Form (new/edit):** bill date (DateField), category (picker sheet with "＋ New
-  category" inline), description, vendor, quantity × unit cost → total filled
-  automatically (total stays editable; editing it clears the link), paid/unpaid
-  switch. Delete at the end of edit (confirm).
+  category" inline), description, vendor, quantity × unit cost → total shown read-only (the server recalculates
+  the total from quantity × cost on every save, so an edited total would not be
+  kept), paid/unpaid choice. Delete at the end of edit (confirm).
 - **Categories:** `/expense-categories` becomes a simple list page (name only) with add / rename / delete (confirm);
   also reachable from the Expenses ⋯ menu. Old create/edit category routes
   redirect to it.
@@ -58,6 +58,9 @@ sizes; paging stays where the API already pages.
   (or customer) when the entry has one.
 - A pure `describeAudit(row)` makes the sentence; unknown shapes fall back to
   "<Entity> <action>" so nothing is hidden.
+- The server's audit date filter read dates as UTC days; it is fixed to India
+  days (read-only query change) and accepts a comma list of entity types so
+  the Stock chip is one paged list.
 
 ## 3. Stock & purchasing
 
