@@ -1,5 +1,7 @@
 "use strict";
 
+const { orderTotal, paymentPosition } = require("./orderMath");
+
 /**
  * Audit Service
  * Handles creating audit logs and calculating order metrics for tracking
@@ -75,31 +77,10 @@ const calculateOrderMetrics = async (models, orderId) => {
 
     const orderData = order.toJSON();
 
-    // Calculate total from product sizes
-    let totalProductAmount = 0;
-    orderData.orderProductSizes.forEach((ops) => {
-      totalProductAmount += parseFloat(ops.quantity_kg) * parseFloat(ops.rate_per_kg || ops.productSize.rate_per_kg);
-    });
-
-    // Add plate charge (use custom charge if available, otherwise use plate type charge)
-    const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType?.charge || 0);
-
-    // Calculate total order amount before round off
-    const totalOrderAmountBeforeRoundOff = totalProductAmount + plateCharge;
-
-    // Apply round off amount
-    const roundOffAmount = parseFloat(orderData.round_off_amount || 0);
-    const totalOrderAmount = totalOrderAmountBeforeRoundOff - roundOffAmount;
-
-    // Calculate payments
-    const advancePayments = orderData.payments ? orderData.payments.filter((p) => p.payment_type === "ADVANCE") : [];
-    const otherPayments = orderData.payments ? orderData.payments.filter((p) => p.payment_type !== "ADVANCE") : [];
-
-    const totalPaid = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-    const advanceFromPayments = advancePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-    const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(orderData.advance_received || 0);
-
-    const totalReceived = totalPaid + advanceReceived;
+    const totalOrderAmount = orderTotal(orderData);
+    const { totalReceived } = paymentPosition(orderData, totalOrderAmount);
+    // Kept as total − received (not total − paid − advance) to match the
+    // audit history already written.
     const outstanding = totalOrderAmount - totalReceived;
 
     return {

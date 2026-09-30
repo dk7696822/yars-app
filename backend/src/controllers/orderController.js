@@ -1,8 +1,46 @@
 "use strict";
 
-const { Order, Customer, PlateType, ProductSize, OrderProductSize, Payment, sequelize } = require("../models");
+const { Order, Customer, PlateType, ProductSize, OrderProductSize, Payment, Invoice, sequelize } = require("../models");
+const { lineAmount, lineKg, orderTotal, paymentPosition, volumeSummary } = require("../services/orderMath");
+const { buildLineRow } = require("../services/orderLines");
+const { LineError } = require("../services/pieceFields");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
+
+/** Attach computed money + volume fields to a plain order (shared by list and detail). */
+const withComputedFields = (orderData) => {
+  const total = orderTotal(orderData);
+  const position = paymentPosition(orderData, total);
+  return {
+    ...orderData,
+    orderProductSizes: (orderData.orderProductSizes || []).map((line) => ({
+      ...line,
+      line_amount: lineAmount(line),
+      line_kg: lineKg(line),
+    })),
+    volume: volumeSummary([orderData]),
+    total_amount: parseFloat(total.toFixed(2)),
+    totalReceivable: parseFloat((total - position.advanceReceived).toFixed(2)), // For backward compatibility
+    payment_summary: {
+      total_paid: position.totalPaid,
+      advance_received: position.advanceReceived,
+      total_payments: position.totalPaid + position.advanceReceived,
+      remaining_balance: parseFloat(position.remaining.toFixed(2)),
+      is_fully_paid: position.totalPaid + position.advanceReceived >= total,
+    },
+  };
+};
+
+/** Validate + create every line of an order inside `transaction`. Throws LineError. */
+const createLines = async (orderId, productSizes, transaction) => {
+  for (const ps of productSizes) {
+    if (!ps.product_size_id) throw new LineError("Product size ID and quantity are required");
+    const productSize = await ProductSize.findByPk(ps.product_size_id, { transaction });
+    if (!productSize) throw new LineError("Invalid product size ID");
+    const row = buildLineRow(ps, productSize);
+    await OrderProductSize.create({ order_id: orderId, product_size_id: ps.product_size_id, ...row }, { transaction });
+  }
+};
 
 /**
  * Create a new order
@@ -52,33 +90,7 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // Create order product sizes
-    const orderProductSizes = [];
-    for (const ps of product_sizes) {
-      if (!ps.product_size_id || !ps.quantity_kg) {
-        await transaction.rollback();
-        return error(res, 400, "Product size ID and quantity are required");
-      }
-
-      // Get the current rate for this product size
-      const productSize = await ProductSize.findByPk(ps.product_size_id);
-      if (!productSize) {
-        await transaction.rollback();
-        return error(res, 400, "Invalid product size ID");
-      }
-
-      const orderProductSize = await OrderProductSize.create(
-        {
-          order_id: order.id,
-          product_size_id: ps.product_size_id,
-          quantity_kg: ps.quantity_kg,
-          rate_per_kg: ps.rate_per_kg || productSize.rate_per_kg, // Use custom rate if provided, otherwise use master rate
-        },
-        { transaction }
-      );
-
-      orderProductSizes.push(orderProductSize);
-    }
+    await createLines(order.id, product_sizes, transaction);
 
     await transaction.commit();
 
@@ -98,6 +110,9 @@ const createOrder = async (req, res) => {
     return success(res, 201, "Order created successfully", createdOrder);
   } catch (err) {
     await transaction.rollback();
+    if (err instanceof LineError) {
+      return error(res, 400, err.message);
+    }
     console.error("Error creating order:", err);
     return error(res, 500, "Failed to create order", err.message);
   }
@@ -196,59 +211,7 @@ const getAllOrders = async (req, res) => {
     });
 
     // Calculate total receivable for each order
-    const ordersWithTotal = orders.map((order) => {
-      const orderData = order.toJSON();
-
-      // Calculate total from product sizes
-      let totalProductAmount = 0;
-      orderData.orderProductSizes.forEach((ops) => {
-        // Use the stored rate_per_kg instead of the current product size rate
-        totalProductAmount += parseFloat(ops.quantity_kg) * parseFloat(ops.rate_per_kg || ops.productSize.rate_per_kg);
-      });
-
-      // Add plate charge (use custom charge if available, otherwise use plate type charge)
-      const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
-
-      // Calculate total order amount before round off
-      const totalOrderAmountBeforeRoundOff = totalProductAmount + plateCharge;
-
-      // Apply round off amount
-      const roundOffAmount = parseFloat(orderData.round_off_amount || 0);
-      const totalOrderAmount = totalOrderAmountBeforeRoundOff - roundOffAmount;
-
-      // Calculate payment summary
-      // Filter out ADVANCE type payments to avoid double counting
-      const advancePayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type === "ADVANCE") : [];
-
-      const otherPayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type !== "ADVANCE") : [];
-
-      // Calculate total of non-advance payments
-      const totalPaid = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-      // Use either the advance_received field or the sum of ADVANCE payments, not both
-      // This handles both old orders (with advance_received) and new orders (with ADVANCE payments)
-      const advanceFromPayments = advancePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-      const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(orderData.advance_received || 0);
-
-      // Calculate remaining balance
-      const remainingBalance = totalOrderAmount - totalPaid - advanceReceived;
-
-      // Calculate total receivable (for backward compatibility)
-      const totalReceivable = totalOrderAmount - advanceReceived;
-
-      return {
-        ...orderData,
-        total_amount: parseFloat(totalOrderAmount.toFixed(2)),
-        totalReceivable: parseFloat(totalReceivable.toFixed(2)), // For backward compatibility
-        payment_summary: {
-          total_paid: totalPaid,
-          advance_received: advanceReceived,
-          total_payments: totalPaid + advanceReceived,
-          remaining_balance: parseFloat(remainingBalance.toFixed(2)),
-          is_fully_paid: totalPaid + advanceReceived >= totalOrderAmount,
-        },
-      };
-    });
+    const ordersWithTotal = orders.map((order) => withComputedFields(order.toJSON()));
 
     return success(res, 200, "Orders retrieved successfully", ordersWithTotal);
   } catch (err) {
@@ -305,6 +268,7 @@ const getOrderById = async (req, res) => {
           as: "payments",
           required: false,
         },
+        { model: Invoice, as: "invoice", attributes: ["id", "invoice_number"], required: false },
       ],
     });
 
@@ -312,58 +276,7 @@ const getOrderById = async (req, res) => {
       return error(res, 404, "Order not found");
     }
 
-    // Calculate total receivable
-    const orderData = order.toJSON();
-
-    // Calculate total from product sizes
-    let totalProductAmount = 0;
-    orderData.orderProductSizes.forEach((ops) => {
-      // Use the stored rate_per_kg instead of the current product size rate
-      totalProductAmount += parseFloat(ops.quantity_kg) * parseFloat(ops.rate_per_kg || ops.productSize.rate_per_kg);
-    });
-
-    // Add plate charge (use custom charge if available, otherwise use plate type charge)
-    const plateCharge = parseFloat(orderData.custom_plate_charge || orderData.plateType.charge);
-
-    // Calculate total order amount before round off
-    const totalOrderAmountBeforeRoundOff = totalProductAmount + plateCharge;
-
-    // Apply round off amount
-    const roundOffAmount = parseFloat(orderData.round_off_amount || 0);
-    const totalOrderAmount = totalOrderAmountBeforeRoundOff - roundOffAmount;
-
-    // Calculate payment summary
-    // Filter out ADVANCE type payments to avoid double counting
-    const advancePayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type === "ADVANCE") : [];
-
-    const otherPayments = orderData.payments ? orderData.payments.filter((payment) => payment.payment_type !== "ADVANCE") : [];
-
-    // Calculate total of non-advance payments
-    const totalPaid = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-    // Use either the advance_received field or the sum of ADVANCE payments, not both
-    // This handles both old orders (with advance_received) and new orders (with ADVANCE payments)
-    const advanceFromPayments = advancePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-    const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(orderData.advance_received || 0);
-
-    // Calculate remaining balance
-    const remainingBalance = totalOrderAmount - totalPaid - advanceReceived;
-
-    // Calculate total receivable (for backward compatibility)
-    const totalReceivable = totalOrderAmount - advanceReceived;
-
-    const orderWithTotal = {
-      ...orderData,
-      total_amount: parseFloat(totalOrderAmount.toFixed(2)),
-      totalReceivable: parseFloat(totalReceivable.toFixed(2)), // For backward compatibility
-      payment_summary: {
-        total_paid: totalPaid,
-        advance_received: advanceReceived,
-        total_payments: totalPaid + advanceReceived,
-        remaining_balance: parseFloat(remainingBalance.toFixed(2)),
-        is_fully_paid: totalPaid + advanceReceived >= totalOrderAmount,
-      },
-    };
+    const orderWithTotal = withComputedFields(order.toJSON());
 
     return success(res, 200, "Order retrieved successfully", orderWithTotal);
   } catch (err) {
@@ -460,30 +373,7 @@ const updateOrder = async (req, res) => {
         transaction,
       });
 
-      // Create new order product sizes
-      for (const ps of product_sizes) {
-        if (!ps.product_size_id || !ps.quantity_kg) {
-          await transaction.rollback();
-          return error(res, 400, "Product size ID and quantity are required");
-        }
-
-        // Get the current rate for this product size
-        const productSize = await ProductSize.findByPk(ps.product_size_id);
-        if (!productSize) {
-          await transaction.rollback();
-          return error(res, 400, "Invalid product size ID");
-        }
-
-        await OrderProductSize.create(
-          {
-            order_id: id,
-            product_size_id: ps.product_size_id,
-            quantity_kg: ps.quantity_kg,
-            rate_per_kg: ps.rate_per_kg || productSize.rate_per_kg, // Use custom rate if provided, otherwise use master rate
-          },
-          { transaction }
-        );
-      }
+      await createLines(id, product_sizes, transaction);
     }
 
     await transaction.commit();
@@ -533,6 +423,9 @@ const updateOrder = async (req, res) => {
     return success(res, 200, "Order updated successfully", updatedOrder);
   } catch (err) {
     await transaction.rollback();
+    if (err instanceof LineError) {
+      return error(res, 400, err.message);
+    }
     console.error("Error updating order:", err);
     return error(res, 500, "Failed to update order", err.message);
   }
