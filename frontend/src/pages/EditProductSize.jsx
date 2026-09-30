@@ -33,8 +33,12 @@ const EditProductSize = () => {
   const handleSubmit = async (formData) => {
     try {
       setSubmitting(true);
-      await productSizeAPI.update(id, formData);
-      navigate("/product-sizes", { state: { message: "Product size updated successfully" } });
+      const response = await productSizeAPI.update(id, formData);
+      const filled = response.data.data?.backfilled_lines || 0;
+      const message = filled > 0
+        ? `Product size updated — weight added to ${filled} earlier order line${filled === 1 ? "" : "s"}`
+        : "Product size updated successfully";
+      navigate("/product-sizes", { state: { message } });
     } catch (err) {
       console.error("Error updating product size:", err);
       setError("Failed to update product size. Please try again.");
