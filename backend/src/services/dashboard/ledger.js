@@ -1,0 +1,54 @@
+"use strict";
+
+/**
+ * One read of everything the dashboard needs. Every include is required:false
+ * so no order line is ever dropped because a size/customer/plate was archived.
+ */
+const loadLedger = async (models) => {
+  const { Order, Customer, PlateType, OrderProductSize, ProductSize, Payment, Expense, ExpenseCategory } = models;
+
+  const rows = await Order.findAll({
+    where: { is_archived: false },
+    attributes: ["id", "customer_id", "order_date", "created_at", "status", "custom_plate_charge", "round_off_amount", "advance_received"],
+    include: [
+      { model: Customer, as: "customer", attributes: ["id", "name", "metadata"], required: false },
+      { model: PlateType, as: "plateType", attributes: ["charge"], required: false },
+      {
+        model: OrderProductSize, as: "orderProductSizes", required: false,
+        include: [{ model: ProductSize, as: "productSize", attributes: ["rate_per_kg", "size_label"], required: false }],
+      },
+      { model: Payment, as: "payments", attributes: ["amount", "payment_type", "payment_date"], required: false },
+    ],
+  });
+  const orders = rows.map((r) => {
+    const o = r.toJSON();
+    return { ...o, customerName: o.customer?.name || "Unknown customer", customerPhone: o.customer?.metadata?.phone || null };
+  });
+
+  const deletedOrderPayments = await Payment.findAll({
+    attributes: ["amount", "payment_date"],
+    include: [{ model: Order, as: "order", attributes: [], where: { is_archived: true }, required: true }],
+    raw: true,
+  });
+
+  const expenses = (
+    await Expense.findAll({
+      where: { is_archived: false },
+      attributes: ["bill_date", "total_cost"],
+      include: [{ model: ExpenseCategory, as: "category", attributes: ["name"], required: false }],
+    })
+  ).map((e) => {
+    const x = e.toJSON();
+    return { bill_date: x.bill_date, total_cost: x.total_cost, categoryName: x.category?.name || "Uncategorised" };
+  });
+
+  const dates = [
+    ...orders.map((o) => o.order_date),
+    ...orders.flatMap((o) => (o.payments || []).map((p) => p.payment_date)),
+    ...expenses.map((e) => e.bill_date),
+  ].filter(Boolean).sort();
+
+  return { orders, deletedOrderPayments, expenses, earliest: dates[0] || null };
+};
+
+module.exports = { loadLedger };

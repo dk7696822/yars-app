@@ -24,6 +24,7 @@ const goodsReceiptRoutes = require("./goodsReceiptRoutes");
 const stockIssueRoutes = require("./stockIssueRoutes");
 const stockRoutes = require("./stockRoutes");
 const assistantRoutes = require("./assistantRoutes");
+const dashboardRoutes = require("./dashboardRoutes");
 
 // Public routes — no token required
 router.use("/auth", authRoutes);
@@ -53,5 +54,6 @@ router.use("/goods-receipts", goodsReceiptRoutes);
 router.use("/stock-issues", stockIssueRoutes);
 router.use("/stock", stockRoutes);
 router.use("/assistant", assistantRoutes);
+router.use("/dashboard", dashboardRoutes);
 
 module.exports = router;
