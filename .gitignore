@@ -1,0 +1,5 @@
+# OS / local tooling
+.DS_Store
+.superpowers/
+.playwright-mcp/
+.claude/settings.local.json
