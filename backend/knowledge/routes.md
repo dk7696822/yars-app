@@ -7,7 +7,8 @@ specific record.
 | path | screen | purpose |
 |---|---|---|
 | `/login` | Login | Sign in (username + password) |
-| `/` | Dashboard | Overview: outstanding balance, orders/customers/revenue/received stats, recent orders |
+| `/` | Dashboard | To collect (dues by age, customers to chase with call/WhatsApp), period figures (sales, collected, kg/pcs, expenses) with charts, recent orders |
+| `/dues` | Dues | Every customer who owes, oldest dues first; filter by age (`/dues?age=90+`, `61-90`, `31-60`, `0-30`); call/WhatsApp reminder |
 | `/orders` | Orders | List, search, filter, delete orders; Excel download |
 | `/orders/new` | Create Order | New bag-manufacturing order |
 | `/orders/edit/:id` | Edit Order | Change an existing order |
@@ -19,7 +20,7 @@ specific record.
 | `/plate-types` | Plate Types | Master list of printing plate types (name + charge) |
 | `/plate-types/new` | Create Plate Type | Add a plate type |
 | `/plate-types/edit/:id` | Edit Plate Type | Update a plate type |
-| `/product-sizes` | Product Sizes | Master list of bag sizes (label + rate per kg) |
+| `/product-sizes` | Product Sizes | Master list of bag sizes (label, rate per kg and/or piece price, optional weight) |
 | `/product-sizes/new` | Create Product Size | Add a product size |
 | `/product-sizes/edit/:id` | Edit Product Size | Update a product size |
 | `/expenses` | Expenses | Expense list, filters, total card, Excel download |

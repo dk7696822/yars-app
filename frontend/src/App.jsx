@@ -6,6 +6,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Dues from "./pages/Dues";
 import Orders from "./pages/Orders";
 import CreateOrder from "./pages/CreateOrder";
 import EditOrder from "./pages/EditOrder";
@@ -117,6 +118,7 @@ function App() {
                 </Route>
 
                 <Route path="history" element={<History />} />
+                <Route path="dues" element={<Dues />} />
 
                 <Route path="stock">
                   <Route index element={<Stock />} />
