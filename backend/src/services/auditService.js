@@ -52,23 +52,27 @@ const createAuditLog = async (AuditLog, { entityType, entityId, action, oldValue
  * Reuses calculation logic from orderController.js
  * @param {Object} models - Sequelize models object
  * @param {string} orderId - Order UUID
+ * @param {Object} [transaction] - Sequelize transaction the payment is being written in
  * @returns {Object} - { total_amount, total_received, outstanding }
  */
-const calculateOrderMetrics = async (models, orderId) => {
+const calculateOrderMetrics = async (models, orderId, transaction) => {
   try {
     const { Order, Customer, PlateType, OrderProductSize, ProductSize, Payment } = models;
 
+    // Read inside the caller's transaction so a just-written payment is seen.
     const order = await Order.findByPk(orderId, {
       include: [
-        { model: Customer, as: "customer" },
-        { model: PlateType, as: "plateType" },
+        { model: Customer, as: "customer", required: false },
+        { model: PlateType, as: "plateType", required: false },
         {
           model: OrderProductSize,
           as: "orderProductSizes",
-          include: [{ model: ProductSize, as: "productSize" }],
+          required: false,
+          include: [{ model: ProductSize, as: "productSize", required: false }],
         },
         { model: Payment, as: "payments", required: false },
       ],
+      transaction,
     });
 
     if (!order) {

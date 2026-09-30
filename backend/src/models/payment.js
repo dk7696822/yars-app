@@ -107,7 +107,7 @@ module.exports = (sequelize, DataTypes) => {
           // Calculate BEFORE metrics (before this payment is added)
           if (payment.order_id) {
             const { calculateOrderMetrics } = require("../services/auditService");
-            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id, options.transaction);
           }
         },
 
@@ -125,7 +125,7 @@ module.exports = (sequelize, DataTypes) => {
           // Calculate AFTER metrics
           let afterMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
           if (payment.order_id) {
-            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id, options.transaction);
           }
 
           await createAuditLog(AuditLog, {
@@ -153,7 +153,7 @@ module.exports = (sequelize, DataTypes) => {
           // Calculate BEFORE metrics
           if (payment.order_id) {
             const { calculateOrderMetrics } = require("../services/auditService");
-            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+            payment._beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id, options.transaction);
           }
         },
 
@@ -171,7 +171,7 @@ module.exports = (sequelize, DataTypes) => {
           // Calculate AFTER metrics
           let afterMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
           if (payment.order_id) {
-            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+            afterMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id, options.transaction);
           }
 
           await createAuditLog(AuditLog, {
@@ -205,7 +205,7 @@ module.exports = (sequelize, DataTypes) => {
           // Calculate BEFORE metrics (this is what it looks like before deletion)
           let beforeMetrics = { total_amount: 0, total_received: 0, outstanding: 0 };
           if (payment.order_id) {
-            beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id);
+            beforeMetrics = await calculateOrderMetrics(sequelize.models, payment.order_id, options.transaction);
           }
 
           // Calculate what AFTER metrics will be (outstanding will increase by payment amount)
