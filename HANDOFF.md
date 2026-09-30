@@ -98,7 +98,7 @@ plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
 - Catalog (Sizes, Plate types) was redesigned right after release
   (`frontend/src/features/catalog`). Order lines can be Kg or Pcs whatever the
   size has saved; a ₹0 saved kg rate means "rate set on each order".
-- **UX redesign part 2 (branch `feature/ux-redesign-2`):** every remaining page
+- **UX redesign part 2 (branch `feature/ux-redesign-2`, DEPLOYED 2026-09-30: Cloud Run yars-backend-00021-fll + Firebase Hosting; backup `~/yars-full-backup-2026-09-30-ux-redesign-2.sql`):** every remaining page
   is on the kit — `src/features/{expenses,history,inventory,assistant,auth}`,
   `src/app/NotFoundPage.jsx`. No legacy pages, components, stylesheets,
   `<Legacy>` wrapper, react-icons or react-datepicker remain; `index.css` holds
