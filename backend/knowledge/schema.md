@@ -105,7 +105,7 @@
 |---|---|---|
 | id | UUID PK | |
 | name | TEXT NOT NULL | customer name |
-| metadata | JSONB | `{phone, email, address}` — contact details live here, NOT in columns |
+| metadata | JSONB | `{phone, email, address, city, gstin}` — contact details live here, NOT in columns |
 | is_archived | BOOLEAN | soft delete |
 | created_at / updated_at | TIMESTAMPTZ | |
 

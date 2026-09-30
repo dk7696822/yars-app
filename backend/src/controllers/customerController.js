@@ -1,8 +1,18 @@
 "use strict";
 
-const { Customer } = require("../models");
+const models = require("../models");
+const { Customer } = models;
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
+const { loadOrders } = require("../services/dashboard/ledger");
+const { todayIST } = require("../services/dashboard/dateRanges");
+const { buildDirectory, buildCustomerSummary, customerStats } = require("../services/lists/customerDirectory");
+const { ListError } = require("../services/lists/orderList");
+const { findSimilar } = require("../services/customerSimilar");
+const { readCustomerBody, CustomerFieldError } = require("../services/customerFields");
+
+const liveCustomers = async () =>
+  (await Customer.findAll({ where: { is_archived: false }, attributes: ["id", "name", "metadata", "created_at"] })).map((c) => c.toJSON());
 
 /**
  * Create a new customer
@@ -12,25 +22,11 @@ const { Op } = require("sequelize");
  */
 const createCustomer = async (req, res) => {
   try {
-    const { name, email, phone, address } = req.body;
-
-    if (!name) {
-      return error(res, 400, "Customer name is required");
-    }
-
-    // Create metadata object with optional fields
-    const metadata = {};
-    if (email) metadata.email = email;
-    if (phone) metadata.phone = phone;
-    if (address) metadata.address = address;
-
-    const customer = await Customer.create({
-      name,
-      metadata,
-    });
-
+    const { name, patch } = readCustomerBody(req.body);
+    const customer = await Customer.create({ name, metadata: patch });
     return success(res, 201, "Customer created successfully", customer);
   } catch (err) {
+    if (err instanceof CustomerFieldError) return error(res, 400, err.message);
     console.error("Error creating customer:", err);
     return error(res, 500, "Failed to create customer", err.message);
   }
@@ -64,6 +60,47 @@ const getAllCustomers = async (req, res) => {
   } catch (err) {
     console.error("Error retrieving customers:", err);
     return error(res, 500, "Failed to retrieve customers", err.message);
+  }
+};
+
+/** Customers screen: A–Z (or owing / recent), with dues from orderFacts. */
+const getDirectory = async (req, res) => {
+  try {
+    const [customers, orders] = await Promise.all([liveCustomers(), loadOrders(models)]);
+    return success(res, 200, "Customer directory", buildDirectory(customers, orders, req.query, todayIST()));
+  } catch (err) {
+    if (err instanceof ListError) return error(res, 400, err.message);
+    console.error("Error loading customer directory:", err);
+    return error(res, 500, "Failed to load customers", err.message);
+  }
+};
+
+/** Customer page: matched by customer_id — never by name. */
+const getCustomerSummary = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({ where: { id: req.params.id, is_archived: false } });
+    if (!customer) return error(res, 404, "Customer not found");
+    const orders = await loadOrders(models, { is_archived: false, customer_id: customer.id });
+    return success(res, 200, "Customer summary", buildCustomerSummary(customer.toJSON(), orders, todayIST()));
+  } catch (err) {
+    console.error("Error loading customer summary:", err);
+    return error(res, 500, "Failed to load customer", err.message);
+  }
+};
+
+/** "Already a customer?" suggestions while typing a name. */
+const getSimilar = async (req, res) => {
+  try {
+    const matches = findSimilar(String(req.query.name || ""), await liveCustomers(), req.query.excludeId);
+    if (!matches.length) return success(res, 200, "Similar customers", []);
+    const orders = await loadOrders(models, { is_archived: false, customer_id: { [Op.in]: matches.map((c) => c.id) } });
+    const stats = customerStats(orders, todayIST());
+    return success(res, 200, "Similar customers", matches.map((c) => ({
+      id: c.id, name: c.name, phone: c.metadata?.phone || null, due: (stats.get(c.id)?.duePaise || 0) / 100,
+    })));
+  } catch (err) {
+    console.error("Error finding similar customers:", err);
+    return error(res, 500, "Failed to check customer names", err.message);
   }
 };
 
@@ -103,47 +140,15 @@ const getCustomerById = async (req, res) => {
  */
 const updateCustomer = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, email, phone, address } = req.body;
-
-    if (!name) {
-      return error(res, 400, "Customer name is required");
-    }
-
-    const customer = await Customer.findOne({
-      where: {
-        id,
-        is_archived: false,
-      },
-    });
-
-    if (!customer) {
-      return error(res, 404, "Customer not found");
-    }
-
-    // Get current metadata or initialize empty object
-    const currentMetadata = customer.metadata || {};
-
-    // Update metadata with new values or keep existing ones
-    const updatedMetadata = {
-      ...currentMetadata,
-      ...(email !== undefined && { email }),
-      ...(phone !== undefined && { phone }),
-      ...(address !== undefined && { address }),
-    };
-
-    // Remove properties that are explicitly set to null or empty string
-    if (email === null || email === "") delete updatedMetadata.email;
-    if (phone === null || phone === "") delete updatedMetadata.phone;
-    if (address === null || address === "") delete updatedMetadata.address;
-
-    await customer.update({
-      name,
-      metadata: updatedMetadata,
-    });
-
+    const { name, patch, remove } = readCustomerBody(req.body);
+    const customer = await Customer.findOne({ where: { id: req.params.id, is_archived: false } });
+    if (!customer) return error(res, 404, "Customer not found");
+    const metadata = { ...(customer.metadata || {}), ...patch };
+    for (const key of remove) delete metadata[key];
+    await customer.update({ name, metadata });
     return success(res, 200, "Customer updated successfully", customer);
   } catch (err) {
+    if (err instanceof CustomerFieldError) return error(res, 400, err.message);
     console.error("Error updating customer:", err);
     return error(res, 500, "Failed to update customer", err.message);
   }
@@ -179,10 +184,4 @@ const deleteCustomer = async (req, res) => {
   }
 };
 
-module.exports = {
-  createCustomer,
-  getAllCustomers,
-  getCustomerById,
-  updateCustomer,
-  deleteCustomer,
-};
+module.exports = { createCustomer, getAllCustomers, getDirectory, getSimilar, getCustomerSummary, getCustomerById, updateCustomer, deleteCustomer };

@@ -10,6 +10,11 @@ router.post("/", customerController.createCustomer);
 // Get all customers
 router.get("/", customerController.getAllCustomers);
 
+// Screens (must come before "/:id")
+router.get("/directory", customerController.getDirectory);
+router.get("/similar", customerController.getSimilar);
+router.get("/:id/summary", customerController.getCustomerSummary);
+
 // Get a customer by ID
 router.get("/:id", customerController.getCustomerById);
 
