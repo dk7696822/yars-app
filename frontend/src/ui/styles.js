@@ -16,3 +16,6 @@ export const buttonClass = ({ variant = "primary", size = "md", block = false } 
 export const INPUT =
   "h-12 w-full rounded-2xl border border-line bg-surface px-3.5 text-[0.95rem] text-ink placeholder:text-ink-2/60 focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/25 disabled:opacity-60";
 export const INPUT_INVALID = "border-status-critical focus:border-status-critical focus:ring-status-critical/25";
+
+/** Form pages fill the screen below the header, so their sticky footer rests at the bottom even when the step is short. */
+export const FORM_PAGE = "mx-auto flex min-h-[calc(100dvh-3.5rem)] max-w-xl flex-col px-4 sm:min-h-[calc(100dvh-4rem)] sm:px-6";

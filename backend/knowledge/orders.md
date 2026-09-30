@@ -1,11 +1,11 @@
 # Orders
 
 What it is: bag-manufacturing orders. An order = customer + date + one plate
-type + one or more product-size lines, each sold by **Kg** (kg × rate/kg) or by
-**Pcs** (pieces × a price like "1,000 pcs cost ₹375"). Order total =
-sum of line amounts + plate charge (custom or default) − round off. Advance can
-be recorded at order time; further payments are recorded on the Order Details
-page (see payments.md).
+type + one or more size lines, each sold by **Kg** (kg × rate/kg) or by
+**Pcs** (pieces × a price like "1,000 pcs cost ₹375"). Order total = sum of
+line amounts + plate charge (custom or default) − round off. An advance can be
+recorded when the order is created; every other payment is recorded on the
+order page (see payments.md).
 
 Domain terms:
 - **Plate type**: the printing plate used; each has a default **Charge** added
@@ -18,60 +18,56 @@ Domain terms:
   (except: lines with no weight pick up a newly-set size weight — see below).
 - **Round Off Amount**: amount subtracted to round the total (e.g. 5 to turn
   ₹10,005 into ₹10,000).
-- Order **status**: Pending → In Progress → Completed → Delivered (or Cancelled).
-  Status is set manually in the order form.
+- Order **status**: Pending → In progress → Completed → Delivered (or Cancelled). Set in the order form's More options or with the status chips on the order page.
+
+## Finding an order
+1. Open [Orders](/orders). Orders are grouped by day (Today, Yesterday,
+   dates), newest first. Each row shows the customer, first size and quantity,
+   status, the total, and **Due ₹…** in red or **Paid ✓** in green.
+2. Search by customer name or size. Chips: **All · Due · In progress · This
+   month**. The line under the chips shows how many orders, their total and
+   the due; cancelled orders are listed (struck through) but not counted.
+3. **⋯ → Download Excel** exports the orders matching the search (this month
+   only when that chip is on).
 
 ## Creating an order
-1. Open [Orders](/orders) and tap **New Order** (top right; just **New** on
-   phones). (Also reachable from the Dashboard quick action.)
-2. Pick the **Customer** (dropdown, required).
-3. Set the **Order Date** (date picker, defaults to today, dd/MM/yyyy).
-4. Pick the **Plate Type** — the dropdown shows each type with its charge, e.g.
-   "4 Colour (₹2,000.00)".
-5. Optionally enter **Custom Plate Charge** (the label shows "(Default: ₹…)"
-   for the selected type) and **Round Off Amount** ("(Amount to subtract)").
-6. Enter **Advance Received** if any money was taken upfront.
-7. Set **Order Status** (Pending / In Progress / Completed / Delivered /
-   Cancelled).
-8. Under **Product Sizes**: for each line pick **Size** (shows its prices, e.g.
-   "8x10 (₹180.00/kg · ₹0.50/pc)"), then the unit toggle **Kg | Pcs** (only
-   units the size has a price for are enabled).
-   - **Kg**: enter **Quantity (kg)**, optionally override **Rate/kg** (label
-     shows the default).
-   - **Pcs**: enter **Quantity (pcs)** (whole number). **Price** "N pcs cost ₹X"
-     is pre-filled from the size and can be changed for this order.
-     **Weight** "N pcs weigh W kg" is pre-filled from the size; typing your own
-     makes it a measured weight (shown as "measured"). If the size has no
-     weight, an amber note says so and offers **Set weight for <size>** — saving
-     it updates the size and fills in earlier pieces lines that had no weight
-     (a message says how many).
-     Skipping is fine; the order still saves.
-   The **Amount** updates live (plus "≈ N kg" for pieces). Tap **Add Product
-   Size** for more lines; the trash button removes a line (at least one line
-   must remain).
-9. Check the summary: **Total Product Amount**, **Plate Charge**,
-   **Advance Received**, **Total Receivable**.
-10. Tap **Save Order**.
+Three steps with **Back** on every step (nothing typed is lost) and a progress
+bar you can tap to jump back:
+1. **Customer & date** — tap to choose the customer (search by name or phone;
+   recent customers first; shows what they owe). Not a customer yet? **＋ New
+   customer** adds one with just name + mobile and returns here. The **Order
+   date** defaults to today (Today / Yesterday shortcuts).
+2. **Items** — per size: choose the **Size** (the list shows its prices), then
+   **Kg | Pcs** (only units the size has a price for).
+   - **Kg**: quantity in kg (up to 2 decimals, e.g. 12.25) and **Rate per kg**
+     (pre-filled from the size).
+   - **Pcs**: quantity (whole number), **Price** "N pcs cost ₹X" (pre-filled),
+     optional **Weight** "N pcs weigh W kg" (pre-filled; typing your own marks
+     it as measured). If the size has no weight, a note offers **Set weight
+     for <size>** — saving it updates the size and fills earlier pieces lines
+     that had none (a message says how many). Skipping is fine.
+   Each line shows its amount live (and ≈ kg for pieces). **＋ Add another
+   size** adds a line.
+3. **Plate & review** — choose the **Plate type** (shows its charge). **More
+   options**: custom plate charge (empty = the plate type's charge), round off
+   (taken off the total), **Advance received** (saved as an advance payment on
+   the order date) and status. The review shows each section with **Edit**.
+   The total is always at the bottom. Tap **Save order**.
 
-## Viewing / editing an order
-1. Open [Orders](/orders); search by customer name, or filter (funnel) by
-   **Status**, **From Date**, **To Date** — filters apply automatically.
-2. Tap an order to open Order Details (`/orders/:id`): Customer Information,
-   Order Information (Order Date, Status, Plate Type, and a **View Invoice →**
-   link if billed), **Order Items** table with Plate Charge, Round Off and
-   **Total Order Amount**, then **Payment Information** (see payments.md).
-3. **Edit Order** (top right) opens the same form as create, pre-filled.
-   **Generate Invoice** appears only while the order has no invoice.
-   If the order is already on an invoice, the edit screen shows a warning:
-   changes won't update that invoice — delete and regenerate the invoice to
-   update it.
+## The order page
+`/orders/:id`: customer, date and status; a money card with **Total**,
+**Received**, **Due** and **＋ Record payment**; Call / WhatsApp for the
+customer; status chips (Pending → In progress → Completed → Delivered); tabs
+**Items** (lines, plate, round off, total), **Payments** (edit/delete each via
+⋯) and **Details**. The **⋯** menu: **Edit order**, **Create invoice** (while
+not invoiced), **Record advance**, **Record refund**, **Cancel order** (shows
+a Restore button afterwards) and **Delete order** (asks first; soft delete).
 
-## Exporting orders to Excel
-1. On [Orders](/orders), set any filters you want, then tap **Download Excel**.
-
-## Deleting an order
-1. On [Orders](/orders) (or the Dashboard list), use the delete action on the
-   order row and confirm **Delete** in the "Delete Order" modal. Soft delete.
+## Editing an order
+**⋯ → Edit order** opens the same three steps, filled in. The advance can't be
+changed here — record an advance or refund as a payment instead. If the order
+is already on an invoice, a warning says the invoice won't change: delete and
+regenerate the invoice to update it.
 
 ## Managing plate types
 1. Open [Plate Types](/plate-types). Tap **New Plate Type**.
@@ -95,10 +91,11 @@ Domain terms:
    "Delete product size" modal. Soft delete.
 
 Rules the UI enforces:
-- Customer, Order Date, Plate Type, Status, and at least one Product Size line
-  are required.
-- Changing a size on a line pre-fills its kg rate from the master only if the
-  line has no rate yet; a pieces line's price and weight reset to the new
-  size's values. Saved orders keep their frozen prices and weights.
+- Customer, order date, plate type and at least one size line are required;
+  each line needs its quantity and rate/price. Problems show next to the field
+  and Next/Save goes to the first one.
+- Changing a size on a line pre-fills its kg rate only if the line has no rate
+  yet; a pieces line's price and weight reset to the new size's values. Saved
+  orders keep their frozen prices and weights.
 - Order create/update/status-change/delete are all written to the audit log
   (visible on [History](/history)).

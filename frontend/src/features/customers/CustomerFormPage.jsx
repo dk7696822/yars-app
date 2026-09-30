@@ -11,7 +11,7 @@ import Button from "../../ui/Button";
 import StickyFooter from "../../ui/StickyFooter";
 import PageHeader from "../../ui/PageHeader";
 import { EmptyState, ErrorState, PageSkeleton } from "../../ui/States";
-import { INPUT, buttonClass } from "../../ui/styles";
+import { INPUT, FORM_PAGE, buttonClass } from "../../ui/styles";
 import { errorText } from "../../lib/errors";
 import { useToast } from "../../context/ToastContext";
 
@@ -66,9 +66,9 @@ export default function CustomerFormPage() {
   };
 
   return (
-    <form onSubmit={submit} noValidate className="mx-auto max-w-xl px-4 pt-4 sm:px-6">
+    <form onSubmit={submit} noValidate className={`${FORM_PAGE} pt-4`}>
       <PageHeader title={isEdit ? "Edit customer" : "New customer"} />
-      <div className="space-y-5 sm:mt-4">
+      <div className="space-y-5 pb-6 sm:mt-4">
         <Field label="Shop / customer name" htmlFor="c-name" error={errors.name}>
           <TextInput value={form.name} onChange={(e) => set({ name: e.target.value })} autoCapitalize="words" autoComplete="organization" autoFocus={!isEdit} />
         </Field>

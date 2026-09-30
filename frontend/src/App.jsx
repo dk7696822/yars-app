@@ -25,8 +25,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dues = lazy(() => import("./pages/Dues"));
 const Assistant = lazy(() => import("./pages/Assistant"));
 const OrdersPage = lazy(() => import("./features/orders/OrdersPage"));
-const CreateOrder = lazy(() => import("./pages/CreateOrder"));
-const EditOrder = lazy(() => import("./pages/EditOrder"));
+const OrderFormPage = lazy(() => import("./features/orders/form/OrderFormPage"));
 const OrderPage = lazy(() => import("./features/orders/OrderPage"));
 const CustomersPage = lazy(() => import("./features/customers/CustomersPage"));
 const CustomerFormPage = lazy(() => import("./features/customers/CustomerFormPage"));
@@ -89,8 +88,8 @@ function App() {
 
                         <Route path="orders">
                           <Route index element={<OrdersPage />} />
-                          <Route path="new" element={old(<CreateOrder />)} />
-                          <Route path="edit/:id" element={old(<EditOrder />)} />
+                          <Route path="new" element={<OrderFormPage />} />
+                          <Route path="edit/:id" element={<OrderFormPage />} />
                           <Route path=":id" element={<OrderPage />} />
                         </Route>
 

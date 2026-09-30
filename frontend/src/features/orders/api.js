@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { orderAPI } from "../../services/api";
+import { orderAPI, productSizeAPI, plateTypeAPI } from "../../services/api";
 import { keys, invalidateMoney } from "../../lib/queryKeys";
 
 export const body = (res) => res.data.data;
@@ -32,4 +32,13 @@ export const useOrderStatus = (id) => {
 export const useDeleteOrder = () => {
   const qc = useQueryClient();
   return useMutation({ mutationFn: (id) => orderAPI.delete(id), onSuccess: () => invalidateMoney(qc) });
+};
+
+/** Sizes and plate types change rarely: cached for 5 minutes. */
+export const useSizes = () => useQuery({ queryKey: keys.catalog.sizes, queryFn: () => productSizeAPI.getAll().then(body), staleTime: 5 * 60_000 });
+export const usePlates = () => useQuery({ queryKey: keys.catalog.plates, queryFn: () => plateTypeAPI.getAll().then(body), staleTime: 5 * 60_000 });
+
+export const useSaveOrder = (id) => {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: (payload) => (id ? orderAPI.update(id, payload) : orderAPI.create(payload)).then(body), onSuccess: () => invalidateMoney(qc) });
 };
