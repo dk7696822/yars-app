@@ -1,4 +1,4 @@
-import { emptyLine, lineFromOrderItem, previewLine, toPayloadLine } from "../../../utils/orderFormLines";
+import { emptyLine, lineFromOrderItem, previewLine, toPayloadLine, applySizeSelection } from "../../../utils/orderFormLines";
 import { parseNumber } from "../../../utils/numberInput";
 import { isISODate, todayIST } from "../../../utils/istDate";
 
@@ -123,11 +123,19 @@ export const toPayload = (draft, { isEdit }) => ({
 });
 
 const saved = (v) => v !== null && v !== undefined && v !== "";
+/** A kg rate of ₹0 on a size means "no saved rate" (25 of 43 sizes in production). */
+const savedRate = (v) => saved(v) && Number(v) > 0;
+
+/** Choose a size on a line. A ₹0 saved rate leaves the rate empty rather than pre-filling 0. */
+export const pickSize = (line, size) => {
+  const next = applySizeSelection(line, size);
+  return size && !savedRate(size.rate_per_kg) && Number(next.rate_per_kg) === 0 ? { ...next, rate_per_kg: "" } : next;
+};
 
 /** Either unit can be chosen; while the size has no saved price for it and none is typed yet, say what to enter. */
 export const unitPriceHint = (line, size) => {
   if (!size) return null;
   if (line.unit === "PIECES" && !saved(size.piece_price_amount) && !saved(line.price_amount)) return `${size.size_label} has no piece price saved — enter the price for this order`;
-  if (line.unit !== "PIECES" && !saved(size.rate_per_kg) && !saved(line.rate_per_kg)) return `${size.size_label} has no rate per kg saved — enter the rate for this order`;
+  if (line.unit !== "PIECES" && !savedRate(size.rate_per_kg) && !saved(line.rate_per_kg)) return `${size.size_label} has no rate per kg saved — enter the rate for this order`;
   return null;
 };

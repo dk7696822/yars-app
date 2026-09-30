@@ -8,8 +8,8 @@ import Button from "../../../ui/Button";
 import { Money } from "../../../ui/Money";
 import { INPUT, INPUT_INVALID } from "../../../ui/styles";
 import SizePicker from "./SizePicker";
-import { linePreview, unitPriceHint } from "./draft";
-import { applySizeSelection, applySizeWeight } from "../../../utils/orderFormLines";
+import { linePreview, unitPriceHint, pickSize } from "./draft";
+import { applySizeWeight } from "../../../utils/orderFormLines";
 import { formatSizePricing, formatKg, formatCurrency, perPiecePriceHint, perPieceWeightHint } from "../../../utils/formatters";
 import { parseNumber } from "../../../utils/numberInput";
 import { errorText } from "../../../lib/errors";
@@ -121,7 +121,7 @@ export default function LineCard({ line, index, sizes, errors, onChange, onRemov
           <Field label="Quantity" htmlFor={`line-${n}-kg`} error={errors.quantity}>
             <NumberInput value={line.quantity_kg} onChange={(v) => set({ quantity_kg: v })} suffix="kg" />
           </Field>
-          <Field label="Rate per kg" htmlFor={`line-${n}-rate`} error={errors.rate} hint={size?.rate_per_kg ? `Size rate ${formatCurrency(size.rate_per_kg)}` : undefined}>
+          <Field label="Rate per kg" htmlFor={`line-${n}-rate`} error={errors.rate} hint={Number(size?.rate_per_kg) > 0 ? `Size rate ${formatCurrency(size.rate_per_kg)}` : undefined}>
             <NumberInput value={line.rate_per_kg} onChange={(v) => set({ rate_per_kg: v })} prefix="₹" />
           </Field>
         </div>
@@ -135,7 +135,7 @@ export default function LineCard({ line, index, sizes, errors, onChange, onRemov
         {amount === null ? <span className="text-sm text-ink-2">—</span> : <Money value={amount} className="font-semibold" />}
       </div>
 
-      <SizePicker open={picking} sizes={sizes} onClose={() => setPicking(false)} onPick={(s) => { onChange(applySizeSelection(line, s)); setPicking(false); }} />
+      <SizePicker open={picking} sizes={sizes} onClose={() => setPicking(false)} onPick={(s) => { onChange(pickSize(line, s)); setPicking(false); }} />
     </div>
   );
 }

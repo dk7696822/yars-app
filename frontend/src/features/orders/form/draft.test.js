@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newDraft, newLine, draftFromOrder, lineErrors, stepErrors, linePreview, draftTotals, toPayload, unitPriceHint } from "./draft";
+import { newDraft, newLine, draftFromOrder, lineErrors, stepErrors, linePreview, draftTotals, toPayload, unitPriceHint, pickSize } from "./draft";
 
 const SIZES = [
   { id: "s1", size_label: "14x18", rate_per_kg: "180.00", piece_price_amount: null, piece_price_count: null, weight_kg: null, weight_pieces_count: null },
@@ -84,5 +84,18 @@ describe("either unit can be chosen", () => {
   test("once this order's price is typed, the hint goes away", () => {
     expect(unitPriceHint({ unit: "PIECES", price_amount: "375", price_pieces_count: "1000" }, SIZES[0])).toBeNull();
     expect(unitPriceHint({ unit: "KG", rate_per_kg: "150" }, SIZES[1])).toBeNull();
+  });
+});
+
+describe("sizes saved with a ₹0 kg rate (25 of 43 in production)", () => {
+  const ZERO = { id: "z1", size_label: "10 x 15", rate_per_kg: "0.00", piece_price_amount: null, piece_price_count: null, weight_kg: null, weight_pieces_count: null };
+  test("picking one leaves the rate empty instead of pre-filling 0", () => {
+    expect(pickSize(newLine(), ZERO)).toMatchObject({ product_size_id: "z1", unit: "KG", rate_per_kg: "" });
+  });
+  test("…and says to enter this order's rate", () => {
+    expect(unitPriceHint({ unit: "KG", rate_per_kg: "" }, ZERO)).toBe("10 x 15 has no rate per kg saved — enter the rate for this order");
+  });
+  test("a real saved rate is still pre-filled", () => {
+    expect(pickSize(newLine(), SIZES[0])).toMatchObject({ product_size_id: "s1", rate_per_kg: 180 });
   });
 });
