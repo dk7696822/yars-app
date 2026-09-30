@@ -64,6 +64,7 @@ CHECK constraints:
 |---|---|---|
 | `unit` | ENUM(`KG`,`PIECES`) NOT NULL DEFAULT `KG` | every existing row becomes KG via the default |
 | `quantity_kg` | DECIMAL(10,2) | **NOT NULL → nullable.** Existing values untouched. |
+| `rate_per_kg` | DECIMAL(10,2) | **NOT NULL → nullable** (it was made NOT NULL by migration `20240603000002`; PIECES lines need it NULL). Existing values untouched. |
 | `quantity_pieces` | INTEGER NULL, ≥ 1 | |
 | `price_amount` | DECIMAL(12,4) NULL | line price "…cost ₹X" (copied from size or custom) |
 | `price_pieces_count` | INTEGER NULL, ≥ 1 | line price "N pieces…" |
@@ -170,7 +171,9 @@ UPDATE order_product_sizes
   - Update keeps today's delete-and-recreate of lines; the client sends back
     each line's stored values so nothing is silently re-snapshotted.
 - **Order responses** add per-line computed `line_amount`, `line_kg`, and
-  per-order `volume` (`volumeSummary` of that order).
+  per-order `volume` (`volumeSummary` of that order). `GET /orders/:id` also
+  includes `invoice { id, invoice_number }` so the edit screen can name the
+  invoice in its warning.
 - **Invoice generation** uses `orderMath`; writes `unit` / price pair on items.
 
 ## 5. Screens
@@ -206,7 +209,9 @@ UPDATE order_product_sizes
 **Invoice screen + PDF**
 - Rate column shows the price as entered: `Rs. 180.00 / kg`,
   `Rs. 375.00 / 1,000 pcs`, `Rs. 0.50 / pc`. Qty column: `50 kg`, `5,000 pcs`.
-- Items with `unit` NULL (all existing invoices) render exactly as today.
+- Items with `unit` NULL (all existing invoices) render with exactly today's
+  text. The PDF's Rate/Qty columns are widened a few points for everyone so
+  "Rs. 375.00 / 1,000 pcs" and "5,000 pcs" fit on one line.
 - No estimated weight on invoices.
 
 **Excel export (dashboard export)**
