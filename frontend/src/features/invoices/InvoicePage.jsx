@@ -101,7 +101,9 @@ export default function InvoicePage() {
           <div className="flex justify-between text-ink-2"><dt>Received on these orders</dt><dd><Money value={m.amountPaid} className="font-semibold text-ink" /></dd></div>
         </dl>
         <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-3">
-          {m.amountDue > 0
+          {cancelled
+            ? <span className="text-sm text-ink-2">Cancelled — not counted as unpaid</span>
+            : m.amountDue > 0
             ? <><span className="text-sm font-semibold text-ink-2">Due{m.derivedStatus === "OVERDUE" && <span className="text-status-critical"> · overdue {m.overdueDays} days</span>}</span><Money value={m.amountDue} className="text-3xl font-bold text-status-critical" /></>
             : <><span className="text-sm font-semibold text-status-good">Paid in full ✓</span>{m.amountExtra > 0 && <span className="text-sm text-ink-2"><Money value={m.amountExtra} /> extra received</span>}</>}
         </div>

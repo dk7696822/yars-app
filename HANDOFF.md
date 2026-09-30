@@ -97,8 +97,11 @@ plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
 - **Verify before release:** `NODE_ENV=production node scripts/dashboard-verify.js`
   now also cross-checks the orders list, the customer directory and every
   invoice's paid amount against SQL, and reports orders on two invoices.
-- Not in this sub-project: Expenses, History, catalog (sub-project 2); Stock
-  screens, Login/Assistant re-theme, deleting legacy CSS (sub-project 3).
+- Catalog (Sizes, Plate types) was redesigned right after release
+  (`frontend/src/features/catalog`). Order lines can be Kg or Pcs whatever the
+  size has saved; a ₹0 saved kg rate means "rate set on each order".
+- Still on the old look: Expenses, History (sub-project 2); Stock screens,
+  Login/Assistant re-theme, deleting legacy CSS (sub-project 3).
 - Backend tests run with `TZ=UTC` (package.json) so they behave like Cloud Run.
 - Invoice GST: order totals exclude GST, so the invoice payment sheet offers
   "The invoice itself" — saved with `invoice_id` and no `order_id`. It counts
