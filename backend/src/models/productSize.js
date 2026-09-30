@@ -29,12 +29,18 @@ module.exports = (sequelize, DataTypes) => {
       },
       rate_per_kg: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
+        allowNull: true, // NULL = sold only by pieces (at least one price is DB-enforced)
         validate: {
           isDecimal: true,
           min: 0,
         },
       },
+      // "N pieces cost ₹X" — stored exactly as typed (see services/orderMath.js).
+      piece_price_amount: { type: DataTypes.DECIMAL(12, 4), allowNull: true },
+      piece_price_count: { type: DataTypes.INTEGER, allowNull: true },
+      // "N pieces weigh W kg" — used only to estimate kg of pieces lines.
+      weight_kg: { type: DataTypes.DECIMAL(12, 3), allowNull: true },
+      weight_pieces_count: { type: DataTypes.INTEGER, allowNull: true },
       is_archived: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

@@ -73,6 +73,11 @@ module.exports = (sequelize, DataTypes) => {
           isDecimal: true,
         },
       },
+      // NULL for plate-charge/advance rows and for every item created before
+      // piece orders existed (those render exactly as before).
+      unit: { type: DataTypes.ENUM("KG", "PIECES"), allowNull: true },
+      price_amount: { type: DataTypes.DECIMAL(12, 4), allowNull: true },
+      price_pieces_count: { type: DataTypes.INTEGER, allowNull: true },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
