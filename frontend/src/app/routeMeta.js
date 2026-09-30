@@ -38,14 +38,15 @@ const ROUTES = [
   [/^\/purchase-orders\/[^/]+\/receive$/, { title: "Receive material", hideNav: true }],
   [/^\/purchase-orders\/[^/]+$/, { title: "Purchase order", back: "/purchase-orders" }],
   [/^\/purchase-orders/, { title: "Purchase orders" }],
+  [/^\/suppliers\/new$/, { title: "New supplier", hideNav: true }],
+  [/^\/suppliers\/edit\/[^/]+$/, { title: "Edit supplier", hideNav: true }],
+  [/^\/suppliers\/[^/]+$/, { title: "Supplier", back: "/suppliers" }],
+  [/^\/suppliers/, { title: "Suppliers" }],
   // Not redesigned yet — titles as before.
   [/^\/stock-issues\/new$/, { title: "Issue stock", hideNav: true }],
   [/^\/stock-issues/, { title: "Stock issues" }],
   [/^\/stock\/[^/]+$/, { title: "Item stock", back: "/stock" }],
   [/^\/stock$/, { title: "Stock" }],
-  [/^\/suppliers\/new/, { title: "New Supplier" }],
-  [/^\/suppliers\/edit/, { title: "Edit Supplier" }],
-  [/^\/suppliers/, { title: "Suppliers" }],
 ];
 
 export const routeMeta = (pathname) => {

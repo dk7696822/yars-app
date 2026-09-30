@@ -51,10 +51,9 @@ const PurchaseOrderPage = lazy(() => import("./features/inventory/PurchaseOrderP
 const ReceivePage = lazy(() => import("./features/inventory/ReceivePage"));
 const StockIssuesPage = lazy(() => import("./features/inventory/StockIssuesPage"));
 const NewStockIssuePage = lazy(() => import("./features/inventory/NewStockIssuePage"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
-const CreateSupplier = lazy(() => import("./pages/CreateSupplier"));
-const EditSupplier = lazy(() => import("./pages/EditSupplier"));
-const SupplierDetail = lazy(() => import("./pages/SupplierDetail"));
+const SuppliersPage = lazy(() => import("./features/inventory/SuppliersPage"));
+const SupplierFormPage = lazy(() => import("./features/inventory/SupplierFormPage"));
+const SupplierPage = lazy(() => import("./features/inventory/SupplierPage"));
 const InventoryCategoriesPage = lazy(() => import("./features/inventory/InventoryCategoriesPage"));
 const ItemAttributesPage = lazy(() => import("./features/inventory/ItemAttributesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -151,10 +150,10 @@ function App() {
                         </Route>
 
                         <Route path="suppliers">
-                          <Route index element={old(<Suppliers />)} />
-                          <Route path="new" element={old(<CreateSupplier />)} />
-                          <Route path="edit/:id" element={old(<EditSupplier />)} />
-                          <Route path=":id" element={old(<SupplierDetail />)} />
+                          <Route index element={<SuppliersPage />} />
+                          <Route path="new" element={<SupplierFormPage />} />
+                          <Route path="edit/:id" element={<SupplierFormPage />} />
+                          <Route path=":id" element={<SupplierPage />} />
                         </Route>
 
                         <Route path="inventory-categories" element={<InventoryCategoriesPage />} />

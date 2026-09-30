@@ -37,6 +37,10 @@ describe("routeMeta", () => {
     ["/purchase-orders/new", { title: "New purchase order", back: null, hideNav: true }],
     ["/purchase-orders/p1", { title: "Purchase order", back: "/purchase-orders", hideNav: false }],
     ["/purchase-orders/p1/receive", { title: "Receive material", back: null, hideNav: true }],
+    ["/suppliers", { title: "Suppliers", back: null, hideNav: false }],
+    ["/suppliers/new", { title: "New supplier", back: null, hideNav: true }],
+    ["/suppliers/edit/s1", { title: "Edit supplier", back: null, hideNav: true }],
+    ["/suppliers/s1", { title: "Supplier", back: "/suppliers", hideNav: false }],
     ["/nowhere", { title: "YARS", back: null, hideNav: false }],
   ])("%s", (path, meta) => expect(routeMeta(path)).toEqual(meta));
 });
