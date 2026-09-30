@@ -2,7 +2,7 @@
 
 const { AuditLog } = require("../models");
 const { success, error } = require("../utils/response");
-const { Op } = require("sequelize");
+const { auditWhere, AuditFilterError } = require("../services/auditFilters");
 
 /**
  * Get all audit logs with filtering and pagination
@@ -14,31 +14,12 @@ const getAllAuditLogs = async (req, res) => {
   try {
     const { entity_type, action, from_date, to_date, page = 1, limit = 20, entity_id } = req.query;
 
-    const where = {};
-
-    if (entity_type) {
-      where.entity_type = entity_type.toUpperCase();
-    }
-
-    if (action) {
-      where.action = action.toUpperCase();
-    }
-
-    if (entity_id) {
-      where.entity_id = entity_id;
-    }
-
-    if (from_date || to_date) {
-      where.created_at = {};
-      if (from_date) {
-        where.created_at[Op.gte] = new Date(from_date);
-      }
-      if (to_date) {
-        // Include the entire end date
-        const endDate = new Date(to_date);
-        endDate.setHours(23, 59, 59, 999);
-        where.created_at[Op.lte] = endDate;
-      }
+    let where;
+    try {
+      where = auditWhere({ entity_type, action, from_date, to_date, entity_id });
+    } catch (err) {
+      if (err instanceof AuditFilterError) return error(res, 400, err.message);
+      throw err;
     }
 
     const offset = (parseInt(page) - 1) * parseInt(limit);

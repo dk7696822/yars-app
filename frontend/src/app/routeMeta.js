@@ -28,8 +28,8 @@ const ROUTES = [
   [/^\/expenses\/edit\/[^/]+$/, { title: "Edit expense", hideNav: true }],
   [/^\/expenses/, { title: "Expenses" }],
   [/^\/expense-categories/, { title: "Expense categories" }],
-  // Not redesigned yet — titles as before.
   [/^\/history/, { title: "History" }],
+  // Not redesigned yet — titles as before.
   [/^\/stock-issues\/new/, { title: "New Stock Issue" }],
   [/^\/stock-issues/, { title: "Stock Issues" }],
   [/^\/stock/, { title: "Stock" }],

@@ -1,30 +1,16 @@
-# History (audit log)
+# History
 
-What it is: a read-only **Activity Log** of important changes — who-did-what for
-payments, orders, and the inventory documents. Backed by the `audit_logs` table.
-Entries record the action (CREATE / UPDATE / DELETE), old/new values, and useful
-metadata (customer name; for payments, the order's total/received/outstanding
-before and after).
+What it is: a timeline of everything that changed money or stock — payments
+recorded, edited or deleted; orders created, edited, moved to a new status or
+deleted; purchase orders, material received, stock issued, wastage and
+adjustments.
 
-What is logged:
-- **Payment** — create, update, delete (with before/after order metrics).
-- **Order** — create; updates only when the status changes or the order is
-  archived (a soft delete is logged as DELETE).
-- **Purchase Order**, **Goods Receipt**, **Stock Issue** — inventory documents.
-Not logged: customers, expenses, invoices, master-data edits.
+## Using it
+[History](/history) shows entries grouped by India date, newest first, each as
+one sentence ("Payment ₹5,000 recorded", "Order status Pending → Delivered").
+Chips: **All · Payments · Orders · Stock** and **Any time · This month · Last
+month**. Scroll down to load older entries.
 
-## Reviewing recent activity
-1. Open [History](/history). The **Activity Log** lists entries newest first,
-   20 per page ("Page N of M" pagination at the bottom).
-2. To narrow it down, open the filter panel and set:
-   - **Type**: Payment / Order / Purchase Order / Goods Receipt / Stock Issue
-   - **Action**: Created / Updated / Deleted
-   - **From Date** / **To Date**
-   Filters apply automatically; active ones appear as removable chips.
-
-## Answering "when/who changed this" questions
-1. Filter by the relevant **Type** and date range on [History](/history), or
-   query `audit_logs` directly — filter `entity_type`/`action`, order by
-   `created_at DESC`; `metadata` and `old_values`/`new_values` (JSONB) carry
-   the details. Note `entity_id` is polymorphic (no FK) — join manually to the
-   right table based on `entity_type`.
+A recorded or edited payment also shows the order's Received and Due as they were just
+before and just after it — "(at that time)"; today's figures are on the order.
+Tap an entry to open its order, invoice or purchase order.

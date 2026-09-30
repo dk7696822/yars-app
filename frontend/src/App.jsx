@@ -40,7 +40,7 @@ const ExpenseCategoriesPage = lazy(() => import("./features/expenses/ExpenseCate
 const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage"));
 const NewInvoicePage = lazy(() => import("./features/invoices/NewInvoicePage"));
 const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
-const History = lazy(() => import("./pages/History"));
+const HistoryPage = lazy(() => import("./features/history/HistoryPage"));
 const Stock = lazy(() => import("./pages/Stock"));
 const StockItemDetail = lazy(() => import("./pages/StockItemDetail"));
 const InventoryItems = lazy(() => import("./pages/InventoryItems"));
@@ -126,7 +126,7 @@ function App() {
                           <Route path=":id" element={<InvoicePage />} />
                         </Route>
 
-                        <Route path="history" element={old(<History />)} />
+                        <Route path="history" element={<HistoryPage />} />
 
                         <Route path="stock">
                           <Route index element={old(<Stock />)} />
