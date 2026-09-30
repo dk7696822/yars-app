@@ -85,15 +85,15 @@ Live at **https://yars-dashboard.web.app**. `VITE_API_URL` comes from `frontend/
 ## Safety rails (hard-learned — keep them)
 
 1. **Never point anything at Supabase casually.** Tests are guarded, and `server.js`/`config/database.js` load `.env.test` when `NODE_ENV=test` — don't undo that.
-2. **`backend/.gitignore` is broken** (every line commented out) — `backend/.env` and `node_modules/` are untracked only by luck. NEVER `git add .`/`-A` in backend/; stage by explicit path. (Fixing the gitignore is safe and desirable, just hasn't been done.)
+2. **The GitHub repo is public.** `.gitignore`s cover `.env`/`.env.*` (fixed 2026-09-30), but still stage by explicit path — never `git add .`/`-A` — and never commit credentials.
 3. Nothing may ever hard-delete a `goods_receipt` or `stock_issue` — `stock_movements.reference_id` is polymorphic with no FK.
 
 ## Known issues / debt (pre-existing, deliberately out of scope so far)
 
-- **Live credentials committed**: `backend/src/config/supabase.js` and `backend/render.yaml` contain real connection strings/secrets in git history.
-- Stale CORS entries (Vercel/Netlify/Amplify) in `server.js`.
+- **Old credentials in public git history**: `supabase.js`/`render.yaml` (removed from HEAD 2026-09-30) held credentials for the OLD Supabase project `tnrwottbdozuvdcmugve` (production is `hqenqposkeiwyephomza`; production JWT secret differs). They remain in public history → the owner should rotate or delete that old project. An old YARS copy is still live at `yars-app.netlify.app` (calls a dead EC2 API) — worth taking down.
+- CORS allowlist cleaned 2026-09-30 (takes effect on the next backend deploy).
 - Original modules do client-side pagination (fetch-all).
-- `frontend/src/pages/Orders.jsx`, `frontend/.env.production`, `frontend/package-lock.json` + deleted `backend/.env.example` are the USER'S OWN uncommitted local changes — leave them alone.
+- The owner's own uncommitted local changes — leave them alone: `frontend/.env.production` (adds `/api` to `VITE_API_URL` — this is what production builds use) and the deleted `backend/.env.example`. Old untracked `backend/scripts/*recover*`/`restore*` scripts are from an Aug-2025 product-size incident.
 
 ## State as of handoff
 
