@@ -10,6 +10,9 @@ router.post('/', orderController.createOrder);
 // Get all orders
 router.get('/', orderController.getAllOrders);
 
+// Orders screen list (paged, with summary) — must come before '/:id'
+router.get('/list', orderController.listOrders);
+
 // Get an order by ID
 router.get('/:id', orderController.getOrderById);
 

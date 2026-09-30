@@ -7,6 +7,9 @@ const { LineError } = require("../services/pieceFields");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 const { todayIST } = require("../services/dashboard/dateRanges");
+const models = require("../models");
+const { loadOrders } = require("../services/dashboard/ledger");
+const { buildOrderList, ListError } = require("../services/lists/orderList");
 
 /** Attach computed money + volume fields to a plain order (shared by list and detail). */
 const withComputedFields = (orderData) => {
@@ -190,6 +193,18 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+/** Orders screen: filtered, summarised, paged — figures from orderFacts. */
+const listOrders = async (req, res) => {
+  try {
+    const orders = await loadOrders(models);
+    return success(res, 200, "Orders list", buildOrderList(orders, req.query, todayIST()));
+  } catch (err) {
+    if (err instanceof ListError) return error(res, 400, err.message);
+    console.error("Error listing orders:", err);
+    return error(res, 500, "Failed to load orders", err.message);
+  }
+};
+
 /**
  * Get an order by ID
  * @param {Object} req - Request object
@@ -334,6 +349,7 @@ const deleteOrder = async (req, res) => {
 module.exports = {
   createOrder,
   getAllOrders,
+  listOrders,
   getOrderById,
   updateOrder,
   deleteOrder,
