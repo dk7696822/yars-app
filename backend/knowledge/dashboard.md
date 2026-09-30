@@ -13,7 +13,10 @@ What is on it:
   advances).
 - Quick actions: **New Order** (desktop; on phones just **Order**), **Customer**,
   **Invoices** (desktop only).
-- **Recent Orders** section with a summary bar — **Quantity** (total kg),
+- **Recent Orders** section with a summary bar — **Kg sold** (kg from kg lines
+  + estimated kg from pieces lines, each line counted once; an amber note shows
+  "+ N pcs without weight (not in kg)" when some pieces lines have no weight —
+  tapping it opens [Product Sizes](/product-sizes)), **Pieces sold**,
   **Amount**, **Receivable** — then the order list, 5 per page, with a
   **View All** link to [Orders](/orders).
 - Orders can be deleted from this list (confirmation modal "Delete order" with

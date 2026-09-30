@@ -49,3 +49,9 @@ Notes:
   payments.
 - An order can be on at most one invoice; once billed, the order's
   **Generate Invoice** button disappears and a **View Invoice →** link appears.
+- Invoice items show units: kg lines as "Rs. 180.00 / kg" × "50 kg", pieces
+  lines with the price as entered ("Rs. 375.00 / 1,000 pcs" × "5,000 pcs").
+  Invoices made before piece orders existed show no units. Estimated weights
+  never appear on invoices.
+- Editing an order after it is invoiced does NOT change the invoice; delete the
+  invoice and generate it again to pick up the changes.
