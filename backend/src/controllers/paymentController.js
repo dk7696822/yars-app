@@ -123,30 +123,6 @@ const createPayment = async (req, res) => {
     // Create the payment
     const payment = await Payment.create(paymentData, { transaction });
 
-    // If this is an invoice payment, update the invoice status
-    if (invoice_id) {
-      // Get total payments for this invoice
-      const payments = await Payment.findAll({
-        where: {
-          invoice_id,
-        },
-        attributes: [[sequelize.fn("SUM", sequelize.col("amount")), "total_paid"]],
-        raw: true,
-      });
-
-      const invoice = await Invoice.findByPk(invoice_id);
-      const totalPaid = parseFloat(payments[0].total_paid || 0);
-      const finalAmount = parseFloat(invoice.final_amount);
-
-      // Update invoice status if fully paid
-      if (totalPaid >= finalAmount) {
-        await invoice.update({ status: "PAID" }, { transaction });
-      } else if (invoice.status === "PAID") {
-        // If it was previously marked as paid but now isn't (e.g., payment adjustment)
-        await invoice.update({ status: "PENDING" }, { transaction });
-      }
-    }
-
     await transaction.commit();
 
     // Fetch the complete payment with associations
@@ -296,29 +272,6 @@ const updatePayment = async (req, res) => {
       { transaction }
     );
 
-    // If this payment is associated with an invoice, update the invoice status
-    if (payment.invoice_id) {
-      // Get total payments for this invoice
-      const payments = await Payment.findAll({
-        where: {
-          invoice_id: payment.invoice_id,
-        },
-        attributes: [[sequelize.fn("SUM", sequelize.col("amount")), "total_paid"]],
-        raw: true,
-      });
-
-      const totalPaid = parseFloat(payments[0].total_paid || 0);
-      const finalAmount = parseFloat(payment.invoice.final_amount);
-
-      // Update invoice status if fully paid
-      if (totalPaid >= finalAmount) {
-        await payment.invoice.update({ status: "PAID" }, { transaction });
-      } else if (payment.invoice.status === "PAID") {
-        // If it was previously marked as paid but now isn't (e.g., payment adjustment)
-        await payment.invoice.update({ status: "PENDING" }, { transaction });
-      }
-    }
-
     await transaction.commit();
 
     // Fetch the updated payment with associations
@@ -366,38 +319,8 @@ const deletePayment = async (req, res) => {
       return error(res, 404, "Payment not found");
     }
 
-    // Store invoice_id before deleting
-    const invoiceId = payment.invoice_id;
-
     // Delete payment
     await payment.destroy({ transaction });
-
-    // If this payment was associated with an invoice, update the invoice status
-    if (invoiceId) {
-      // Get total payments for this invoice
-      const payments = await Payment.findAll({
-        where: {
-          invoice_id: invoiceId,
-        },
-        attributes: [[sequelize.fn("SUM", sequelize.col("amount")), "total_paid"]],
-        raw: true,
-      });
-
-      const totalPaid = parseFloat(payments[0]?.total_paid || 0);
-
-      // Only proceed if the invoice still exists
-      if (payment.invoice) {
-        const finalAmount = parseFloat(payment.invoice.final_amount);
-
-        // Update invoice status based on remaining payments
-        if (totalPaid >= finalAmount) {
-          await payment.invoice.update({ status: "PAID" }, { transaction });
-        } else if (payment.invoice.status === "PAID") {
-          // If it was previously marked as paid but now isn't
-          await payment.invoice.update({ status: "PENDING" }, { transaction });
-        }
-      }
-    }
 
     await transaction.commit();
 

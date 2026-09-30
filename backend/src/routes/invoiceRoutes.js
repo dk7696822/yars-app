@@ -6,6 +6,7 @@ const invoiceController = require("../controllers/invoiceController");
 
 router.post("/generate", invoiceController.generateInvoice);
 router.get("/", invoiceController.getAllInvoices);
+router.get("/list", invoiceController.listInvoices); // Invoices screen (before "/:id")
 router.get("/:id", invoiceController.getInvoiceById);
 router.get("/:id/pdf", invoiceController.generatePDF);
 router.patch("/:id/status", invoiceController.updateInvoiceStatus);

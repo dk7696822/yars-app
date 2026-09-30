@@ -5,6 +5,12 @@ const { success, error } = require("../utils/response");
 const { orderTotal, lineAmount } = require("../services/orderMath");
 const { formatInvoiceRate, formatInvoiceQty } = require("../services/invoiceItemFormat");
 const { Op } = require("sequelize");
+const models = require("../models");
+const { invoiceMoneyFor } = require("../services/invoiceMoney");
+const { buildInvoiceList } = require("../services/lists/invoiceList");
+const { ListError } = require("../services/lists/orderList");
+const { rupees, orderFacts } = require("../services/orderFacts");
+const { todayIST, addDays } = require("../services/dashboard/dateRanges");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
@@ -96,7 +102,7 @@ const generateInvoice = async (req, res) => {
     // The actual amount due is finalAmount - totalAdvanceReceived - any additional payments
 
     // Create a date object for today
-    const today = new Date();
+    const today = todayIST();
 
     // Generate sequential invoice number with leading zeros (format: 00000001, 00000002, etc.)
     // Find all invoices and filter for numeric invoice numbers
@@ -132,14 +138,7 @@ const generateInvoice = async (req, res) => {
         invoice_date: today,
         billing_period_start: billing_period_start || orders[0].order_date,
         billing_period_end: billing_period_end || today,
-        payment_due_date:
-          payment_due_date ||
-          (() => {
-            // Create a new date object to avoid modifying the original today variable
-            const dueDate = new Date(today);
-            dueDate.setDate(dueDate.getDate() + 30);
-            return dueDate;
-          })(),
+        payment_due_date: payment_due_date || addDays(today, 30),
         total_amount: parseFloat(totalAmount.toFixed(2)),
         tax_percent: parseFloat(parseFloat(tax_percent || 0).toFixed(2)),
         tax_amount: parseFloat(taxAmount.toFixed(2)),
@@ -263,6 +262,38 @@ const generateInvoice = async (req, res) => {
   }
 };
 
+/** money + per-order figures + every payment that counts toward the invoice. */
+const moneyDetail = (m) => ({
+  money: { amountPaid: m.amountPaid, amountDue: m.amountDue, amountExtra: m.amountExtra, derivedStatus: m.derivedStatus, overdueDays: m.overdueDays },
+  orderMoney: m.orders
+    .map((o) => {
+      const f = orderFacts(o);
+      return { id: o.id, orderDate: o.order_date, status: o.status, deleted: Boolean(o.is_archived), total: rupees(f.totalPaise), received: rupees(f.receivedPaise), due: rupees(f.remainingPaise) };
+    })
+    .sort((a, b) => a.orderDate.localeCompare(b.orderDate)),
+  orderPayments: [
+    ...m.orders.flatMap((o) => (o.payments || []).map((p) => ({ ...p, order_id: o.id, orderDate: o.order_date }))),
+    ...m.invoiceOnlyPayments.map((p) => ({ ...p, orderDate: null })),
+  ]
+    .map((p) => ({ id: p.id, orderId: p.order_id || null, orderDate: p.orderDate, amount: Number(p.amount), type: p.payment_type, method: p.payment_method, date: p.payment_date, reference: p.reference_number || null, notes: p.notes || null }))
+    .sort((a, b) => b.date.localeCompare(a.date)),
+  payment_summary: { total_paid: m.amountPaid, remaining_balance: m.amountDue, is_fully_paid: m.derivedStatus === "PAID" },
+});
+
+const listInvoices = async (req, res) => {
+  try {
+    const invoices = (
+      await Invoice.findAll({ where: { is_archived: false }, include: [{ model: Customer, as: "customer", attributes: ["id", "name", "metadata"], required: false }] })
+    ).map((i) => i.toJSON());
+    const money = await invoiceMoneyFor(models, invoices, todayIST());
+    return success(res, 200, "Invoices list", buildInvoiceList(invoices, money, req.query));
+  } catch (err) {
+    if (err instanceof ListError) return error(res, 400, err.message);
+    console.error("Error listing invoices:", err);
+    return error(res, 500, "Failed to load invoices", err.message);
+  }
+};
+
 const getAllInvoices = async (req, res) => {
   try {
     const { customer_id, status, dateFrom, dateTo, search } = req.query;
@@ -322,25 +353,9 @@ const getAllInvoices = async (req, res) => {
       order: [["invoice_date", "DESC"]],
     });
 
-    // Add payment summary to each invoice
-    const invoicesWithPaymentInfo = invoices.map((invoice) => {
-      const invoiceData = invoice.toJSON();
-
-      // Calculate total paid amount
-      const totalPaid = invoice.payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-      // Calculate remaining balance
-      const remainingBalance = parseFloat(invoice.final_amount) - totalPaid;
-
-      return {
-        ...invoiceData,
-        payment_summary: {
-          total_paid: totalPaid,
-          remaining_balance: remainingBalance,
-          is_fully_paid: totalPaid >= parseFloat(invoice.final_amount),
-        },
-      };
-    });
+    const plain = invoices.map((i) => i.toJSON());
+    const money = await invoiceMoneyFor(models, plain, todayIST());
+    const invoicesWithPaymentInfo = plain.map((inv) => ({ ...inv, payment_summary: moneyDetail(money.get(inv.id)).payment_summary }));
 
     return success(res, 200, "Invoices retrieved successfully", invoicesWithPaymentInfo);
   } catch (err) {
@@ -385,23 +400,9 @@ const getInvoiceById = async (req, res) => {
       return error(res, 404, "Invoice not found");
     }
 
-    // Calculate total paid amount
-    const totalPaid = invoice.payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-    // Calculate remaining balance
-    const remainingBalance = parseFloat(invoice.final_amount) - totalPaid;
-
-    // Add payment summary to the response
-    const invoiceWithPaymentInfo = {
-      ...invoice.toJSON(),
-      payment_summary: {
-        total_paid: totalPaid,
-        remaining_balance: remainingBalance,
-        is_fully_paid: totalPaid >= parseFloat(invoice.final_amount),
-      },
-    };
-
-    return success(res, 200, "Invoice retrieved successfully", invoiceWithPaymentInfo);
+    const plain = invoice.toJSON();
+    const m = (await invoiceMoneyFor(models, [plain], todayIST())).get(plain.id);
+    return success(res, 200, "Invoice retrieved successfully", { ...plain, ...moneyDetail(m) });
   } catch (err) {
     console.error("Error retrieving invoice:", err);
     return error(res, 500, "Failed to retrieve invoice", err.message);
@@ -421,7 +422,11 @@ const updateInvoiceStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!status || !["PENDING", "PAID", "CANCELLED"].includes(status)) {
+    if (status === "PAID") {
+      await transaction.rollback();
+      return error(res, 400, "Paid is worked out from recorded payments");
+    }
+    if (!["PENDING", "CANCELLED"].includes(status)) {
       await transaction.rollback();
       return error(res, 400, "Invalid status value");
     }
@@ -578,6 +583,8 @@ const generatePDF = async (req, res) => {
       return sendErrorResponse(404, "Invoice not found");
     }
 
+    const money = (await invoiceMoneyFor(models, [invoice.toJSON()], todayIST())).get(invoice.id);
+
     // Create a PDF document
     doc = new PDFDocument({ margin: 50 });
 
@@ -717,6 +724,8 @@ const generatePDF = async (req, res) => {
     // Add items
     let y = tableHeaderY + 60;
     for (const item of invoice.invoiceItems) {
+        // Advance lines (negative) are not items — what was received is in the totals.
+        if (parseFloat(item.total_price) < 0) continue;
       // Convert string values to numbers to ensure toFixed works
       const totalPrice = parseFloat(item.total_price);
 
@@ -750,73 +759,23 @@ const generatePDF = async (req, res) => {
     doc.moveTo(50, y).lineTo(550, y).stroke(); // Line after items
     y += 20;
 
-    // Calculate advance payment total from invoice items
-    let advancePaymentTotal = 0;
-    for (const item of invoice.invoiceItems) {
-      if (item.description.includes("Advance Payment")) {
-        advancePaymentTotal += Math.abs(parseFloat(item.total_price));
-      }
-    }
-
-    // Calculate total payments made (excluding advance payments which are already in invoice items)
-    let totalPayments = 0;
-    if (invoice.payments && invoice.payments.length > 0) {
-      // Filter out ADVANCE type payments to avoid double counting
-      const advancePayments = invoice.payments.filter((payment) => payment.payment_type === "ADVANCE");
-      const otherPayments = invoice.payments.filter((payment) => payment.payment_type !== "ADVANCE");
-
-      // Only count non-advance payments
-      totalPayments = otherPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-    }
-
-    // For the PDF, we should use the original total amount from the invoice
-    // This is already the full order amount without advance subtracted
-    // Convert all values to numbers to ensure toFixed works
-    const totalAmount = parseFloat(invoice.total_amount);
-    const taxPercent = parseFloat(invoice.tax_percent);
-    const taxAmount = parseFloat(invoice.tax_amount);
-    // We don't need finalAmount since we're calculating the remaining amount based on totalAmount
-
-    doc.fontSize(12).font("Helvetica-Bold").text("Subtotal", 350, y);
-    doc.text(`Rs. ${totalAmount.toFixed(2)}`, 450, y, { align: "right", width: 100 });
-    y += 20;
-
-    // Show advance payment if any
-    if (advancePaymentTotal > 0) {
-      doc.text("Advance Paid", 350, y);
-      doc.text(`Rs. ${advancePaymentTotal.toFixed(2)}`, 450, y, { align: "right", width: 100 });
+    const totals = [
+      ["Subtotal", parseFloat(invoice.total_amount)],
+      [`Tax (${parseFloat(invoice.tax_percent).toFixed(2)}%)`, parseFloat(invoice.tax_amount)],
+      ["Total", parseFloat(invoice.final_amount)],
+      ["Received", money.amountPaid],
+    ];
+    doc.fontSize(12).font("Helvetica-Bold");
+    for (const [label, value] of totals) {
+      doc.text(label, 350, y);
+      doc.text(`Rs. ${value.toFixed(2)}`, 450, y, { align: "right", width: 100 });
       y += 20;
     }
-
-    // Show additional payments if any (excluding advance payments which are already shown in invoice items)
-    // Only show additional payments if they are different from the advance payment
-    if (totalPayments > 0 && totalPayments !== advancePaymentTotal) {
-      doc.text("Additional Payments", 350, y);
-      doc.text(`Rs. ${totalPayments.toFixed(2)}`, 450, y, { align: "right", width: 100 });
-      y += 20;
-    }
-
-    doc.text("Tax Rate (%)", 350, y);
-    doc.text(`${taxPercent.toFixed(2)}%`, 450, y, { align: "right", width: 100 });
-    y += 20;
-
-    doc.text("Tax", 350, y);
-    doc.text(`Rs. ${taxAmount.toFixed(2)}`, 450, y, { align: "right", width: 100 });
-    y += 20;
-
     doc.moveTo(350, y).lineTo(550, y).stroke();
     y += 20;
-
-    // Calculate remaining amount after all payments
-    // First, calculate the total amount that has been paid (advance + additional payments)
-    const totalPaidAmount = advancePaymentTotal + totalPayments;
-
-    // The remaining amount is the subtotal minus all payments
-    // We use totalAmount (subtotal) instead of finalAmount (which includes tax)
-    const remainingAmount = Math.max(0, totalAmount - totalPaidAmount);
-
-    doc.fontSize(14).text("Total Payable", 350, y);
-    doc.text(`Rs. ${remainingAmount.toFixed(2)}`, 450, y, { align: "right", width: 100 });
+    // The same "Due" as the invoice page and list.
+    doc.fontSize(14).text(money.amountDue > 0 ? "Due" : "Paid in full", 350, y);
+    doc.text(`Rs. ${money.amountDue.toFixed(2)}`, 450, y, { align: "right", width: 100 });
 
     // Add disclaimer text at the bottom
     const disclaimerY = y + 60;
@@ -849,6 +808,7 @@ const generatePDF = async (req, res) => {
 module.exports = {
   generateInvoice,
   getAllInvoices,
+  listInvoices,
   getInvoiceById,
   updateInvoiceStatus,
   deleteInvoice,
