@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus, FaBoxes, FaUsers, FaMoneyBillWave, FaExclamationCircle, FaArrowRight, FaChartLine, FaReceipt, FaChevronLeft, FaChevronRight, FaBalanceScale, FaWeight } from "react-icons/fa";
+import { FaPlus, FaBoxes, FaUsers, FaMoneyBillWave, FaExclamationCircle, FaArrowRight, FaChartLine, FaReceipt, FaChevronLeft, FaChevronRight, FaBalanceScale, FaWeight, FaCubes } from "react-icons/fa";
 import { orderAPI } from "../services/api";
-import { formatCurrency } from "../utils/formatters";
+import { formatCurrency, formatKg, formatNumber } from "../utils/formatters";
+import { volumeSummary } from "../utils/orderMath";
 import { useToast } from "../context/ToastContext";
 import OrderList from "../components/orders/OrderList";
 import ConfirmationModal from "../components/common/ConfirmationModal";
@@ -193,7 +194,7 @@ const QuickAction = ({ to, icon: Icon, label, primary = false }) => (
 );
 
 // Summary Stat Pill - Compact, non-truncating design with enhanced dark mode
-const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
+const SummaryStatPill = ({ icon: Icon, label, value, color = "blue", sub = null }) => {
   const colorClasses = {
     blue: {
       bg: "bg-blue-50 dark:bg-[#111920]",
@@ -216,6 +217,13 @@ const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
       text: "text-amber-700 dark:text-amber-300",
       glow: "dark:shadow-[0_0_20px_-8px_rgba(245,158,11,0.4)]",
     },
+    violet: {
+      bg: "bg-violet-50 dark:bg-[#151419]",
+      icon: "bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400",
+      border: "border-violet-200/50 dark:border-violet-500/25",
+      text: "text-violet-700 dark:text-violet-300",
+      glow: "dark:shadow-[0_0_20px_-8px_rgba(139,92,246,0.4)]",
+    },
   };
 
   const c = colorClasses[color];
@@ -229,6 +237,7 @@ const SummaryStatPill = ({ icon: Icon, label, value, color = "blue" }) => {
         <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-emerald-100/60">{label}</span>
       </div>
       <p className={`text-lg sm:text-xl font-bold font-display ${c.text} break-all leading-tight`}>{value}</p>
+      {sub && <div className="mt-1 text-[11px] sm:text-xs text-gray-500 dark:text-emerald-100/60">{sub}</div>}
     </div>
   );
 };
@@ -260,16 +269,11 @@ const Dashboard = () => {
 
   // Calculate summary for ALL orders
   const ordersSummary = useMemo(() => {
-    let totalKg = 0;
+    const volume = volumeSummary(allOrders);
     let totalAmount = 0;
     let totalReceivable = 0;
 
     allOrders.forEach((order) => {
-      if (order.orderProductSizes) {
-        order.orderProductSizes.forEach((item) => {
-          totalKg += parseFloat(item.quantity_kg || 0);
-        });
-      }
       totalAmount += parseFloat(order.total_amount || 0);
       if (order.payment_summary) {
         totalReceivable += parseFloat(order.payment_summary.remaining_balance || 0);
@@ -278,7 +282,7 @@ const Dashboard = () => {
       }
     });
 
-    return { totalKg: totalKg.toFixed(2), totalAmount, totalReceivable };
+    return { volume, totalAmount, totalReceivable };
   }, [allOrders]);
 
   useEffect(() => {
@@ -515,12 +519,31 @@ const Dashboard = () => {
         {/* Orders Summary Bar */}
         {allOrders.length > 0 && (
           <div className="relative border-b border-gray-100 dark:border-emerald-900/20 px-4 sm:px-5 py-4 dark:bg-[#0d1210]/50">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <SummaryStatPill
                 icon={FaWeight}
-                label="Quantity"
-                value={`${ordersSummary.totalKg} kg`}
+                label="Kg sold"
+                value={formatKg(ordersSummary.volume.kgSold)}
                 color="blue"
+                sub={
+                  <>
+                    {ordersSummary.volume.kgFromPieces > 0 && (
+                      <span className="block">{formatKg(ordersSummary.volume.kgFromKgLines)} ordered + ≈{formatKg(ordersSummary.volume.kgFromPieces)} from pcs</span>
+                    )}
+                    {ordersSummary.volume.piecesWithoutWeight > 0 && (
+                      <Link to="/product-sizes" className="block text-amber-600 dark:text-amber-400">
+                        + {formatNumber(ordersSummary.volume.piecesWithoutWeight)} pcs without weight (not in kg)
+                      </Link>
+                    )}
+                  </>
+                }
+              />
+              <SummaryStatPill
+                icon={FaCubes}
+                label="Pieces sold"
+                value={`${formatNumber(ordersSummary.volume.piecesTotal)} pcs`}
+                color="violet"
+                sub={ordersSummary.volume.kgFromPieces > 0 ? `≈ ${formatKg(ordersSummary.volume.kgFromPieces)}` : null}
               />
               <SummaryStatPill
                 icon={FaMoneyBillWave}
