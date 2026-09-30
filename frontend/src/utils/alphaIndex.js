@@ -14,3 +14,8 @@ export const groupByLetter = (rows) => {
   }
   return groups;
 };
+
+export const initials = (name) => {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  return words.length ? words.slice(0, 2).map((w) => w[0].toUpperCase()).join("") : "?";
+};

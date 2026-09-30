@@ -56,6 +56,9 @@ const downloadFile = async (url, params, fallbackName) => {
 // Customer API
 export const customerAPI = {
   getAll: (params) => api.get("/customers", { params }),
+  directory: (params) => api.get("/customers/directory", { params }),
+  summary: (id) => api.get(`/customers/${id}/summary`),
+  similar: (params) => api.get("/customers/similar", { params }),
   getById: (id) => api.get(`/customers/${id}`),
   create: (data) => api.post("/customers", data),
   update: (id, data) => api.put(`/customers/${id}`, data),

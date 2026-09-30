@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { groupByDay } from "./dayGroups";
-import { letterOf, groupByLetter } from "./alphaIndex";
+import { letterOf, groupByLetter, initials } from "./alphaIndex";
 import { itemsText, itemsFromLines } from "./itemsText";
 import { shortDate } from "./dashboardFormat";
 
@@ -37,5 +37,11 @@ describe("itemsText", () => {
       { unit: "KG", quantity_kg: "12.25", productSize: { size_label: "14x18" } },
       { unit: "PIECES", quantity_pieces: 500, productSize: null },
     ])).toEqual([{ size: "14x18", unit: "KG", quantity: 12.25 }, { size: "Unknown size", unit: "PIECES", quantity: 500 }]);
+  });
+});
+
+describe("initials", () => {
+  test("first letters of the first two words", () => {
+    expect([initials("Sri Veerbhadreshwar"), initials("zed"), initials("12 Star Traders"), initials("  ")]).toEqual(["SV", "Z", "1S", "?"]);
   });
 });
