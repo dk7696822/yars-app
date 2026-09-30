@@ -95,35 +95,35 @@ const OrderLineFields = ({ item, index, productSizes, onChange, onRemove, canRem
               onChange={(e) => set({ quantity_pieces: e.target.value === "" ? "" : Number(e.target.value) })}
               min="1" step="1" required className="form-control" />
           </div>
-          <div className="form-group">
+          <div className="form-group pair-group">
             <label>Price</label>
             <div className="flex items-center gap-2">
               <input type="number" aria-label="Priced per number of pieces" value={item.price_pieces_count}
                 onChange={(e) => set({ price_pieces_count: e.target.value === "" ? "" : Number(e.target.value) })}
-                min="1" step="1" required className="form-control w-24" />
+                min="1" step="1" required className="form-control !w-24 md:!w-32 !px-3 flex-none" />
               <span className="text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">pcs cost ₹</span>
               <input type="number" aria-label="Price for those pieces" value={item.price_amount}
                 onChange={(e) => set({ price_amount: e.target.value === "" ? "" : parseFloat(e.target.value) })}
-                min="0" step="0.0001" required className="form-control" />
+                min="0" step="0.0001" required className="form-control flex-1 !min-w-[4.5rem] !px-3" />
             </div>
           </div>
-          <div className="form-group">
+          <div className="form-group pair-group">
             <label>Weight <span className="text-xs text-gray-500">(optional)</span></label>
             <div className="flex items-center gap-2">
               <input type="number" aria-label="Number of pieces weighed" value={item.weight_pieces_count}
                 onChange={(e) => set({ weight_pieces_count: e.target.value === "" ? "" : Number(e.target.value), weight_source: "MANUAL" })}
-                min="1" step="1" className="form-control w-24" />
+                min="1" step="1" className="form-control !w-24 md:!w-32 !px-3 flex-none" />
               <span className="text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">pcs weigh</span>
               <input type="number" aria-label="Weight in kg" value={item.weight_kg}
                 onChange={(e) => set({ weight_kg: e.target.value === "" ? "" : parseFloat(e.target.value), weight_source: "MANUAL" })}
-                min="0" step="0.001" className="form-control" />
+                min="0" step="0.001" className="form-control flex-1 !min-w-[4.5rem] !px-3" />
               <span className="text-sm text-gray-600 dark:text-gray-300">kg</span>
             </div>
             {item.weight_source === "MANUAL" && lineHasWeight && <p className="text-xs text-gray-500 mt-1">Measured weight for this order</p>}
           </div>
 
           {size && !sizeHasWeight && !lineHasWeight && (
-            <div className="sm:col-span-full rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 text-sm text-amber-800 dark:text-amber-300">
+            <div className="weight-note rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 text-sm text-amber-800 dark:text-amber-300">
               <p className="flex items-start gap-2">
                 <FaExclamationTriangle className="mt-0.5 flex-shrink-0" />
                 <span>Weight not set for {size.size_label}, so this line&apos;s kg can&apos;t be calculated. Add it for the size, type a measured weight above, or skip.</span>
@@ -155,10 +155,12 @@ const OrderLineFields = ({ item, index, productSizes, onChange, onRemove, canRem
       <div className="form-group amount-column">
         <label>Amount</label>
         <div className="amount-display">
-          {formatCurrency(amount ?? 0)}
-          {item.unit === "PIECES" && amount !== null && (
-            <span className="block text-xs font-normal text-gray-500 dark:text-gray-400">{kg === null ? "kg: weight not set" : `≈ ${formatKg(kg)}`}</span>
-          )}
+          <div>
+            {formatCurrency(amount ?? 0)}
+            {item.unit === "PIECES" && amount !== null && (
+              <span className="block text-xs font-normal text-gray-500 dark:text-gray-400">{kg === null ? "kg: weight not set" : `≈ ${formatKg(kg)}`}</span>
+            )}
+          </div>
         </div>
       </div>
 
