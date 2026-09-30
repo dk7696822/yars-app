@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { dashboardAPI } from "../services/dashboardAPI";
 import { loadPeriod, savePeriod } from "../utils/periodPrefs";
@@ -100,7 +101,11 @@ export default function Dashboard() {
           </div>
         </>
       )}
-      <Link to="/orders/new" className="fixed bottom-24 left-4 z-30 rounded-2xl bg-brass px-4 py-3 text-sm font-bold text-brass-on shadow-lg shadow-brass/30 sm:hidden">＋ New order</Link>
+      {/* Portal: the transformed page wrapper would otherwise pin this to the page, not the screen. */}
+      {createPortal(
+        <Link to="/orders/new" className="fixed bottom-24 left-4 z-30 rounded-2xl bg-brass px-4 py-3 text-sm font-bold text-brass-on shadow-lg shadow-brass/30 sm:hidden">＋ New order</Link>,
+        document.body
+      )}
       <InfoSheet open={Boolean(info)} title={infoContent?.title || ""} onClose={() => setInfo(null)}>
         {infoContent?.body.map((p) => <p key={p}>{p}</p>)}
       </InfoSheet>

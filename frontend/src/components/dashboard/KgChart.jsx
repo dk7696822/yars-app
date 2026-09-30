@@ -7,7 +7,7 @@ export default function KgChart({ months, topSizes }) {
   return (
     <section aria-labelledby="kg-trend">
       <div className="flex items-baseline justify-between px-1 pb-2 pt-5"><h2 id="kg-trend" className="text-sm font-bold text-ink">Kg sold</h2><span className="text-xs text-ink-2">last 6 months</span></div>
-      <BarChart title="Kg sold per month" months={months} format={kgText} series={[{ key: "kgSold", label: "Kg sold", fill: "fill-chart-kg", swatch: "bg-chart-kg" }]} />
+      <BarChart title="Kg sold per month" months={months} format={kgText} axisFormat={(v) => `${Math.round(v)} kg`} series={[{ key: "kgSold", label: "Kg sold", fill: "fill-chart-kg", swatch: "bg-chart-kg" }]} />
       {topSizes.length > 0 && (
         <div className="mt-2 rounded-2xl bg-surface p-3.5">
           <h3 className="mb-2 text-xs font-bold text-ink">Top sizes · selected period</h3>

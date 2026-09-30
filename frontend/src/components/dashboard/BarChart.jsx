@@ -14,7 +14,7 @@ const barPath = (x, w, h) => {
   return `M${x},${BASE}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${BASE}Z`;
 };
 
-export default function BarChart({ months, series, format, title }) {
+export default function BarChart({ months, series, format, title, axisFormat = axisInr }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const reduce = useReducedMotion();
@@ -35,7 +35,7 @@ export default function BarChart({ months, series, format, title }) {
       )}
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-hidden="true">
         <line x1="0" x2={W} y1={BASE - scale(mid)} y2={BASE - scale(mid)} className="stroke-line" strokeDasharray="3 4" />
-        <text x="2" y={BASE - scale(mid) - 4} className="fill-ink-2" fontSize="9">{axisInr(mid)}</text>
+        <text x="2" y={BASE - scale(mid) - 4} className="fill-ink-2" fontSize="9">{axisFormat(mid)}</text>
         <line x1="0" x2={W} y1={BASE} y2={BASE} className="stroke-line" />
         {months.map((m, i) => (
           <g key={m.month} onClick={() => setActive(i)} onMouseEnter={() => setActive(i)} className="cursor-pointer">
@@ -68,4 +68,5 @@ BarChart.propTypes = {
   series: PropTypes.arrayOf(PropTypes.shape({ key: PropTypes.string, label: PropTypes.string, fill: PropTypes.string, swatch: PropTypes.string })).isRequired,
   format: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+  axisFormat: PropTypes.func,
 };
