@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { FaEdit, FaEye, FaTrash, FaChevronDown, FaChevronUp, FaBoxes, FaMoneyBillWave, FaBalanceScale } from "react-icons/fa";
-import { formatCurrency, formatDate } from "../../utils/formatters";
+import { FaEdit, FaEye, FaTrash, FaChevronDown, FaChevronUp, FaBoxes, FaMoneyBillWave, FaBalanceScale, FaWeightHanging } from "react-icons/fa";
+import { formatCurrency, formatDate, formatLineQuantity, formatLineRate, formatLineKg, formatKg, formatNumber } from "../../utils/formatters";
+import { lineAmount, volumeSummary } from "../../utils/orderMath";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../ui/Table";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -25,18 +26,11 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
 
   // Calculate summary statistics from all orders (not just paginated)
   const summary = useMemo(() => {
-    let totalKg = 0;
+    const volume = volumeSummary(ordersForSummary);
     let totalAmount = 0;
     let totalReceivable = 0;
 
     ordersForSummary.forEach((order) => {
-      // Calculate total KG
-      if (order.orderProductSizes) {
-        order.orderProductSizes.forEach((item) => {
-          totalKg += parseFloat(item.quantity_kg || 0);
-        });
-      }
-
       // Calculate total amount
       totalAmount += parseFloat(order.total_amount || 0);
 
@@ -50,7 +44,7 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
     });
 
     return {
-      totalKg: totalKg.toFixed(2),
+      volume,
       totalAmount,
       totalReceivable,
     };
@@ -145,9 +139,9 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                     <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-emerald-900/20 last:border-0">
                       <div>
                         <span className="text-gray-900 dark:text-gray-100 font-medium">{item.productSize.size_label}</span>
-                        <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">({item.quantity_kg} kg)</span>
+                        <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">({formatLineQuantity(item)}{formatLineKg(item) ? ` · ${formatLineKg(item)}` : ""})</span>
                       </div>
-                      <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(item.quantity_kg * (item.rate_per_kg || item.productSize.rate_per_kg))}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(lineAmount(item))}</span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between py-2 bg-gray-100/50 dark:bg-[#161d1a] rounded-lg px-3 mt-2">
@@ -252,8 +246,8 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>Product Size</TableHead>
-                                  <TableHead>Quantity (kg)</TableHead>
-                                  <TableHead>Rate per kg</TableHead>
+                                  <TableHead>Quantity</TableHead>
+                                  <TableHead>Rate</TableHead>
                                   <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
                               </TableHeader>
@@ -261,9 +255,12 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
                                 {order.orderProductSizes.map((item) => (
                                   <TableRow key={item.id}>
                                     <TableCell className="text-gray-900 dark:text-gray-100">{item.productSize.size_label}</TableCell>
-                                    <TableCell className="text-gray-700 dark:text-gray-300">{item.quantity_kg}</TableCell>
-                                    <TableCell className="text-gray-700 dark:text-gray-300">{formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}</TableCell>
-                                    <TableCell className="text-right text-gray-900 dark:text-gray-100">{formatCurrency(item.quantity_kg * (item.rate_per_kg || item.productSize.rate_per_kg))}</TableCell>
+                                    <TableCell className="text-gray-700 dark:text-gray-300">
+                                      {formatLineQuantity(item)}
+                                      {formatLineKg(item) && <span className="block text-xs text-gray-500 dark:text-gray-400">{formatLineKg(item)}</span>}
+                                    </TableCell>
+                                    <TableCell className="text-gray-700 dark:text-gray-300">{formatLineRate(item)}</TableCell>
+                                    <TableCell className="text-right text-gray-900 dark:text-gray-100">{formatCurrency(lineAmount(item))}</TableCell>
                                   </TableRow>
                                 ))}
                                 <TableRow className="bg-gray-50/50 dark:bg-emerald-500/5">
@@ -335,15 +332,34 @@ const OrderList = ({ orders, onDelete, showSummary = true, allOrders }) => {
       {showSummary && ordersForSummary.length > 0 && (
         <div className="mt-4 p-4 bg-white dark:bg-[#111916] rounded-xl border border-gray-200/60 dark:border-emerald-900/20">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-emerald-100/80 mb-3">Orders Summary</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Quantity Card */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Kg sold */}
             <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#0d1411] rounded-xl border border-gray-200/60 dark:border-emerald-900/30 p-3 sm:p-4">
               <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <FaWeightHanging className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Kg sold</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-emerald-100 font-display">{formatKg(summary.volume.kgSold)}</h3>
+                {summary.volume.kgFromPieces > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatKg(summary.volume.kgFromKgLines)} ordered + ≈{formatKg(summary.volume.kgFromPieces)} from pcs</p>
+                )}
+                {summary.volume.piecesWithoutWeight > 0 && (
+                  <Link to="/product-sizes" className="text-xs text-amber-600 dark:text-amber-400">
+                    + {formatNumber(summary.volume.piecesWithoutWeight)} pcs without weight (not in kg)
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Pieces sold */}
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#0d1411] rounded-xl border border-gray-200/60 dark:border-emerald-900/30 p-3 sm:p-4">
+              <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400">
                 <FaBoxes className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Quantity</p>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-emerald-100 font-display">{summary.totalKg} kg</h3>
+                <p className="text-xs font-medium text-gray-500 dark:text-emerald-100/50 uppercase tracking-wide">Pieces sold</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-emerald-100 font-display">{formatNumber(summary.volume.piecesTotal)} pcs</h3>
               </div>
             </div>
 

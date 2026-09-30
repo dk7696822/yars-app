@@ -25,7 +25,7 @@ invoice number (e.g. 00000042). Status: PENDING → PAID or CANCELLED.
 2. Tap **View** on an invoice (or its number) to open `/invoices/:id`:
    Invoice Information (Invoice Date, Due Date, Billing Period, Status),
    Customer Information, **Invoice Items** table (Description, Quantity,
-   Unit Price, Amount), totals (**Subtotal**, **Advance Paid** if any,
+   Rate, Amount), totals (**Subtotal**, **Advance Paid** if any,
    **Tax (…%)**, **Total Payable**), and **Payment Information**.
 3. **Download PDF** opens the printable invoice in a new tab. Also available
    from the list via the **PDF** button / row actions.

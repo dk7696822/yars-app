@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { FaFileDownload, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import { formatCurrency, formatDate } from "../../utils/formatters";
+import { formatCurrency, formatDate, formatInvoiceQty, formatInvoiceRate } from "../../utils/formatters";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { invoiceAPI } from "../../services/api";
@@ -107,7 +107,7 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
               <tr className="border-b border-gray-200 dark:border-emerald-900/30">
                 <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
-                <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Unit Price</th>
+                <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rate</th>
                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
               </tr>
             </thead>
@@ -115,8 +115,8 @@ const InvoiceDetails = ({ invoice, onStatusChange, onAddPayment }) => {
               {invoice.invoiceItems.map((item) => (
                 <tr key={item.id}>
                   <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">{item.description}</td>
-                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white text-right">{item.quantity}</td>
-                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white text-right">{formatCurrency(item.unit_price)}</td>
+                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white text-right">{formatInvoiceQty(item)}</td>
+                  <td className="py-3 px-4 text-sm text-gray-900 dark:text-white text-right">{formatInvoiceRate(item)}</td>
                   <td className="py-3 px-4 text-sm text-gray-900 dark:text-white text-right">{formatCurrency(item.total_price)}</td>
                 </tr>
               ))}

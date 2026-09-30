@@ -4,6 +4,7 @@ import { FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import Dropdown from "../ui/Dropdown";
 import { formatCurrency, formatDate } from "../../utils/formatters";
+import { lineAmount } from "../../utils/orderMath";
 import { orderAPI } from "../../services/api";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -42,8 +43,7 @@ const GenerateInvoiceForm = ({ customers, onSubmit, onCancel, isLoading }) => {
               // Calculate product amount
               if (order.orderProductSizes) {
                 for (const item of order.orderProductSizes) {
-                  const itemTotal = parseFloat(item.quantity_kg) * parseFloat(item.rate_per_kg);
-                  productAmount += itemTotal;
+                  productAmount += lineAmount(item);
                 }
               }
 
