@@ -8,7 +8,6 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import Legacy from "./app/Legacy";
 import { PageSkeleton } from "./ui/States";
 import "./assets/styles/index.css";
 import "./styles/button-override.css";
@@ -23,7 +22,7 @@ import "./styles/dark-theme.css";
 const LoginPage = lazy(() => import("./features/auth/LoginPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dues = lazy(() => import("./pages/Dues"));
-const Assistant = lazy(() => import("./pages/Assistant"));
+const AssistantPage = lazy(() => import("./features/assistant/AssistantPage"));
 const OrdersPage = lazy(() => import("./features/orders/OrdersPage"));
 const OrderFormPage = lazy(() => import("./features/orders/form/OrderFormPage"));
 const OrderPage = lazy(() => import("./features/orders/OrderPage"));
@@ -58,9 +57,6 @@ const InventoryCategoriesPage = lazy(() => import("./features/inventory/Inventor
 const ItemAttributesPage = lazy(() => import("./features/inventory/ItemAttributesPage"));
 const NotFoundPage = lazy(() => import("./app/NotFoundPage"));
 
-/** A page that hasn't been redesigned yet keeps its old look. */
-const old = (page) => <Legacy>{page}</Legacy>;
-
 function App() {
   return (
     <ThemeProvider>
@@ -76,7 +72,7 @@ function App() {
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<MainLayout />}>
                         <Route index element={<Dashboard />} />
-                        <Route path="assistant" element={old(<Assistant />)} />
+                        <Route path="assistant" element={<AssistantPage />} />
                         <Route path="dues" element={<Dues />} />
 
                         <Route path="orders">
