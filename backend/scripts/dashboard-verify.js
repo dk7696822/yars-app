@@ -30,8 +30,8 @@ const verifyDashboard = async (sequelize, models, today = todayIST()) => {
 
   if (!overview.checks.ok) problems.push(`overview checks failed: ${JSON.stringify(overview.checks)}`);
 
-  // Jarvis's canonical per-customer pending (includes cancelled orders, so only compare when none exist).
-  if (overview.excluded.cancelled.count === 0) {
+  // Jarvis's canonical per-customer pending must equal the dashboard's list.
+  {
     const sql = Object.fromEntries((await q(canonicalPending())).map((r) => [r.name, paise(r.pending)]));
     const app = {};
     for (const c of overview.customers) app[c.name] = (app[c.name] || 0) + paise(c.amount);
@@ -40,7 +40,8 @@ const verifyDashboard = async (sequelize, models, today = todayIST()) => {
     }
   }
 
-  const [{ collected }] = await q(`SELECT COALESCE(SUM(p.amount),0) AS collected FROM payments p JOIN orders o ON o.id = p.order_id
+  const [{ collected }] = await q(`SELECT COALESCE(SUM(CASE WHEN p.payment_type = 'REFUND' THEN -p.amount ELSE p.amount END),0) AS collected
+                                   FROM payments p JOIN orders o ON o.id = p.order_id
                                    WHERE NOT o.is_archived AND o.status <> 'CANCELLED'`);
   const [{ legacy }] = await q(`SELECT COALESCE(SUM(o.advance_received),0) AS legacy FROM orders o
                                 WHERE NOT o.is_archived AND o.status <> 'CANCELLED' AND COALESCE(o.advance_received,0) > 0

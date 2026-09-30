@@ -43,6 +43,18 @@ describe("Jarvis canonical queries match the app", () => {
       customer: customerB, plateType: plate,
       lines: [{ product_size_id: pcsSize.id, unit: "PIECES", quantity_pieces: 1001, price_amount: "1.005", price_pieces_count: 1 }],
     });
+
+    const betaPaid = await createOrderWithLines({
+      customer: customerB, plateType: plate,
+      lines: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: "2.00", rate_per_kg: "150.00" }],
+    }); // 300 + 500 plate = 800
+    await db.Payment.create({ order_id: betaPaid.id, customer_id: customerB.id, amount: "800.00", payment_type: "FINAL", payment_date: "2026-09-06" });
+    await db.Payment.create({ order_id: betaPaid.id, customer_id: customerB.id, amount: "100.00", payment_type: "REFUND", payment_date: "2026-09-07" });
+
+    await createOrderWithLines({
+      customer: customerB, plateType: plate, status: "CANCELLED",
+      lines: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: "4.00", rate_per_kg: "150.00" }],
+    }); // 1100, cancelled — never owed
   });
 
   const appOrders = () =>
@@ -62,15 +74,16 @@ describe("Jarvis canonical queries match the app", () => {
 
     const expected = {};
     for (const order of await appOrders()) {
+      if (order.status === "CANCELLED") continue;
       const remaining = paymentPosition(order, orderTotal(order)).remaining;
       expected[order.customer.name] = (expected[order.customer.name] || 0) + remaining;
     }
     for (const [name, value] of Object.entries(expected)) {
       expect(sqlPending[name]).toBeCloseTo(value, 2);
     }
-    // Alpha: 1500 + 1875 + 500 − 5 − 700 − 1000 = 2170; Beta: 1006.01 + 500
+    // Alpha: 1500 + 1875 + 500 − 5 − 700 − 1000 = 2170; Beta: 1006.01 + 500 + (800 − 800 + 100 refunded)
     expect(sqlPending.Alpha).toBeCloseTo(2170, 2);
-    expect(sqlPending.Beta).toBeCloseTo(1506.01, 2);
+    expect(sqlPending.Beta).toBeCloseTo(1606.01, 2);
   });
 
   test("volume query = app volume summary", async () => {

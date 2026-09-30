@@ -1,6 +1,7 @@
 "use strict";
 
-const { Payment, Invoice, Customer, Order, sequelize } = require("../models");
+const { Payment, Invoice, Customer, Order, PlateType, OrderProductSize, ProductSize, sequelize } = require("../models");
+const { orderTotal, paymentPosition } = require("../services/orderMath");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
@@ -86,6 +87,23 @@ const createPayment = async (req, res) => {
       if (!order) {
         await transaction.rollback();
         return error(res, 404, "Order not found");
+      }
+
+      if (payment_type === "REFUND") {
+        const full = await Order.findByPk(order_id, {
+          include: [
+            { model: PlateType, as: "plateType", required: false },
+            { model: OrderProductSize, as: "orderProductSizes", required: false, include: [{ model: ProductSize, as: "productSize", required: false }] },
+            { model: Payment, as: "payments", required: false },
+          ],
+          transaction,
+        });
+        const data = full.toJSON();
+        const received = Math.round(paymentPosition(data, orderTotal(data)).totalReceived * 100);
+        if (Math.round(parseFloat(amount) * 100) > received) {
+          await transaction.rollback();
+          return error(res, 400, `A refund can't be more than received (₹${new Intl.NumberFormat("en-IN").format(received / 100)})`);
+        }
       }
 
       customer_id = order.customer.id;

@@ -129,3 +129,11 @@ describe("computeTrends", () => {
     expect(t.months[0]).toEqual({ month: "2026-04", sales: 0, collected: 0, kgSold: 0, partial: false });
   });
 });
+
+describe("refunds", () => {
+  test("a refund inside the period reduces collected", () => {
+    const l = ledger([order({ id: "r1", order_date: "2026-09-01", payments: [pay(1000, "2026-09-02", "FINAL"), pay(300, "2026-09-10", "REFUND")] })]);
+    const out = m.computePeriod(l, { from: "2026-09-01", to: "2026-09-30" }, null);
+    expect(out.collected.value).toBe(700);
+  });
+});

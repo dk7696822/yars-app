@@ -40,7 +40,9 @@ export const orderTotal = (order) => {
 
 export const paymentPosition = (order, total = orderTotal(order)) => {
   const payments = order.payments || [];
-  const sum = (list) => list.reduce((acc, p) => acc + parseFloat(p.amount), 0);
+  // A refund is money given back: it counts against what was received.
+  const signed = (p) => (p.payment_type === "REFUND" ? -1 : 1) * parseFloat(p.amount);
+  const sum = (list) => list.reduce((acc, p) => acc + signed(p), 0);
   const totalPaid = sum(payments.filter((p) => p.payment_type !== "ADVANCE"));
   const advanceFromPayments = sum(payments.filter((p) => p.payment_type === "ADVANCE"));
   const advanceReceived = advanceFromPayments > 0 ? advanceFromPayments : parseFloat(order.advance_received || 0);

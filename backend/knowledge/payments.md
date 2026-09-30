@@ -11,6 +11,10 @@ field is separate (a column on the order, not a payments row) but is counted in
 Payment types: **Advance Payment**, **Partial Payment**, **Final Payment**,
 **Refund**. Methods: **Cash**, **Bank Transfer**, **UPI**, **Check**, **Other**.
 
+A **Refund** is money given back to the customer: it is subtracted from what
+the order has received (so the due goes up again). A refund can't be more than
+the order has received.
+
 ## Recording a payment against an order
 1. Open the order: [Orders](/orders) → tap the order (`/orders/:id`).
 2. Scroll to **Payment Information**. It shows **Total Order Amount**,

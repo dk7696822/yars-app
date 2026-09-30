@@ -25,9 +25,10 @@ const orderFacts = (order) => {
 
 const hasAdvanceRows = (order) => sum((order.payments || []).filter((p) => p.payment_type === "ADVANCE"), (p) => Number(p.amount)) > 0;
 
-/** Money received for this order inside the range: dated payments + a legacy column-only advance at the order date. */
+/** Money received for this order inside the range: dated payments (refunds negative) + a legacy column-only advance at the order date. */
 const receivedInRange = (order, range) => {
-  let paise = sum((order.payments || []).filter((p) => inRange(p.payment_date, range)), (p) => toPaise(p.amount));
+  const signed = (p) => (p.payment_type === "REFUND" ? -1 : 1) * toPaise(p.amount);
+  let paise = sum((order.payments || []).filter((p) => inRange(p.payment_date, range)), signed);
   if (!hasAdvanceRows(order) && Number(order.advance_received || 0) > 0 && inRange(order.order_date, range)) {
     paise += toPaise(order.advance_received);
   }

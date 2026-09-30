@@ -60,6 +60,18 @@
         "payments": [ { "payment_type": "FINAL", "amount": "3870.00" } ]
       },
       "expected": { "total": 3870, "totalPaid": 3870, "advanceReceived": 0, "totalReceived": 3870, "remaining": 0 }
+    },
+    {
+      "name": "a refund reduces what was received",
+      "order": {
+        "custom_plate_charge": null, "round_off_amount": "0.00", "advance_received": "0.00",
+        "plateType": { "charge": "500.00" },
+        "orderProductSizes": [
+          { "unit": "KG", "quantity_kg": "10.00", "rate_per_kg": "150.00", "productSize": { "rate_per_kg": "150.00" } }
+        ],
+        "payments": [ { "payment_type": "FINAL", "amount": "2000.00" }, { "payment_type": "REFUND", "amount": "300.00" } ]
+      },
+      "expected": { "total": 2000, "totalPaid": 1700, "advanceReceived": 0, "totalReceived": 1700, "remaining": 300 }
     }
   ],
   "volume": [

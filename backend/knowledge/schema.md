@@ -61,7 +61,7 @@
                 WHERE ops.order_id = o.id), 0)
       + COALESCE(o.custom_plate_charge, pt.charge, 0)
       - COALESCE(o.round_off_amount, 0)
-      - COALESCE((SELECT SUM(p.amount) FROM payments p
+      - COALESCE((SELECT SUM(CASE WHEN p.payment_type = 'REFUND' THEN -p.amount ELSE p.amount END) FROM payments p
                   WHERE p.order_id = o.id AND p.payment_type <> 'ADVANCE'), 0)
       - CASE WHEN COALESCE((SELECT SUM(p.amount) FROM payments p
                             WHERE p.order_id = o.id AND p.payment_type = 'ADVANCE'), 0) > 0
@@ -70,12 +70,14 @@
              ELSE COALESCE(o.advance_received, 0) END AS balance
     FROM orders o
     LEFT JOIN plate_types pt ON pt.id = o.plate_type_id
-    WHERE o.is_archived = false
+    WHERE o.is_archived = false AND o.status <> 'CANCELLED'
   )
   SELECT c.name, ROUND(SUM(oc.balance), 2) AS pending
   FROM order_calc oc JOIN customers c ON c.id = oc.customer_id
   GROUP BY c.name HAVING SUM(oc.balance) > 0 ORDER BY pending DESC
 <!-- /canonical:pending -->
+- Refunds (`payment_type = 'REFUND'`) are money given back — always subtract
+  them from received. Cancelled orders are never owed.
 - **For ANY kg sold / pieces sold / volume question, use exactly this query**
   (add date/customer filters on `o` as needed; never change the sums):
 
