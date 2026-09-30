@@ -32,6 +32,10 @@ describe("routeMeta", () => {
     ["/inventory-items/edit/i1", { title: "Edit item", back: null, hideNav: true }],
     ["/inventory-categories", { title: "Item categories", back: null, hideNav: false }],
     ["/item-attributes", { title: "Item details", back: null, hideNav: false }],
+    ["/purchase-orders", { title: "Purchase orders", back: null, hideNav: false }],
+    ["/purchase-orders/new", { title: "New purchase order", back: null, hideNav: true }],
+    ["/purchase-orders/p1", { title: "Purchase order", back: "/purchase-orders", hideNav: false }],
+    ["/purchase-orders/p1/receive", { title: "Receive material", back: null, hideNav: true }],
     ["/nowhere", { title: "YARS", back: null, hideNav: false }],
   ])("%s", (path, meta) => expect(routeMeta(path)).toEqual(meta));
 });

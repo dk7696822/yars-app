@@ -45,10 +45,10 @@ const StockPage = lazy(() => import("./features/inventory/StockPage"));
 const StockItemPage = lazy(() => import("./features/inventory/StockItemPage"));
 const ItemsPage = lazy(() => import("./features/inventory/ItemsPage"));
 const ItemFormPage = lazy(() => import("./features/inventory/ItemFormPage"));
-const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders"));
-const CreatePurchaseOrder = lazy(() => import("./pages/CreatePurchaseOrder"));
-const PurchaseOrderDetail = lazy(() => import("./pages/PurchaseOrderDetail"));
-const ReceivePurchaseOrder = lazy(() => import("./pages/ReceivePurchaseOrder"));
+const PurchaseOrdersPage = lazy(() => import("./features/inventory/PurchaseOrdersPage"));
+const NewPurchaseOrderPage = lazy(() => import("./features/inventory/NewPurchaseOrderPage"));
+const PurchaseOrderPage = lazy(() => import("./features/inventory/PurchaseOrderPage"));
+const ReceivePage = lazy(() => import("./features/inventory/ReceivePage"));
 const StockIssues = lazy(() => import("./pages/StockIssues"));
 const CreateStockIssue = lazy(() => import("./pages/CreateStockIssue"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
@@ -139,10 +139,10 @@ function App() {
                         </Route>
 
                         <Route path="purchase-orders">
-                          <Route index element={old(<PurchaseOrders />)} />
-                          <Route path="new" element={old(<CreatePurchaseOrder />)} />
-                          <Route path=":id" element={old(<PurchaseOrderDetail />)} />
-                          <Route path=":id/receive" element={old(<ReceivePurchaseOrder />)} />
+                          <Route index element={<PurchaseOrdersPage />} />
+                          <Route path="new" element={<NewPurchaseOrderPage />} />
+                          <Route path=":id" element={<PurchaseOrderPage />} />
+                          <Route path=":id/receive" element={<ReceivePage />} />
                         </Route>
 
                         <Route path="stock-issues">
