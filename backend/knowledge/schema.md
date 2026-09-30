@@ -29,9 +29,17 @@
   inventory_*, purchase_*, goods_*, stock_*, item_attribute*). They are linked
   only via `stock_issues.order_id` / `stock_movements.order_id` (optional tags).
 - `orders` has **no** `total_amount` column — the API computes it:
-  `SUM(ops.quantity_kg * COALESCE(ops.rate_per_kg, product_sizes.rate_per_kg))`
-  + plate charge (`COALESCE(orders.custom_plate_charge, plate_types.charge)`)
-  − `COALESCE(orders.round_off_amount, 0)`.
+  SUM(line amount) + plate charge (`COALESCE(orders.custom_plate_charge, plate_types.charge)`)
+  − `COALESCE(orders.round_off_amount, 0)`, where **line amount** is exactly:
+  `CASE WHEN ops.unit = 'PIECES' THEN ROUND(ops.quantity_pieces * ops.price_amount / ops.price_pieces_count, 2) ELSE ops.quantity_kg * COALESCE(ops.rate_per_kg, ps.rate_per_kg) END`
+- **Units — never double count:** every order line is EITHER a kg line
+  (`unit = 'KG'`: `quantity_kg` × rate) OR a pieces line (`unit = 'PIECES'`:
+  `quantity_pieces` priced "N pieces cost ₹X" = `price_pieces_count` pieces
+  cost `price_amount`). Kg sold = kg of KG lines + ESTIMATED kg of PIECES
+  lines (`quantity_pieces × weight_kg / weight_pieces_count`); PIECES lines
+  with NULL weight have unknown kg — always say how many pieces are
+  unweighted when answering kg questions. Never add `quantity_kg` and
+  pieces-estimated kg of the same line (a line is only ever one unit).
 - **Advance rule — tricky, do not improvise:** an order's advance is EITHER the
   sum of its `payments` rows with `payment_type = 'ADVANCE'` (when any exist) OR
   the legacy `orders.advance_received` column — NEVER both. Many old orders have
@@ -43,9 +51,12 @@
   SELECT differently as needed (total, per customer, top N) but never change
   the balance computation inside `order_calc`:
 
+<!-- canonical:pending -->
   WITH order_calc AS (
     SELECT o.customer_id,
-      COALESCE((SELECT SUM(ops.quantity_kg * COALESCE(ops.rate_per_kg, ps.rate_per_kg))
+      COALESCE((SELECT SUM(CASE WHEN ops.unit = 'PIECES'
+                                THEN ROUND(ops.quantity_pieces * ops.price_amount / ops.price_pieces_count, 2)
+                                ELSE ops.quantity_kg * COALESCE(ops.rate_per_kg, ps.rate_per_kg) END)
                 FROM order_product_sizes ops JOIN product_sizes ps ON ps.id = ops.product_size_id
                 WHERE ops.order_id = o.id), 0)
       + COALESCE(o.custom_plate_charge, pt.charge, 0)
@@ -64,6 +75,24 @@
   SELECT c.name, ROUND(SUM(oc.balance), 2) AS pending
   FROM order_calc oc JOIN customers c ON c.id = oc.customer_id
   GROUP BY c.name HAVING SUM(oc.balance) > 0 ORDER BY pending DESC
+<!-- /canonical:pending -->
+- **For ANY kg sold / pieces sold / volume question, use exactly this query**
+  (add date/customer filters on `o` as needed; never change the sums):
+
+<!-- canonical:volume -->
+  SELECT
+    ROUND(COALESCE(SUM(ops.quantity_kg) FILTER (WHERE ops.unit = 'KG'), 0), 3) AS kg_from_kg_lines,
+    ROUND(COALESCE(SUM(ops.quantity_pieces * ops.weight_kg / ops.weight_pieces_count)
+          FILTER (WHERE ops.unit = 'PIECES' AND ops.weight_kg IS NOT NULL), 0), 3) AS kg_from_pieces,
+    ROUND(COALESCE(SUM(ops.quantity_kg) FILTER (WHERE ops.unit = 'KG'), 0)
+          + COALESCE(SUM(ops.quantity_pieces * ops.weight_kg / ops.weight_pieces_count)
+            FILTER (WHERE ops.unit = 'PIECES' AND ops.weight_kg IS NOT NULL), 0), 3) AS kg_sold,
+    COALESCE(SUM(ops.quantity_pieces) FILTER (WHERE ops.unit = 'PIECES'), 0) AS pieces_total,
+    COALESCE(SUM(ops.quantity_pieces) FILTER (WHERE ops.unit = 'PIECES' AND ops.weight_kg IS NULL), 0) AS pieces_without_weight
+  FROM order_product_sizes ops
+  JOIN orders o ON o.id = ops.order_id
+  WHERE o.is_archived = false
+<!-- /canonical:volume -->
 - Active-name uniqueness on master tables is via partial unique indexes
   (`WHERE is_archived = false`) — archived names can be reused.
 
@@ -83,8 +112,12 @@
 `is_archived`, timestamps. Referenced by orders.
 
 ### product_sizes
-`id`, `size_label TEXT` (e.g. "8x10"), `rate_per_kg DECIMAL(10,2)` (default ₹/kg),
-`is_archived`, timestamps.
+`id`, `size_label TEXT` (e.g. "8x10"), `rate_per_kg DECIMAL(10,2) NULL` (default
+₹/kg; NULL = sold only by pieces), `piece_price_amount DECIMAL(12,4) NULL` +
+`piece_price_count INTEGER NULL` ("N pieces cost ₹X" — e.g. 1000 pcs cost
+₹375 → per piece ₹0.375), `weight_kg DECIMAL(12,3) NULL` + `weight_pieces_count
+INTEGER NULL` ("N pieces weigh W kg"), `is_archived`, timestamps. A size has at
+least one of rate_per_kg / piece price.
 
 ### orders
 | column | type | meaning |
@@ -103,9 +136,15 @@
 
 ### order_product_sizes (order line items)
 `id`, `order_id FK → orders`, `product_size_id FK → product_sizes`,
-`quantity_kg DECIMAL(10,2)`, `rate_per_kg DECIMAL(10,2)` (rate frozen for this
-order; may differ from the master rate). No timestamps, no is_archived.
-Line amount = quantity_kg × rate_per_kg.
+`unit ENUM('KG','PIECES')`, and either
+- KG: `quantity_kg DECIMAL(10,2)`, `rate_per_kg DECIMAL(10,2)` (rate frozen for
+  this order; may differ from the master rate), or
+- PIECES: `quantity_pieces INTEGER`, `price_amount DECIMAL(12,4)` +
+  `price_pieces_count INTEGER` (price frozen for this order), and optionally
+  `weight_kg` + `weight_pieces_count` + `weight_source ENUM('SIZE','MANUAL')`
+  (SIZE = copied from the size, MANUAL = measured for this order).
+The other unit's columns are NULL (DB-enforced). No timestamps, no is_archived.
+Line amount: see the CASE expression above.
 
 ### invoices
 | column | type | meaning |
@@ -125,9 +164,12 @@ Line amount = quantity_kg × rate_per_kg.
 
 ### invoice_items
 `id`, `invoice_id FK → invoices`, `order_id FK → orders NULL`,
-`description TEXT`, `quantity DECIMAL(10,2)`, `unit_price DECIMAL(10,2)` (can be
-NEGATIVE — advance payments appear as negative lines with description containing
-"Advance Payment"), `total_price DECIMAL(10,2)`, timestamps.
+`description TEXT`, `quantity DECIMAL(10,2)` (kg or pieces), `unit_price
+DECIMAL(10,2)` (can be NEGATIVE — advance payments appear as negative lines with
+description containing "Advance Payment"), `total_price DECIMAL(10,2)`,
+`unit ENUM('KG','PIECES') NULL` (NULL for plate-charge/advance lines and for
+items created before piece orders existed), `price_amount` + `price_pieces_count`
+(pieces price as entered), timestamps.
 
 ### payments
 | column | type | meaning |

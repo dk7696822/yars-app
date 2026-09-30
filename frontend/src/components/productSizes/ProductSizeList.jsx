@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { formatCurrency } from "../../utils/formatters";
+import { formatSizePricing } from "../../utils/formatters";
 
 const ProductSizeList = ({ productSizes, onDelete }) => {
   if (!productSizes || productSizes.length === 0) {
@@ -18,7 +18,7 @@ const ProductSizeList = ({ productSizes, onDelete }) => {
         <thead>
           <tr>
             <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Size Label</th>
-            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Rate per kg</th>
+            <th className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pricing</th>
             <th className="h-12 px-4 text-right align-middle font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Actions</th>
           </tr>
         </thead>
@@ -26,7 +26,7 @@ const ProductSizeList = ({ productSizes, onDelete }) => {
           {productSizes.map((productSize) => (
             <tr key={productSize.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
               <td className="p-4 align-middle font-medium text-gray-900 dark:text-gray-300">{productSize.size_label}</td>
-              <td className="p-4 align-middle text-gray-900 dark:text-gray-300">{formatCurrency(productSize.rate_per_kg)}</td>
+              <td className="p-4 align-middle text-gray-900 dark:text-gray-300">{formatSizePricing(productSize)}</td>
               <td className="p-4 align-middle text-right">
                 <div className="flex justify-end space-x-2">
                   <Link

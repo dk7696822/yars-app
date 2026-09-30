@@ -206,6 +206,32 @@ select:focus {
   margin-bottom: 0;
 }
 
+/* Pieces lines carry more fields than kg lines: let desktop rows wrap, give
+   the "N pcs ↔ amount" pairs more room, and put the weight note on its own line. */
+@media (min-width: 768px) {
+  .product-size-row {
+    flex-wrap: wrap;
+  }
+
+  .product-size-row > .form-group {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  .product-size-row > .pair-group {
+    flex: 2 1 300px;
+  }
+
+  .product-size-row > .amount-column {
+    flex: 0 0 140px;
+  }
+
+  .product-size-row > .weight-note {
+    flex-basis: 100%;
+    order: 10;
+  }
+}
+
 .amount-column {
   width: 100%;
 }

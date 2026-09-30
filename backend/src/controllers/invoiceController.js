@@ -2,6 +2,8 @@
 
 const { Invoice, InvoiceItem, Customer, Order, OrderProductSize, ProductSize, PlateType, Payment, sequelize } = require("../models");
 const { success, error } = require("../utils/response");
+const { orderTotal, lineAmount } = require("../services/orderMath");
+const { formatInvoiceRate, formatInvoiceQty } = require("../services/invoiceItemFormat");
 const { Op } = require("sequelize");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -63,35 +65,19 @@ const generateInvoice = async (req, res) => {
     let totalAdvanceReceived = 0;
 
     for (const order of orders) {
-      // Calculate product amount
-      let productAmount = 0;
-      for (const item of order.orderProductSizes) {
-        const quantity = parseFloat(item.quantity_kg) || 0;
-        const rate = parseFloat(item.rate_per_kg) || 0;
-        const itemTotal = quantity * rate;
-        productAmount += itemTotal;
-      }
-
-      // Add plate charge (use custom charge if available, otherwise use plate type charge)
-      const plateCharge = parseFloat(order.custom_plate_charge || order.plateType.charge) || 0;
-
-      // Apply round off amount
-      const roundOffAmount = parseFloat(order.round_off_amount) || 0;
-
       // Track advance separately (don't subtract it from the total amount)
       const advanceReceived = parseFloat(order.advance_received) || 0;
       totalAdvanceReceived += advanceReceived;
 
-      // Calculate total for this order (including round off)
-      const orderTotal = productAmount + plateCharge - roundOffAmount;
+      const orderAmount = orderTotal(order);
 
       // Safety check for this order's total
-      if (isNaN(orderTotal)) {
+      if (isNaN(orderAmount)) {
         await transaction.rollback();
         return error(res, 400, `Invalid calculation for order ${order.id}. Please check order data.`);
       }
 
-      totalAmount += orderTotal;
+      totalAmount += orderAmount;
     }
 
     // Calculate tax amount with safety checks
@@ -172,18 +158,23 @@ const generateInvoice = async (req, res) => {
       for (const item of order.orderProductSizes) {
         const productSize = item.productSize;
         const description = `${productSize.size_label} (${order.order_date})`;
-        const quantity = parseFloat(item.quantity_kg);
-        const unitPrice = parseFloat(item.rate_per_kg);
-        const totalPrice = quantity * unitPrice;
+        const isPieces = item.unit === "PIECES";
 
         await InvoiceItem.create(
           {
             invoice_id: invoice.id,
             order_id: order.id,
             description,
-            quantity,
-            unit_price: unitPrice,
-            total_price: totalPrice,
+            quantity: isPieces ? item.quantity_pieces : parseFloat(item.quantity_kg),
+            // Pieces: rounded per-piece price, kept only for older readers of
+            // unit_price — screens use the exact price_amount/price_pieces_count.
+            unit_price: isPieces
+              ? Math.round((parseFloat(item.price_amount) / item.price_pieces_count) * 100) / 100
+              : parseFloat(item.rate_per_kg),
+            total_price: lineAmount(item),
+            unit: item.unit,
+            price_amount: isPieces ? item.price_amount : null,
+            price_pieces_count: isPieces ? item.price_pieces_count : null,
           },
           { transaction }
         );
@@ -714,8 +705,8 @@ const generatePDF = async (req, res) => {
       .fontSize(11)
       .font("Helvetica-Bold")
       .text("Description", leftMargin + 10, tableHeaderY + 20);
-    doc.text("Rate", 200, tableHeaderY + 20, { align: "left", width: 100 });
-    doc.text("Qty.", 400, tableHeaderY + 20, { align: "center", width: 40 });
+    doc.text("Rate", 200, tableHeaderY + 20, { align: "left", width: 175 });
+    doc.text("Qty.", 375, tableHeaderY + 20, { align: "center", width: 75 });
     doc.text("Amount", 450, tableHeaderY + 20, { align: "right", width: 100 });
 
     doc
@@ -727,9 +718,7 @@ const generatePDF = async (req, res) => {
     let y = tableHeaderY + 60;
     for (const item of invoice.invoiceItems) {
       // Convert string values to numbers to ensure toFixed works
-      const unitPrice = parseFloat(item.unit_price);
       const totalPrice = parseFloat(item.total_price);
-      const quantity = parseFloat(item.quantity);
 
       // Calculate the height needed for the description text
       const descriptionWidth = 120; // Narrower width for description to avoid collision
@@ -742,8 +731,8 @@ const generatePDF = async (req, res) => {
       doc.fontSize(10).font("Helvetica").text(item.description, 60, y, descriptionOptions);
 
       // Position other columns with enough space from description
-      doc.text(`Rs. ${Math.abs(unitPrice).toFixed(2)}`, 200, y, { align: "left", width: 100 });
-      doc.text(quantity.toString(), 400, y, { align: "center", width: 40 });
+      doc.text(formatInvoiceRate(item), 200, y, { align: "left", width: 175 });
+      doc.text(formatInvoiceQty(item), 375, y, { align: "center", width: 75 });
       doc.text(`Rs. ${Math.abs(totalPrice).toFixed(2)}`, 450, y, { align: "right", width: 100 });
 
       // Adjust y position based on the height of the description or a minimum row height

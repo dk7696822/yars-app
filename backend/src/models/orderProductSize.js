@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       quantity_kg: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
+        allowNull: true,
         validate: {
           isDecimal: true,
           min: 0,
@@ -51,12 +51,21 @@ module.exports = (sequelize, DataTypes) => {
       },
       rate_per_kg: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false,
+        allowNull: true,
         validate: {
           isDecimal: true,
           min: 0,
         },
       },
+      // KG lines use quantity_kg/rate_per_kg; PIECES lines use the fields
+      // below. A DB CHECK guarantees a line is exactly one of the two.
+      unit: { type: DataTypes.ENUM("KG", "PIECES"), allowNull: false, defaultValue: "KG" },
+      quantity_pieces: { type: DataTypes.INTEGER, allowNull: true },
+      price_amount: { type: DataTypes.DECIMAL(12, 4), allowNull: true },
+      price_pieces_count: { type: DataTypes.INTEGER, allowNull: true },
+      weight_kg: { type: DataTypes.DECIMAL(12, 3), allowNull: true },
+      weight_pieces_count: { type: DataTypes.INTEGER, allowNull: true },
+      weight_source: { type: DataTypes.ENUM("SIZE", "MANUAL"), allowNull: true },
     },
     {
       sequelize,

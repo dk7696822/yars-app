@@ -25,7 +25,7 @@ invoice number (e.g. 00000042). Status: PENDING → PAID or CANCELLED.
 2. Tap **View** on an invoice (or its number) to open `/invoices/:id`:
    Invoice Information (Invoice Date, Due Date, Billing Period, Status),
    Customer Information, **Invoice Items** table (Description, Quantity,
-   Unit Price, Amount), totals (**Subtotal**, **Advance Paid** if any,
+   Rate, Amount), totals (**Subtotal**, **Advance Paid** if any,
    **Tax (…%)**, **Total Payable**), and **Payment Information**.
 3. **Download PDF** opens the printable invoice in a new tab. Also available
    from the list via the **PDF** button / row actions.
@@ -49,3 +49,9 @@ Notes:
   payments.
 - An order can be on at most one invoice; once billed, the order's
   **Generate Invoice** button disappears and a **View Invoice →** link appears.
+- Invoice items show units: kg lines as "Rs. 180.00 / kg" × "50 kg", pieces
+  lines with the price as entered ("Rs. 375.00 / 1,000 pcs" × "5,000 pcs").
+  Invoices made before piece orders existed show no units. Estimated weights
+  never appear on invoices.
+- Editing an order after it is invoiced does NOT change the invoice; delete the
+  invoice and generate it again to pick up the changes.

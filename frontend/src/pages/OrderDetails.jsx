@@ -6,7 +6,8 @@ import OrderPaymentSummary from "../components/payments/OrderPaymentSummary";
 import PaymentForm from "../components/payments/PaymentForm";
 import Modal from "../components/common/Modal";
 import ConfirmationModal from "../components/common/ConfirmationModal";
-import { formatCurrency, formatDate } from "../utils/formatters";
+import { formatCurrency, formatDate, formatLineQuantity, formatLineRate, formatLineKg } from "../utils/formatters";
+import { lineAmount } from "../utils/orderMath";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 
@@ -146,9 +147,7 @@ const OrderDetails = () => {
   }
 
   // Calculate total product amount
-  const totalProductAmount = order.orderProductSizes.reduce((sum, item) => {
-    return sum + parseFloat(item.quantity_kg) * parseFloat(item.rate_per_kg || item.productSize.rate_per_kg);
-  }, 0);
+  const totalProductAmount = order.orderProductSizes.reduce((sum, item) => sum + lineAmount(item), 0);
 
   return (
     <div className="page-container space-y-5 md:space-y-6">
@@ -317,10 +316,11 @@ const OrderDetails = () => {
               <div key={item.id} className="bg-gray-50 dark:bg-[#161d1a] rounded-xl p-4 border border-gray-200/50 dark:border-emerald-900/20">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</span>
-                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(lineAmount(item))}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>{item.quantity_kg} kg × {formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}/kg</span>
+                  <span>{formatLineQuantity(item)} × {formatLineRate(item)}</span>
+                  {formatLineKg(item) && <span>{formatLineKg(item)}</span>}
                 </div>
               </div>
             ))}
@@ -358,8 +358,8 @@ const OrderDetails = () => {
               <thead>
                 <tr className="bg-gray-50/80 dark:bg-[#161d1a]">
                   <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Product Size</th>
-                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Quantity (kg)</th>
-                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Rate per kg</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Quantity</th>
+                  <th className="h-12 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Rate</th>
                   <th className="h-12 px-4 text-right align-middle text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200/60 dark:border-emerald-900/30">Amount</th>
                 </tr>
               </thead>
@@ -367,9 +367,12 @@ const OrderDetails = () => {
                 {order.orderProductSizes.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-emerald-500/5 transition-colors">
                     <td className="p-4 align-middle font-medium text-gray-900 dark:text-gray-100">{item.productSize.size_label}</td>
-                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{item.quantity_kg}</td>
-                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{formatCurrency(item.rate_per_kg || item.productSize.rate_per_kg)}</td>
-                    <td className="p-4 align-middle text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrency((item.rate_per_kg || item.productSize.rate_per_kg) * item.quantity_kg)}</td>
+                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">
+                      {formatLineQuantity(item)}
+                      {formatLineKg(item) && <span className="block text-xs text-gray-500 dark:text-gray-400">{formatLineKg(item)}</span>}
+                    </td>
+                    <td className="p-4 align-middle text-gray-700 dark:text-gray-300">{formatLineRate(item)}</td>
+                    <td className="p-4 align-middle text-right font-medium text-gray-900 dark:text-gray-100">{formatCurrency(lineAmount(item))}</td>
                   </tr>
                 ))}
                 <tr className="bg-gray-50/80 dark:bg-[#161d1a]">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { FaArrowLeft, FaEdit, FaExclamationCircle } from "react-icons/fa";
 import { productSizeAPI } from "../services/api";
+import { backfillMessage } from "../utils/formatters";
 import ProductSizeForm from "../components/productSizes/ProductSizeForm";
 
 const EditProductSize = () => {
@@ -33,8 +34,10 @@ const EditProductSize = () => {
   const handleSubmit = async (formData) => {
     try {
       setSubmitting(true);
-      await productSizeAPI.update(id, formData);
-      navigate("/product-sizes", { state: { message: "Product size updated successfully" } });
+      const response = await productSizeAPI.update(id, formData);
+      const filled = backfillMessage(response.data.data?.backfilled_lines);
+      const message = filled ? `Product size updated. ${filled}.` : "Product size updated successfully";
+      navigate("/product-sizes", { state: { message } });
     } catch (err) {
       console.error("Error updating product size:", err);
       setError("Failed to update product size. Please try again.");
