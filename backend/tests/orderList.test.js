@@ -97,6 +97,18 @@ describe("GET /orders/list", () => {
     expect(row.total).toBe(1720);
   });
 
+  test("the order page's money block equals its list row", async () => {
+    const customer = await createCustomer("Delta");
+    const plate = await createPlateType("0.00");
+    const size = await createSize({ rate_per_kg: "181.25" });
+    const o = await createOrderWithLines({ customer, plateType: plate, lines: [{ product_size_id: size.id, unit: "KG", quantity_kg: "12.35", rate_per_kg: "181.25" }] }); // 2238.4375
+    await db.Payment.create({ order_id: o.id, customer_id: customer.id, amount: "1000.10", payment_type: "PARTIAL", payment_date: "2026-09-02" });
+    const row = (await call(listOrders, { query: {} })).body.data.rows[0];
+    const detail = (await call(getOrderById, { params: { id: o.id } })).body.data;
+    expect(detail.money).toEqual({ total: row.total, received: row.received, due: row.due });
+    expect(detail.money).toEqual({ total: 2238.44, received: 1000.1, due: 1238.34 });
+  });
+
   test("unknown chip → 400", async () => {
     expect((await call(listOrders, { query: { chip: "late" } })).status).toBe(400);
   });

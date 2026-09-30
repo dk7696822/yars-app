@@ -16,34 +16,30 @@ the order has received (so the due goes up again). A refund can't be more than
 the order has received.
 
 ## Recording a payment against an order
-1. Open the order: [Orders](/orders) → tap the order (`/orders/:id`).
-2. Scroll to **Payment Information**. It shows **Total Order Amount**,
-   **Total Paid** (with "(Includes ₹… advance)" when relevant),
-   **Remaining Balance**, and **Payment Status** (FULLY PAID / PARTIALLY PAID).
-3. Tap **Record Payment** (button hidden once fully paid). A modal titled
-   "Record Payment" opens.
-4. Fill:
-   - **Amount** (required; pre-filled with the remaining balance)
-   - **Payment Date** (required, defaults to today, dd/MM/yyyy)
-   - **Payment Method** (Cash / Bank Transfer / UPI / Check / Other)
-   - **Payment Type** (Advance / Partial / Final / Refund)
-   - **Reference Number** "(Optional)" — placeholder "Transaction ID, Check
-     Number, etc."
-   - **Notes** "(Optional)"
-5. Tap **Record Payment**. The summary and **Payment History** refresh.
+1. Open the order ([Orders](/orders) → tap it, `/orders/:id`). The money card at
+   the top shows **Total**, **Received** and **Due** (or "Paid in full ✓").
+2. Tap **＋ Record payment**. A sheet opens: type the **Amount** (or tap
+   **Full due ₹…**), pick how it was paid (**Cash / UPI / Bank / Cheque /
+   Other**), check the **Date** (today by default; Today / Yesterday
+   shortcuts), and optionally **＋ Add reference or note**.
+3. The type is worked out from the amount: the whole due (or more) is saved as
+   a **Final payment**, less as a **Part payment**. If the amount is more than
+   the due, the sheet says by how much and the button becomes **Save anyway**.
+4. **Advance** and **Refund** are separate: the order's **⋯** menu has
+   **Record advance** and **Record refund** (a refund can't be more than what
+   was received).
 
 ## Recording a payment against an invoice
-1. Open the invoice (`/invoices/:id`), scroll to **Payment Information**, tap
-   **Record Payment**. Same form as above; the amount pre-fills with the
-   invoice's remaining balance.
+1. Open the invoice (`/invoices/:id`) and tap **＋ Payment**. Choose **which
+   order** the money is for (orders with a due are listed, oldest first), then
+   the same sheet as above. The payment is saved on that order and linked to
+   the invoice.
 
 ## Editing or deleting a payment
-1. On the order's detail page, in **Payment History**, open the row's action
-   menu: **Edit** opens the same modal titled "Edit Payment" (submit button says
-   **Update Payment**); **Delete** asks for confirmation ("Delete payment" —
-   this permanently removes the payment) and restores the outstanding balance.
-2. The invoice detail page lists payments read-only (no edit/delete there);
-   edit/delete controls exist only in the order page's Payment History.
+1. On the order page, open the **Payments** tab. Each payment has a **⋯**
+   button: **Edit payment** (same sheet, where the type can also be changed)
+   or **Delete payment** (asks first).
+2. Invoice and customer pages list payments read-only.
 
 Notes:
 - Payment create/update/delete are audited with before/after order metrics

@@ -3,6 +3,7 @@
 const { Order, Customer, PlateType, ProductSize, OrderProductSize, Payment, Invoice, sequelize } = require("../models");
 const { lineAmount, lineKg, orderTotal, paymentPosition, volumeSummary } = require("../services/orderMath");
 const { buildLineRow } = require("../services/orderLines");
+const { orderFacts, rupees } = require("../services/orderFacts");
 const { LineError } = require("../services/pieceFields");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
@@ -32,6 +33,11 @@ const withComputedFields = (orderData) => {
       remaining_balance: parseFloat(position.remaining.toFixed(2)),
       is_fully_paid: position.totalPaid + position.advanceReceived >= total,
     },
+    // The figures every new screen shows — identical to the list row and the dashboard.
+    money: (() => {
+      const f = orderFacts(orderData);
+      return { total: rupees(f.totalPaise), received: rupees(f.receivedPaise), due: rupees(f.remainingPaise) };
+    })(),
   };
 };
 

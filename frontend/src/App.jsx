@@ -27,7 +27,7 @@ const Assistant = lazy(() => import("./pages/Assistant"));
 const OrdersPage = lazy(() => import("./features/orders/OrdersPage"));
 const CreateOrder = lazy(() => import("./pages/CreateOrder"));
 const EditOrder = lazy(() => import("./pages/EditOrder"));
-const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const OrderPage = lazy(() => import("./features/orders/OrderPage"));
 const Customers = lazy(() => import("./pages/Customers"));
 const CreateCustomer = lazy(() => import("./pages/CreateCustomer"));
 const CustomerDetails = lazy(() => import("./pages/CustomerDetails"));
@@ -92,7 +92,7 @@ function App() {
                           <Route index element={<OrdersPage />} />
                           <Route path="new" element={old(<CreateOrder />)} />
                           <Route path="edit/:id" element={old(<EditOrder />)} />
-                          <Route path=":id" element={old(<OrderDetails />)} />
+                          <Route path=":id" element={<OrderPage />} />
                         </Route>
 
                         <Route path="customers">
