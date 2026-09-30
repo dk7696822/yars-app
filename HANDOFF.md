@@ -67,6 +67,40 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - Migrations: `YYYYMMDD…` prefix; inventory ones are `20260711000001–11`. `ALTER TYPE ... ADD VALUE` cannot run in a transaction (see migration 000010).
 - **Auth (added 2026-07-23)**: all `/api` routes require `Authorization: Bearer <JWT>` (30-day expiry, signed with `JWT_SECRET` env var — server refuses to boot without it). Public exceptions: `POST /api/auth/login`, `GET /api/health`. Users live in the `users` table (bcrypt hashes); manage them with `node backend/scripts/create-user.js <username> <password> <displayName>` (idempotent). Frontend stores the token in localStorage; both axios clients attach it and auto-logout on 401.
 
+## UX redesign — sub-project 1 (branch `feature/ux-redesign`, not deployed)
+
+Built on `feature/dashboard-redesign`; ships in ONE release with the dashboard
+and sub-projects 2–3. Spec: `docs/superpowers/specs/2026-09-30-ux-redesign-1-core-design.md`;
+plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
+
+- **Money comes from one place:** `backend/src/services/orderFacts.js`
+  (paise, built on `orderMath`). Used by the dashboard, `GET /api/orders/list`,
+  `/api/customers/directory`, `/api/customers/:id/summary`, invoices, and the
+  `money` block on `GET /api/orders/:id`.
+- **Refunds** reduce received everywhere (orderMath both sides, dashboard,
+  Jarvis canonical SQL). Jarvis "pending" now skips cancelled orders.
+- **Invoices:** due = final amount incl. tax − received on the invoice's
+  orders (+ invoice-only payments); status derived (Cancelled is the only
+  manual one). `PATCH /invoices/:id/status` accepts only PENDING/CANCELLED.
+- **Orders:** includes are `required:false` (archived sizes/plates/customers
+  never hide an order); editing never changes the advance; server dates use
+  `todayIST()`.
+- **Customers:** page is by `customer_id` (not name); `city` and `gstin` in
+  `metadata`; `/customers/similar` warns about duplicates.
+- **Frontend:** kit in `src/ui/`, screens in `src/features/{orders,customers,
+  invoices,payments}`, TanStack Query (`src/lib/queryKeys.js` →
+  `invalidateMoney` after any money change), every route lazy, vendor chunks.
+  Pages not redesigned yet render inside `<Legacy>` — the old CSS applies only
+  under `.legacy` (removed in sub-project 3).
+- **Verify before release:** `NODE_ENV=production node scripts/dashboard-verify.js`
+  now also cross-checks the orders list, the customer directory and every
+  invoice's paid amount against SQL, and reports orders on two invoices.
+- Not in this sub-project: Expenses, History, catalog (sub-project 2); Stock
+  screens, Login/Assistant re-theme, deleting legacy CSS (sub-project 3).
+- Backend tests run with `TZ=UTC` (package.json) so they behave like Cloud Run.
+- Invoice GST: an order's total excludes GST, so GST paid against an invoice
+  shows on the chosen order as "extra received". Only one taxed invoice exists.
+
 ## Deployment — direct from local, NO GitHub push involved
 
 **GCP account: `dk7696822@gmail.com` (already credentialed). Project ID: `yars-dashboard`** ("Yars Dashboard", number 848592267490). The user's *active* gcloud account is their work account — always pass `--account`/`--project` per command, never switch global config.
