@@ -67,10 +67,12 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - Migrations: `YYYYMMDD…` prefix; inventory ones are `20260711000001–11`. `ALTER TYPE ... ADD VALUE` cannot run in a transaction (see migration 000010).
 - **Auth (added 2026-07-23)**: all `/api` routes require `Authorization: Bearer <JWT>` (30-day expiry, signed with `JWT_SECRET` env var — server refuses to boot without it). Public exceptions: `POST /api/auth/login`, `GET /api/health`. Users live in the `users` table (bcrypt hashes); manage them with `node backend/scripts/create-user.js <username> <password> <displayName>` (idempotent). Frontend stores the token in localStorage; both axios clients attach it and auto-logout on 401.
 
-## UX redesign — sub-project 1 (branch `feature/ux-redesign`, not deployed)
+## UX redesign — sub-project 1 (branch `feature/ux-redesign`, DEPLOYED 2026-09-30: Cloud Run yars-backend-00019-n7j + Firebase Hosting, together with the dashboard)
 
-Built on `feature/dashboard-redesign`; ships in ONE release with the dashboard
-and sub-projects 2–3. Spec: `docs/superpowers/specs/2026-09-30-ux-redesign-1-core-design.md`;
+Built on `feature/dashboard-redesign`; deployed together with the dashboard on
+2026-09-30 (the user asked to ship it now). Sub-projects 2–3 follow. Branches
+are NOT merged to main/pushed yet. Pre-release DB backup:
+`~/yars-full-backup-2026-09-30-ux-redesign.sql`. Spec: `docs/superpowers/specs/2026-09-30-ux-redesign-1-core-design.md`;
 plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
 
 - **Money comes from one place:** `backend/src/services/orderFacts.js`
