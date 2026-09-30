@@ -1,34 +1,37 @@
 # Dashboard
 
-What it is: the home screen at [/](/). It summarises the order book and money
-position, and lists recent orders. It is built from the latest 20 orders (not
-the full history), so lifetime figures for a big order book should come from SQL,
-not this screen.
+What it is: the home screen at [/](/), dark "Midnight Forest" theme. Every figure
+is computed on the server by the same order math as the Orders screen and is
+reconciled (Sales − Collected = To collect − Credit, to the paisa). If a check
+ever fails the screen shows a red "These figures don't add up" banner instead
+of numbers.
 
-What is on it:
-- **Outstanding** hero card — total remaining balance across the loaded orders,
-  with subtitle "Pending collection" and a badge ("Needs attention" / "All clear").
-- Stat cards: **Orders** (count), **Customers** (distinct customers among those
-  orders), **Revenue** (sum of order totals), **Received** (sum of payments +
-  advances).
-- Quick actions: **New Order** (desktop; on phones just **Order**), **Customer**,
-  **Invoices** (desktop only).
-- **Recent Orders** section with a summary bar — **Kg sold** (kg from kg lines
-  + estimated kg from pieces lines, each line counted once; an amber note shows
-  "+ N pcs without weight (not in kg)" when some pieces lines have no weight —
-  tapping it opens [Product Sizes](/product-sizes)), **Pieces sold**,
-  **Amount**, **Receivable** — then the order list, 5 per page, with a
-  **View All** link to [Orders](/orders).
-- Orders can be deleted from this list (confirmation modal "Delete order" with
-  **Delete** / **Keep it**).
+## Top: money to collect (always all-time, as of today)
+- **To collect** — sum of every order's unpaid remainder (cancelled and deleted
+  orders excluded). ⓘ explains the definition.
+- **Age bar** — 0–30 / 31–60 / 61–90 / 90+ days by order date; the bands add up
+  to To collect. Tap a band to open [Dues](/dues) filtered to it.
+- **Collect from** — top 5 customers, oldest dues first: amount, age of oldest
+  unpaid order, number of orders. Tap the name for the customer page; phone icon
+  calls them; chat icon opens WhatsApp with a pre-written reminder listing their
+  unpaid orders (the user sends it). Icons appear only when a valid mobile is
+  saved. **See all N customers** opens [Dues](/dues).
 
-## Creating an order from the dashboard
-1. Open the [Dashboard](/) and tap **Order** (phone) or **New Order** (desktop),
-   top of the page.
-2. This opens [Create Order](/orders/new) — see orders.md for the form.
+## Period section
+- Chips: **All time · This month · Last month · This FY · Custom…** (sticky; the
+  last choice is remembered on the phone; opens on All time the first time).
+- Tiles: **Sales** (orders dated in the period), **Collected** (payments received
+  in the period, including on older orders), **Kg sold** (+ pieces, ≈ kg from
+  pieces), **Expenses** (bills dated in the period). Badges compare with the
+  same-length period before (e.g. same days last month); none for All time.
+- Charts: **Sales vs collected** and **Kg sold** for the last 6 months (tap a
+  month for exact values; the current month is marked "so far"); **Top sizes**
+  and **Expenses by category** follow the chosen period.
+- **Recent orders** (read-only) with the number in progress.
+- There is no profit figure on purpose: big raw-material bills are used over
+  many months.
 
-## Checking who owes money
-1. The **Outstanding** card on [/](/) shows the total pending collection for the
-   last 20 orders. For per-customer dues or the true all-time figure, ask the
-   assistant to run a query (orders + payments), or open
-   [Orders](/orders) and read the **Receivable** column per order.
+## Answering "why is the dashboard different from …"
+- Dashboard excludes orders with status Cancelled; the Orders list includes them.
+- Collected excludes payments recorded on deleted orders.
+- For kg/pieces and dues SQL, use the canonical queries in schema.md.
