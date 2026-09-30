@@ -6,25 +6,19 @@ _Last updated: 2026-09-30, after piece-based orders shipped to production._
 
 Back-office management system for a **non-woven bags factory** (YARS). Single-family userbase — the owner (Deepak) and his brother, who runs the factory floor and uses the app **on a phone**. Mobile-first matters more than desktop.
 
-## ⚠️ Repo layout — read this first
+## Repo layout
 
 ```
 yars-app/
-├── backend/          # THE app's API (Node/Express/Sequelize)
-├── frontend/         # THE app's UI (React/Vite/Tailwind)
-├── docs/superpowers/ # Design specs and implementation plans
-├── HANDOFF.md        # this file
-└── epidermohydra/    # ⛔ UNRELATED project sharing this repo. NEVER touch it.
+├── backend/          # the API (Node/Express/Sequelize)
+├── frontend/         # the UI (React/Vite/Tailwind)
+├── docs/superpowers/ # design specs and implementation plans
+└── HANDOFF.md        # this file
 ```
 
-**`epidermohydra/` is a completely separate business's codebase that happens to live in this repo. Do not read, modify, build, or deploy anything inside it as part of YARS work.**
+**Epidermohydra (a separate skincare business) used to live in `epidermohydra/` inside this repo. On 2026-09-30 it was moved to its own local repo at `~/Desktop/epidermohydra`** (history carried over) and stripped from this repo's unpushed history, so it never reached the public GitHub repo. It has nothing to do with YARS — don't bring it back. Full pre-split backup: `~/yars-app-full-history-2026-09-30.bundle`.
 
-## ⛔ Epidermohydra is NOT part of YARS
-
-- It is a **different business entirely** (a skincare e-commerce project) that only shares this directory for convenience. It has its own frontend, admin panel, backend, database, GCP project (`epidermohydra`), and Firebase sites. Nothing in it is imported by, deployed with, or related to YARS in any way.
-- **While working on yars-app, never touch `epidermohydra/`**: don't edit its files, don't stage or commit anything under it, don't run its scripts or migrations, don't include it in searches/refactors/builds, and don't let a broad command (`git add .`, repo-wide find-and-replace, formatters, linters) reach into it.
-- When the user says "frontend", "backend", "the app", "deploy" in a YARS context, they mean the **root** `frontend/` and `backend/` — never Epidermohydra's.
-- Epidermohydra work happens in its own sessions with its own instructions (e.g., its active deploy dirs are `frontend-revamp/`/`admin-revamp/`, not `frontend/`/`admin/` — but that's for those sessions, not this handoff).
+**`github.com/dk7696822/yars-app` is PUBLIC.** Never commit secrets; stage by explicit path.
 
 ## Tech stack
 
