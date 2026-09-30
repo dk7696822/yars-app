@@ -32,7 +32,8 @@ const ROUTES = [
   // Not redesigned yet — titles as before.
   [/^\/stock-issues\/new/, { title: "New Stock Issue" }],
   [/^\/stock-issues/, { title: "Stock Issues" }],
-  [/^\/stock/, { title: "Stock" }],
+  [/^\/stock\/[^/]+$/, { title: "Item stock", back: "/stock" }],
+  [/^\/stock$/, { title: "Stock" }],
   [/^\/inventory-items\/new/, { title: "New Inventory Item" }],
   [/^\/inventory-items\/edit/, { title: "Edit Inventory Item" }],
   [/^\/inventory-items/, { title: "Inventory Items" }],

@@ -16,6 +16,7 @@ describe("routeMeta", () => {
     ["/dues", { title: "Dues", back: null, hideNav: false }],
     ["/stock-issues/new", { title: "New Stock Issue", back: null, hideNav: false }],
     ["/stock", { title: "Stock", back: null, hideNav: false }],
+    ["/stock/abc", { title: "Item stock", back: "/stock", hideNav: false }],
     ["/product-sizes", { title: "Sizes", back: null, hideNav: false }],
     ["/product-sizes/new", { title: "New size", back: null, hideNav: true }],
     ["/product-sizes/edit/s1", { title: "Edit size", back: null, hideNav: true }],

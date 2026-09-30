@@ -41,8 +41,8 @@ const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage"));
 const NewInvoicePage = lazy(() => import("./features/invoices/NewInvoicePage"));
 const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
 const HistoryPage = lazy(() => import("./features/history/HistoryPage"));
-const Stock = lazy(() => import("./pages/Stock"));
-const StockItemDetail = lazy(() => import("./pages/StockItemDetail"));
+const StockPage = lazy(() => import("./features/inventory/StockPage"));
+const StockItemPage = lazy(() => import("./features/inventory/StockItemPage"));
 const InventoryItems = lazy(() => import("./pages/InventoryItems"));
 const CreateInventoryItem = lazy(() => import("./pages/CreateInventoryItem"));
 const EditInventoryItem = lazy(() => import("./pages/EditInventoryItem"));
@@ -129,8 +129,8 @@ function App() {
                         <Route path="history" element={<HistoryPage />} />
 
                         <Route path="stock">
-                          <Route index element={old(<Stock />)} />
-                          <Route path=":itemId" element={old(<StockItemDetail />)} />
+                          <Route index element={<StockPage />} />
+                          <Route path=":itemId" element={<StockItemPage />} />
                         </Route>
 
                         <Route path="inventory-items">
