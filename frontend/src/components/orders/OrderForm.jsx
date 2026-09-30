@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import DatePicker from "react-datepicker";
-import { FaPlus, FaTrash, FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
+import { FaPlus, FaSave, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import { formatCurrency } from "../../utils/formatters";
 import Dropdown from "../ui/Dropdown";
+import OrderLineFields from "./OrderLineFields";
+import { emptyLine, lineFromOrderItem, previewLine, toPayloadLine } from "../../utils/orderFormLines";
+import { productSizeAPI } from "../../services/api";
 import "react-datepicker/dist/react-datepicker.css";
 import "./OrderForm.css";
 
-const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmit, onCancel, isLoading, error }) => {
+const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmit, onCancel, isLoading, error, onProductSizeUpdated }) => {
   const [formData, setFormData] = useState({
     customer_id: "",
     order_date: new Date(),
@@ -16,7 +19,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     status: "PENDING",
     custom_plate_charge: null,
     round_off_amount: 0,
-    product_sizes: [{ product_size_id: "", quantity_kg: 1, rate_per_kg: 0 }],
+    product_sizes: [emptyLine()],
   });
 
   const [totalAmount, setTotalAmount] = useState(0);
@@ -26,12 +29,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
   // Initialize form with initial values if provided
   useEffect(() => {
     if (initialValues) {
-      const productSizesData =
-        initialValues.orderProductSizes?.map((item) => ({
-          product_size_id: item.product_size_id,
-          quantity_kg: parseFloat(item.quantity_kg),
-          rate_per_kg: parseFloat(item.rate_per_kg || item.productSize.rate_per_kg),
-        })) || [{ product_size_id: "", quantity_kg: 1 }];
+      const productSizesData = initialValues.orderProductSizes?.map(lineFromOrderItem) || [emptyLine()];
 
       setFormData({
         customer_id: initialValues.customer_id || "",
@@ -52,11 +50,8 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     let amount = 0;
     formData.product_sizes.forEach((item) => {
       const productSize = productSizes.find((ps) => ps.id === item.product_size_id);
-      if (productSize && item.quantity_kg) {
-        // Use the stored rate if available, otherwise use the current product size rate
-        const rate = item.rate_per_kg || parseFloat(productSize.rate_per_kg);
-        amount += rate * parseFloat(item.quantity_kg);
-      }
+      const { amount: lineTotal } = previewLine(item, productSize);
+      if (lineTotal !== null) amount += lineTotal;
     });
 
     // Get plate charge (use custom charge if available, otherwise use plate type charge)
@@ -94,35 +89,31 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
     }));
   };
 
-  const handleProductSizeChange = (index, field, value) => {
-    const updatedProductSizes = [...formData.product_sizes];
+  const handleLineChange = (index, nextLine) => {
+    setFormData((prev) => {
+      const product_sizes = [...prev.product_sizes];
+      product_sizes[index] = nextLine;
+      return { ...prev, product_sizes };
+    });
+  };
 
-    // If changing the product size, also update the rate_per_kg
-    if (field === "product_size_id") {
-      const productSize = productSizes.find((ps) => ps.id === value);
-      updatedProductSizes[index] = {
-        ...updatedProductSizes[index],
-        [field]: value,
-        // Only set the rate if this is a new product size selection (not editing an existing order item)
-        rate_per_kg: !updatedProductSizes[index].rate_per_kg ? (productSize ? parseFloat(productSize.rate_per_kg) : 0) : updatedProductSizes[index].rate_per_kg,
-      };
-    } else {
-      updatedProductSizes[index] = {
-        ...updatedProductSizes[index],
-        [field]: value,
-      };
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      product_sizes: updatedProductSizes,
-    }));
+  const saveSizeWeight = async (size, weight) => {
+    const response = await productSizeAPI.update(size.id, {
+      size_label: size.size_label,
+      rate_per_kg: size.rate_per_kg,
+      piece_price_amount: size.piece_price_amount,
+      piece_price_count: size.piece_price_count,
+      ...weight,
+    });
+    const updated = response.data.data;
+    onProductSizeUpdated(updated);
+    return updated;
   };
 
   const addProductSize = () => {
     setFormData((prev) => ({
       ...prev,
-      product_sizes: [...prev.product_sizes, { product_size_id: "", quantity_kg: 1, rate_per_kg: 0 }],
+      product_sizes: [...prev.product_sizes, emptyLine()],
     }));
   };
 
@@ -142,7 +133,7 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, product_sizes: formData.product_sizes.map(toPayloadLine) });
   };
 
   return (
@@ -274,72 +265,16 @@ const OrderForm = ({ initialValues, customers, productSizes, plateTypes, onSubmi
           </div>
 
           {formData.product_sizes.map((item, index) => (
-            <div key={index} className="product-size-row">
-              <div className="form-group">
-                <label htmlFor={`product_size_${index}`}>Size</label>
-                <Dropdown
-                  id={`product_size_${index}`}
-                  name={`product_size_${index}`}
-                  value={item.product_size_id}
-                  onChange={(e) => handleProductSizeChange(index, "product_size_id", e.target.value)}
-                  placeholder="Select Size"
-                  required
-                  options={[
-                    { value: "", label: "Select Size" },
-                    ...productSizes.map((size) => ({
-                      value: size.id,
-                      label: `${size.size_label} (${formatCurrency(size.rate_per_kg)}/kg)`,
-                    })),
-                  ]}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor={`quantity_${index}`}>Quantity (kg)</label>
-                <input
-                  type="number"
-                  id={`quantity_${index}`}
-                  value={item.quantity_kg}
-                  onChange={(e) => handleProductSizeChange(index, "quantity_kg", parseFloat(e.target.value))}
-                  min="0.1"
-                  step="0.1"
-                  required
-                  className="form-control"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor={`rate_${index}`}>
-                  Rate/kg
-                  {item.product_size_id && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">(Default: {formatCurrency(productSizes.find((ps) => ps.id === item.product_size_id)?.rate_per_kg || 0)})</span>
-                  )}
-                </label>
-                <input
-                  type="number"
-                  id={`rate_${index}`}
-                  value={item.rate_per_kg || ""}
-                  onChange={(e) => handleProductSizeChange(index, "rate_per_kg", e.target.value ? parseFloat(e.target.value) : null)}
-                  min="0"
-                  step="0.01"
-                  placeholder="Custom rate (optional)"
-                  className="form-control"
-                />
-              </div>
-
-              <div className="form-group amount-column">
-                <label>Amount</label>
-                <div className="amount-display">
-                  {item.product_size_id && item.quantity_kg
-                    ? formatCurrency((item.rate_per_kg || parseFloat(productSizes.find((ps) => ps.id === item.product_size_id)?.rate_per_kg || 0)) * parseFloat(item.quantity_kg))
-                    : formatCurrency(0)}
-                </div>
-              </div>
-
-              <button type="button" className="btn-icon remove-btn" onClick={() => removeProductSize(index)} disabled={formData.product_sizes.length === 1}>
-                <FaTrash />
-              </button>
-            </div>
+            <OrderLineFields
+              key={index}
+              item={item}
+              index={index}
+              productSizes={productSizes}
+              onChange={handleLineChange}
+              onRemove={removeProductSize}
+              canRemove={formData.product_sizes.length > 1}
+              onSaveSizeWeight={saveSizeWeight}
+            />
           ))}
         </div>
 
@@ -393,12 +328,14 @@ OrderForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   error: PropTypes.string,
+  onProductSizeUpdated: PropTypes.func,
 };
 
 OrderForm.defaultProps = {
   initialValues: null,
   isLoading: false,
   error: "",
+  onProductSizeUpdated: () => {},
 };
 
 export default OrderForm;

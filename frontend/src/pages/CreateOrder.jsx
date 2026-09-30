@@ -42,7 +42,7 @@ const CreateOrder = () => {
       navigate("/orders", { state: { message: "Order created successfully" } });
     } catch (err) {
       console.error("Error creating order:", err);
-      setError("Failed to create order. Please try again.");
+      setError(err.response?.data?.message || "Failed to create order. Please try again.");
       setSubmitting(false);
     }
   };
@@ -108,7 +108,16 @@ const CreateOrder = () => {
 
         {/* Card Content */}
         <div className="relative">
-          <OrderForm customers={customers} productSizes={productSizes} plateTypes={plateTypes} onSubmit={handleSubmit} onCancel={handleCancel} isLoading={submitting} error={error} />
+          <OrderForm
+            customers={customers}
+            productSizes={productSizes}
+            plateTypes={plateTypes}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            isLoading={submitting}
+            error={error}
+            onProductSizeUpdated={(updated) => setProductSizes((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))}
+          />
         </div>
       </div>
     </div>

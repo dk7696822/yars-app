@@ -51,7 +51,7 @@ const EditOrder = () => {
       navigate("/orders", { state: { message: "Order updated successfully" } });
     } catch (err) {
       console.error("Error updating order:", err);
-      setError("Failed to update order. Please try again.");
+      setError(err.response?.data?.message || "Failed to update order. Please try again.");
       setSubmitting(false);
     }
   };
@@ -129,6 +129,13 @@ const EditOrder = () => {
         </div>
       )}
 
+      {order?.invoice_id && (
+        <div className="rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-4 text-sm text-amber-800 dark:text-amber-300">
+          This order is on invoice #{order.invoice?.invoice_number || "—"}. Changes here won&apos;t update the invoice.
+          Delete and regenerate the invoice to update it.
+        </div>
+      )}
+
       {/* Form Card */}
       <div className="relative bg-white dark:bg-[#111916] rounded-2xl border border-gray-200/60 dark:border-emerald-900/20 shadow-soft dark:shadow-[0_0_30px_-10px_rgba(16,185,129,0.1)] overflow-hidden">
         {/* Ambient glow */}
@@ -157,6 +164,7 @@ const EditOrder = () => {
             onCancel={handleCancel}
             isLoading={submitting}
             error={error}
+            onProductSizeUpdated={(updated) => setProductSizes((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))}
           />
         </div>
       </div>
