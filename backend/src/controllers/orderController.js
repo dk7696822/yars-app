@@ -232,7 +232,7 @@ const updateOrder = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
+    const { customer_id, order_date, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
 
     // Check if order exists
     const order = await Order.findOne({
@@ -246,16 +246,13 @@ const updateOrder = async (req, res) => {
       return error(res, 404, "Order not found");
     }
 
-    // Get the original advance amount before updating
-    const originalAdvance = parseFloat(order.advance_received || 0);
-    const newAdvance = advance_received !== undefined ? parseFloat(advance_received) : originalAdvance;
-
-    // Update order details
+    // Update order details. The advance is set only when an order is created;
+    // later advances or corrections are recorded as payments — editing never
+    // rewrites them.
     await order.update(
       {
         customer_id: customer_id || order.customer_id,
         order_date: order_date || order.order_date,
-        advance_received: newAdvance,
         plate_type_id: plate_type_id || order.plate_type_id,
         status: status || order.status,
         custom_plate_charge: custom_plate_charge !== undefined ? (custom_plate_charge ? parseFloat(custom_plate_charge) : null) : order.custom_plate_charge,
@@ -263,43 +260,6 @@ const updateOrder = async (req, res) => {
       },
       { transaction }
     );
-
-    // Handle changes in advance payment
-    if (newAdvance !== originalAdvance) {
-      // Find existing advance payment
-      const existingAdvancePayment = await Payment.findOne({
-        where: {
-          order_id: id,
-          payment_type: "ADVANCE",
-        },
-        transaction,
-      });
-
-      if (existingAdvancePayment) {
-        // Update existing advance payment
-        await existingAdvancePayment.update(
-          {
-            amount: newAdvance,
-            payment_date: order_date || existingAdvancePayment.payment_date,
-          },
-          { transaction }
-        );
-      } else if (newAdvance > 0) {
-        // Create new advance payment if none exists and amount > 0
-        await Payment.create(
-          {
-            order_id: id,
-            customer_id: customer_id || order.customer_id,
-            amount: newAdvance,
-            payment_date: order_date || todayIST(),
-            payment_method: "CASH",
-            payment_type: "ADVANCE",
-            notes: "Advance payment updated",
-          },
-          { transaction }
-        );
-      }
-    }
 
     // Update product sizes if provided
     if (product_sizes && product_sizes.length > 0) {

@@ -176,3 +176,26 @@ describe("dates default to India's today", () => {
     expect(saved.payments[0].payment_date).toBe("2026-10-01");
   });
 });
+
+describe("editing an order", () => {
+  test("never changes its advance payment or advance column", async () => {
+    const customer = await createCustomer();
+    const plate = await createPlateType("0.00");
+    const size = await createSize({ rate_per_kg: "100.00" });
+    const created = await call(createOrder, { body: {
+      customer_id: customer.id, plate_type_id: plate.id, order_date: "2026-09-10", advance_received: "500",
+      product_sizes: [{ product_size_id: size.id, unit: "KG", quantity_kg: "10.00", rate_per_kg: "100.00" }],
+    } });
+    const id = created.body.data.id;
+    await db.Payment.create({ order_id: id, customer_id: customer.id, amount: "200.00", payment_type: "PARTIAL", payment_date: "2026-09-12" });
+
+    const res = await call(updateOrder, { params: { id }, body: { advance_received: 800, status: "COMPLETED" } });
+    expect(res.status).toBe(200);
+
+    const payments = await db.Payment.findAll({ where: { order_id: id }, order: [["amount", "ASC"]] });
+    expect(payments.map((p) => [p.payment_type, p.amount])).toEqual([["PARTIAL", "200.00"], ["ADVANCE", "500.00"]]);
+    const order = await db.Order.findByPk(id);
+    expect(order.advance_received).toBe("500.00");
+    expect(order.status).toBe("COMPLETED");
+  });
+});
