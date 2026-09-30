@@ -38,7 +38,7 @@ bar you can tap to jump back:
    customer** adds one with just name + mobile and returns here. The **Order
    date** defaults to today (Today / Yesterday shortcuts).
 2. **Items** — per size: choose the **Size** (the list shows its prices), then
-   **Kg | Pcs** (only units the size has a price for).
+   **Kg | Pcs** (either can be chosen; if the size has no saved price for that unit, a note asks for the price for this order).
    - **Kg**: quantity in kg (up to 2 decimals, e.g. 12.25) and **Rate per kg**
      (pre-filled from the size).
    - **Pcs**: quantity (whole number), **Price** "N pcs cost ₹X" (pre-filled),

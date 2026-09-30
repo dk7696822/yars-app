@@ -121,3 +121,13 @@ export const toPayload = (draft, { isEdit }) => ({
   // The advance is only ever set when the order is created.
   ...(isEdit ? {} : { advance_received: num(draft.advance, { allowZero: true }) ?? 0 }),
 });
+
+const saved = (v) => v !== null && v !== undefined && v !== "";
+
+/** Either unit can be chosen; while the size has no saved price for it and none is typed yet, say what to enter. */
+export const unitPriceHint = (line, size) => {
+  if (!size) return null;
+  if (line.unit === "PIECES" && !saved(size.piece_price_amount) && !saved(line.price_amount)) return `${size.size_label} has no piece price saved — enter the price for this order`;
+  if (line.unit !== "PIECES" && !saved(size.rate_per_kg) && !saved(line.rate_per_kg)) return `${size.size_label} has no rate per kg saved — enter the rate for this order`;
+  return null;
+};

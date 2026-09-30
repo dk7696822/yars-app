@@ -8,8 +8,8 @@ import Button from "../../../ui/Button";
 import { Money } from "../../../ui/Money";
 import { INPUT, INPUT_INVALID } from "../../../ui/styles";
 import SizePicker from "./SizePicker";
-import { linePreview } from "./draft";
-import { availableUnits, applySizeSelection, applySizeWeight } from "../../../utils/orderFormLines";
+import { linePreview, unitPriceHint } from "./draft";
+import { applySizeSelection, applySizeWeight } from "../../../utils/orderFormLines";
 import { formatSizePricing, formatKg, formatCurrency, perPiecePriceHint, perPieceWeightHint } from "../../../utils/formatters";
 import { parseNumber } from "../../../utils/numberInput";
 import { errorText } from "../../../lib/errors";
@@ -30,7 +30,7 @@ export default function LineCard({ line, index, sizes, errors, onChange, onRemov
   const [picking, setPicking] = useState(false);
   const [weightDraft, setWeightDraft] = useState(null); // { count, kg, saving, error } while setting a size weight
   const size = sizes.find((s) => s.id === line.product_size_id);
-  const units = availableUnits(size);
+  const hint = unitPriceHint(line, size);
   const { amount, kg } = linePreview(line, size);
   const set = (patch) => onChange({ ...line, ...patch });
   const n = index + 1;
@@ -73,12 +73,13 @@ export default function LineCard({ line, index, sizes, errors, onChange, onRemov
 
       <div role="radiogroup" aria-label={`Sold by — size ${n}`} className="inline-flex rounded-2xl bg-raised p-1">
         {[["KG", "Kg"], ["PIECES", "Pcs"]].map(([value, label]) => (
-          <button key={value} type="button" role="radio" aria-checked={line.unit === value} disabled={!units.includes(value)} onClick={() => set({ unit: value })}
-            className={`h-9 rounded-xl px-5 text-sm font-semibold disabled:opacity-40 ${line.unit === value ? "bg-brass text-brass-on" : "text-ink-2"}`}>
+          <button key={value} type="button" role="radio" aria-checked={line.unit === value} onClick={() => set({ unit: value })}
+            className={`h-9 rounded-xl px-5 text-sm font-semibold ${line.unit === value ? "bg-brass text-brass-on" : "text-ink-2"}`}>
             {label}
           </button>
         ))}
       </div>
+      {hint && <p className="-mt-2 text-xs text-status-warn">{hint}</p>}
 
       {line.unit === "PIECES" ? (
         <>
