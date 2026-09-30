@@ -98,8 +98,12 @@ plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
 - Not in this sub-project: Expenses, History, catalog (sub-project 2); Stock
   screens, Login/Assistant re-theme, deleting legacy CSS (sub-project 3).
 - Backend tests run with `TZ=UTC` (package.json) so they behave like Cloud Run.
-- Invoice GST: an order's total excludes GST, so GST paid against an invoice
-  shows on the chosen order as "extra received". Only one taxed invoice exists.
+- Invoice GST: order totals exclude GST, so the invoice payment sheet offers
+  "The invoice itself" — saved with `invoice_id` and no `order_id`. It counts
+  toward the invoice's due but not any order's, and the dashboard discloses it
+  separately from Collected.
+- List endpoints load every live order and page in memory (fine at a few
+  thousand orders; move to SQL aggregation if it ever grows past that).
 
 ## Deployment — direct from local, NO GitHub push involved
 

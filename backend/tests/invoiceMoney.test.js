@@ -114,6 +114,19 @@ describe("invoice endpoints", () => {
     expect(list.rows[0]).toMatchObject({ id, derivedStatus: "PAID", amountDue: 0, ordersCount: 2 });
   });
 
+  test("GST paid on the invoice alone stays off the orders and settles the invoice", async () => {
+    const { customer, o1 } = await setup();
+    await db.Payment.create({ order_id: o1.id, customer_id: customer.id, amount: "1000.00", payment_type: "FINAL", payment_date: "2026-09-11" });
+    const id = (await call(generateInvoice, { body: { customer_id: customer.id, order_ids: [o1.id], tax_percent: 18, payment_due_date: "2099-01-01" } })).body.data.id;
+    const gst = await call(createPayment, { body: { invoice_id: id, amount: "180", payment_type: "FINAL", payment_date: "2026-09-20" } });
+    expect(gst.status).toBe(201);
+    expect(gst.body.data.order_id).toBeNull();
+    const detail = (await call(getInvoiceById, { params: { id } })).body.data;
+    expect(detail.money).toMatchObject({ amountPaid: 1180, amountDue: 0, derivedStatus: "PAID" });
+    expect(detail.orderMoney[0].due).toBe(0); // the order is not shown as overpaid
+    expect(detail.orderPayments.map((p) => [p.amount, p.orderId])).toEqual([[180, null], [1000, o1.id]]);
+  });
+
   test("a deleted order's payments still count toward its invoice", async () => {
     const { customer, o1 } = await setup();
     const id = (await call(generateInvoice, { body: { customer_id: customer.id, order_ids: [o1.id] } })).body.data.id;

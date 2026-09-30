@@ -210,7 +210,8 @@ export default function OrderPage() {
 
       <ActionSheet open={menuOpen} title="Order" onClose={() => setMenuOpen(false)} actions={actions} />
       {confirmText && <ConfirmDialog open title={confirmText.title} message={confirmText.message} confirmLabel={confirmText.confirmLabel} cancelLabel={confirmText.cancelLabel} busy={busy} onConfirm={runConfirm} onClose={() => setConfirm(null)} />}
-      <PaymentSheet key={sheet.key} open={sheet.open} mode={sheet.mode} payment={sheet.payment} orderId={id} received={received}
+      <PaymentSheet key={sheet.key} open={sheet.open} mode={sheet.mode} payment={sheet.payment} orderId={id}
+        received={sheet.payment ? received - signed(sheet.payment) : received}
         due={sheet.payment ? due + signed(sheet.payment) : due} onClose={() => setSheet((s) => ({ ...s, open: false }))} />
     </div>
   );

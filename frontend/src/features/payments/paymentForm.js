@@ -32,7 +32,8 @@ export const toPaymentRow = (p) => ({
 
 /**
  * Check the sheet and build the API body. mode "payment": the type follows the
- * amount; "advance" / "refund": fixed; "edit": the chosen type. overpay > 0
+ * amount; "advance" / "refund": fixed; "edit": the chosen type. `received` is what
+ * the OTHER payments received (for an edit, the caller leaves this payment out). overpay > 0
  * means the amount is above the due — the sheet asks once before saving.
  */
 export const validatePayment = ({ mode, form, due, received }) => {
@@ -40,7 +41,8 @@ export const validatePayment = ({ mode, form, due, received }) => {
   const { value: amount, error } = parseNumber(form.amount);
   if (error || amount === null) errors.amount = error || "Enter the amount";
   if (!isISODate(form.date)) errors.date = "Choose the date";
-  if (!errors.amount && mode === "refund" && Math.round(amount * 100) > Math.round(received * 100)) {
+  const isRefund = mode === "refund" || (mode === "edit" && form.type === "REFUND");
+  if (!errors.amount && isRefund && Math.round(amount * 100) > Math.round(received * 100)) {
     errors.amount = `A refund can't be more than received (${inr(received)})`;
   }
   if (Object.keys(errors).length) return { errors, overpay: 0, payload: null };

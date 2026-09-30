@@ -21,6 +21,10 @@ describe("validatePayment", () => {
     expect(validatePayment({ mode: "refund", form: form({ amount: "600.01" }), due: 400, received: 600 }).errors.amount).toBe("A refund can't be more than received (₹600)");
     expect(validatePayment({ mode: "refund", form: form({ amount: "600" }), due: 400, received: 600 }).payload.payment_type).toBe("REFUND");
   });
+  test("editing a payment into a refund is capped by what the other payments received", () => {
+    expect(validatePayment({ mode: "edit", form: form({ amount: "700", type: "REFUND" }), due: 400, received: 600 }).errors.amount).toBe("A refund can't be more than received (₹600)");
+    expect(validatePayment({ mode: "edit", form: form({ amount: "600", type: "REFUND" }), due: 400, received: 600 }).payload.payment_type).toBe("REFUND");
+  });
   test("advance and edit keep their type; reference and note are trimmed", () => {
     expect(validatePayment({ mode: "advance", form: form({ amount: "500" }), due: 1000, received: 0 }).payload.payment_type).toBe("ADVANCE");
     const edit = validatePayment({ mode: "edit", form: form({ amount: "500", type: "FINAL", reference: " UTR9 ", notes: "  " }), due: 1000, received: 0 });

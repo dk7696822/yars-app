@@ -107,7 +107,7 @@ export default function InvoicePage() {
         </div>
         <div className="mt-4 flex gap-2">
           <Button className="flex-1" loading={sharing} onClick={share}><Share2 className="h-4 w-4" aria-hidden="true" />Share PDF</Button>
-          {!cancelled && m.amountDue > 0 && choices.length > 0 && <Button className="flex-1" variant="secondary" onClick={() => setSheet({ open: true, key: Date.now() })}>＋ Payment</Button>}
+          {!cancelled && m.amountDue > 0 && <Button className="flex-1" variant="secondary" onClick={() => setSheet({ open: true, key: Date.now() })}>＋ Payment</Button>}
           {remind && <a href={remind} target="_blank" rel="noopener noreferrer" className={`${buttonClass({ variant: "secondary" })} flex-1`}><MessageCircle className="h-4 w-4" aria-hidden="true" />Remind</a>}
         </div>
       </section>

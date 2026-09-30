@@ -55,6 +55,18 @@ describe("Jarvis canonical queries match the app", () => {
       customer: customerB, plateType: plate, status: "CANCELLED",
       lines: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: "4.00", rate_per_kg: "150.00" }],
     }); // 1100, cancelled — never owed
+
+    // Gamma: one order overpaid by 200, one owing 800 — pending is 800, not 600.
+    const customerC = await createCustomer("Gamma");
+    const over = await createOrderWithLines({
+      customer: customerC, plateType: plate,
+      lines: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: "2.00", rate_per_kg: "150.00" }],
+    }); // 800
+    await db.Payment.create({ order_id: over.id, customer_id: customerC.id, amount: "1000.00", payment_type: "FINAL", payment_date: "2026-09-08" });
+    await createOrderWithLines({
+      customer: customerC, plateType: plate,
+      lines: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: "2.00", rate_per_kg: "150.00" }],
+    }); // 800 owing
   });
 
   const appOrders = () =>
@@ -76,7 +88,8 @@ describe("Jarvis canonical queries match the app", () => {
     for (const order of await appOrders()) {
       if (order.status === "CANCELLED") continue;
       const remaining = paymentPosition(order, orderTotal(order)).remaining;
-      expected[order.customer.name] = (expected[order.customer.name] || 0) + remaining;
+      // Like the app: only what is owed adds up; money received above an order's total is not netted.
+      expected[order.customer.name] = (expected[order.customer.name] || 0) + Math.max(0, remaining);
     }
     for (const [name, value] of Object.entries(expected)) {
       expect(sqlPending[name]).toBeCloseTo(value, 2);
@@ -84,6 +97,7 @@ describe("Jarvis canonical queries match the app", () => {
     // Alpha: 1500 + 1875 + 500 − 5 − 700 − 1000 = 2170; Beta: 1006.01 + 500 + (800 − 800 + 100 refunded)
     expect(sqlPending.Alpha).toBeCloseTo(2170, 2);
     expect(sqlPending.Beta).toBeCloseTo(1606.01, 2);
+    expect(sqlPending.Gamma).toBeCloseTo(800, 2);
   });
 
   test("volume query = app volume summary", async () => {

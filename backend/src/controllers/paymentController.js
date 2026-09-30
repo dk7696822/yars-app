@@ -7,6 +7,27 @@ const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 
 /**
+ * "A refund can't be more than received": the order's received money, leaving
+ * out `excludePaymentId` (the payment being edited). Returns the message to
+ * send, or null when the refund is allowed.
+ */
+const refundTooLarge = async (orderId, amount, excludePaymentId, transaction) => {
+  const full = await Order.findByPk(orderId, {
+    include: [
+      { model: PlateType, as: "plateType", required: false },
+      { model: OrderProductSize, as: "orderProductSizes", required: false, include: [{ model: ProductSize, as: "productSize", required: false }] },
+      { model: Payment, as: "payments", required: false },
+    ],
+    transaction,
+  });
+  const data = full.toJSON();
+  data.payments = (data.payments || []).filter((p) => p.id !== excludePaymentId);
+  const received = Math.round(paymentPosition(data, orderTotal(data)).totalReceived * 100);
+  if (Math.round(parseFloat(amount) * 100) <= received) return null;
+  return `A refund can't be more than received (₹${new Intl.NumberFormat("en-IN").format(received / 100)})`;
+};
+
+/**
  * Create a new payment
  * @param {Object} req - Request object
  * @param {Object} res - Response object
@@ -62,11 +83,8 @@ const createPayment = async (req, res) => {
       customer_id = invoice.customer.id;
       paymentData.invoice_id = invoice_id;
 
-      // If order_id is not provided but the payment is for an invoice with orders,
-      // we can link the payment to the first order
-      if (!order_id && invoice.orders && invoice.orders.length > 0) {
-        paymentData.order_id = invoice.orders[0].id;
-      }
+      // No order_id = money for the invoice as a whole (e.g. its GST). It is
+      // NOT pinned to an order: that would show the order as overpaid.
     }
 
     // Handle order payment
@@ -91,19 +109,10 @@ const createPayment = async (req, res) => {
       }
 
       if (payment_type === "REFUND") {
-        const full = await Order.findByPk(order_id, {
-          include: [
-            { model: PlateType, as: "plateType", required: false },
-            { model: OrderProductSize, as: "orderProductSizes", required: false, include: [{ model: ProductSize, as: "productSize", required: false }] },
-            { model: Payment, as: "payments", required: false },
-          ],
-          transaction,
-        });
-        const data = full.toJSON();
-        const received = Math.round(paymentPosition(data, orderTotal(data)).totalReceived * 100);
-        if (Math.round(parseFloat(amount) * 100) > received) {
+        const tooLarge = await refundTooLarge(order_id, amount, null, transaction);
+        if (tooLarge) {
           await transaction.rollback();
-          return error(res, 400, `A refund can't be more than received (₹${new Intl.NumberFormat("en-IN").format(received / 100)})`);
+          return error(res, 400, tooLarge);
         }
       }
 
@@ -257,6 +266,15 @@ const updatePayment = async (req, res) => {
     if (!payment) {
       await transaction.rollback();
       return error(res, 404, "Payment not found");
+    }
+
+    const nextType = payment_type || payment.payment_type;
+    if (nextType === "REFUND" && payment.order_id) {
+      const tooLarge = await refundTooLarge(payment.order_id, amount !== undefined ? amount : payment.amount, payment.id, transaction);
+      if (tooLarge) {
+        await transaction.rollback();
+        return error(res, 400, tooLarge);
+      }
     }
 
     // Update payment

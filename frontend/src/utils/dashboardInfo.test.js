@@ -24,7 +24,7 @@ describe("ⓘ disclosures", () => {
       unlinkedPayments: { count: 1, amount: 250 },
     }));
     expect(lines).toContain("Excludes ₹14,456 from 2 payment(s) on deleted orders.");
-    expect(lines).toContain("Excludes ₹250 from 1 payment(s) not linked to any order.");
+    expect(lines).toContain("Excludes ₹250 from 1 payment(s) made on an invoice as a whole (such as GST), not on an order.");
   });
 
   test("sales discloses cancelled orders", () => {

@@ -26,7 +26,7 @@ by hand. The same Due shows on the list, the invoice page and the PDF.
 `/invoices/:id`: customer, dates and status; a money card — **Orders total**,
 **GST**, **Received on these orders**, **Due** — with **Share PDF** (phone
 share sheet, or a download), **＋ Payment** (choose which order the money is
-for) and **Remind** (WhatsApp with the invoice number and balance). Tabs:
+for, or the invoice itself for GST) and **Remind** (WhatsApp with the invoice number and balance). Tabs:
 **Items**, **Payments**, **Details** (dates, GST and the orders with each
 one's due). **⋯**: **Cancel invoice** (asks first; Restore afterwards) and
 **Delete invoice** (its orders become un-invoiced; payments stay on the orders).

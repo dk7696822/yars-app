@@ -72,12 +72,14 @@
     LEFT JOIN plate_types pt ON pt.id = o.plate_type_id
     WHERE o.is_archived = false AND o.status <> 'CANCELLED'
   )
-  SELECT c.name, ROUND(SUM(oc.balance), 2) AS pending
+  SELECT c.name, ROUND(SUM(GREATEST(oc.balance, 0)), 2) AS pending
   FROM order_calc oc JOIN customers c ON c.id = oc.customer_id
-  GROUP BY c.name HAVING SUM(oc.balance) > 0 ORDER BY pending DESC
+  GROUP BY c.name HAVING SUM(GREATEST(oc.balance, 0)) > 0 ORDER BY pending DESC
 <!-- /canonical:pending -->
 - Refunds (`payment_type = 'REFUND'`) are money given back — always subtract
   them from received. Cancelled orders are never owed.
+- Money received above an order's total is NOT subtracted from what the
+  customer owes on other orders (the app adds only positive balances).
 - **For ANY kg sold / pieces sold / volume question, use exactly this query**
   (add date/customer filters on `o` as needed; never change the sums):
 

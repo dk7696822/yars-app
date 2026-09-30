@@ -18,7 +18,7 @@ export const infoExtras = (key, period) => {
   }
   if (key === "collected") {
     if (ex.deletedOrderPayments?.count > 0) lines.push(`Excludes ${inr(ex.deletedOrderPayments.amount)} from ${ex.deletedOrderPayments.count} payment(s) on deleted orders.`);
-    if (ex.unlinkedPayments?.count > 0) lines.push(`Excludes ${inr(ex.unlinkedPayments.amount)} from ${ex.unlinkedPayments.count} payment(s) not linked to any order.`);
+    if (ex.unlinkedPayments?.count > 0) lines.push(`Excludes ${inr(ex.unlinkedPayments.amount)} from ${ex.unlinkedPayments.count} payment(s) made on an invoice as a whole (such as GST), not on an order.`);
   }
   return lines;
 };

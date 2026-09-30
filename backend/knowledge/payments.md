@@ -30,10 +30,15 @@ the order has received.
    was received).
 
 ## Recording a payment against an invoice
-1. Open the invoice (`/invoices/:id`) and tap **＋ Payment**. Choose **which
-   order** the money is for (orders with a due are listed, oldest first), then
-   the same sheet as above. The payment is saved on that order and linked to
-   the invoice.
+1. Open the invoice (`/invoices/:id`) and tap **＋ Payment**. Under **Money is
+   for**, choose an order on the invoice (orders still owing are listed first,
+   oldest first; paid ones follow) or **The invoice itself** — for money that
+   isn't for one order, such as the invoice's GST. When every order is already
+   paid, "The invoice itself" is preselected. Then the same sheet as above;
+   "Full due" is the invoice's due (GST included).
+2. A payment on "the invoice itself" has no order: it counts toward the
+   invoice's due, but not toward any order's due or the dashboard's Collected
+   (the dashboard notes it separately).
 
 ## Editing or deleting a payment
 1. On the order page, open the **Payments** tab. Each payment has a **⋯**

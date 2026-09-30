@@ -14,6 +14,7 @@ import { PAYMENT_METHODS, PAYMENT_TYPE_LABEL } from "../../utils/paymentType";
 import { inr, shortDate } from "../../utils/dashboardFormat";
 import { errorText } from "../../lib/errors";
 import { useToast } from "../../context/ToastContext";
+import { INVOICE_ONLY, defaultInvoiceChoice } from "../invoices/paymentChoices";
 
 const METHOD_OPTIONS = PAYMENT_METHODS.map(([value, label]) => ({ value, label }));
 const TYPE_OPTIONS = Object.entries(PAYMENT_TYPE_LABEL).map(([value, label]) => ({ value, label }));
@@ -26,7 +27,7 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
   const toast = useToast();
   const save = useSavePayment();
   const [form, setForm] = useState(() => initialPaymentForm(payment));
-  const [choice, setChoice] = useState(() => orderChoices?.[0]?.id || orderId);
+  const [choice, setChoice] = useState(() => (orderChoices ? defaultInvoiceChoice(orderChoices) : orderId));
   const [errors, setErrors] = useState({});
   const [overpay, setOverpay] = useState(0);
   const [more, setMore] = useState(Boolean(payment?.reference || payment?.notes));
@@ -50,7 +51,8 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
       setOverpay(result.overpay);
       return;
     }
-    const body = { ...result.payload, order_id: choice, ...(invoiceId ? { invoice_id: invoiceId } : {}) };
+    // Money for the invoice as a whole (e.g. GST) is saved without an order.
+    const body = { ...result.payload, ...(choice === INVOICE_ONLY ? {} : { order_id: choice }), ...(invoiceId ? { invoice_id: invoiceId } : {}) };
     save.mutate({ id: payment?.id, body }, {
       onSuccess: () => {
         toast.success(text.done);
@@ -73,7 +75,7 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
       <div className="space-y-4">
         {orderChoices && (
           <fieldset>
-            <legend className="mb-1.5 text-[0.8rem] font-semibold text-ink-2">For order</legend>
+            <legend className="mb-1.5 text-[0.8rem] font-semibold text-ink-2">Money is for</legend>
             <div role="radiogroup" className="space-y-1.5">
               {orderChoices.map((o) => (
                 <button key={o.id} type="button" role="radio" aria-checked={o.id === choice} onClick={() => { setChoice(o.id); setOverpay(0); }}
@@ -82,6 +84,11 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
                   {o.due > 0 ? <span>due <Money value={o.due} /></span> : <span>paid</span>}
                 </button>
               ))}
+              <button type="button" role="radio" aria-checked={choice === INVOICE_ONLY} onClick={() => { setChoice(INVOICE_ONLY); setOverpay(0); }}
+                className={`flex w-full justify-between rounded-2xl border px-3 py-2.5 text-left text-sm ${choice === INVOICE_ONLY ? "border-brass bg-brass/10 text-ink" : "border-line text-ink-2"}`}>
+                <span>The invoice itself</span>
+                <span>e.g. GST, not on an order</span>
+              </button>
             </div>
           </fieldset>
         )}
