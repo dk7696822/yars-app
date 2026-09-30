@@ -36,9 +36,7 @@ const SizesPage = lazy(() => import("./features/catalog/SizesPage"));
 const SizeFormPage = lazy(() => import("./features/catalog/SizeFormPage"));
 const ExpensesPage = lazy(() => import("./features/expenses/ExpensesPage"));
 const ExpenseFormPage = lazy(() => import("./features/expenses/ExpenseFormPage"));
-const ExpenseCategories = lazy(() => import("./pages/ExpenseCategories"));
-const CreateExpenseCategory = lazy(() => import("./pages/CreateExpenseCategory"));
-const EditExpenseCategory = lazy(() => import("./pages/EditExpenseCategory"));
+const ExpenseCategoriesPage = lazy(() => import("./features/expenses/ExpenseCategoriesPage"));
 const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage"));
 const NewInvoicePage = lazy(() => import("./features/invoices/NewInvoicePage"));
 const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
@@ -116,9 +114,9 @@ function App() {
                         </Route>
 
                         <Route path="expense-categories">
-                          <Route index element={old(<ExpenseCategories />)} />
-                          <Route path="new" element={old(<CreateExpenseCategory />)} />
-                          <Route path="edit/:id" element={old(<EditExpenseCategory />)} />
+                          <Route index element={<ExpenseCategoriesPage />} />
+                          <Route path="new" element={<Navigate to="/expense-categories" replace />} />
+                          <Route path="edit/:id" element={<Navigate to="/expense-categories" replace />} />
                         </Route>
 
                         <Route path="invoices">
