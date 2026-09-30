@@ -31,8 +31,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setUser(loggedInUser);
       return true;
-    } catch {
-      return false;
+    } catch (err) {
+      // Wrong username/password → false. No connection or a server fault is not "wrong password".
+      if (err?.response?.status === 400 || err?.response?.status === 401) return false;
+      throw err;
     }
   };
 

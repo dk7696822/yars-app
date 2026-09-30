@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { FaCheckCircle, FaExclamationCircle, FaInfoCircle } from "react-icons/fa";
+import { CircleCheck, CircleAlert, Info } from "lucide-react";
 
 /**
  * Lightweight toast notifications. Renders above the bottom tab bar on
@@ -13,19 +13,12 @@ const ToastContext = createContext(null);
 
 const TOAST_DURATION = 3200;
 
-const ICONS = {
-  success: FaCheckCircle,
-  error: FaExclamationCircle,
-  info: FaInfoCircle,
-};
+const ICONS = { success: CircleCheck, error: CircleAlert, info: Info };
 
 const STYLES = {
-  success:
-    "bg-white dark:bg-[#111916] border-emerald-200 dark:border-emerald-500/30 text-gray-800 dark:text-emerald-50 [&_svg]:text-emerald-500 dark:[&_svg]:text-emerald-400",
-  error:
-    "bg-white dark:bg-[#191212] border-red-200 dark:border-red-500/30 text-gray-800 dark:text-red-50 [&_svg]:text-red-500 dark:[&_svg]:text-red-400",
-  info:
-    "bg-white dark:bg-[#111916] border-gray-200 dark:border-emerald-900/40 text-gray-800 dark:text-gray-100 [&_svg]:text-gray-500 dark:[&_svg]:text-gray-400",
+  success: "border-status-good/40 [&_svg]:text-status-good",
+  error: "border-status-critical/40 [&_svg]:text-status-critical",
+  info: "border-line [&_svg]:text-brass",
 };
 
 export const ToastProvider = ({ children }) => {
@@ -74,7 +67,7 @@ export const ToastProvider = ({ children }) => {
               onClick={() => dismiss(toast.id)}
               className={`${toast.leaving ? "toast-out" : "toast-in"} ${STYLES[toast.type]}
                 pointer-events-auto flex items-center gap-3 w-full sm:w-auto sm:max-w-sm
-                rounded-xl border px-4 py-3 shadow-lg dark:shadow-black/40 cursor-pointer`}
+                rounded-2xl border bg-raised px-4 py-3 text-ink shadow-lg shadow-black/30 cursor-pointer`}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
               <p className="text-sm font-medium">{toast.message}</p>

@@ -20,7 +20,7 @@ import "./styles/page-animations.css";
 import "./styles/dark-theme.css";
 
 // Each page is its own chunk: opening the app only downloads what it shows.
-const Login = lazy(() => import("./pages/Login"));
+const LoginPage = lazy(() => import("./features/auth/LoginPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dues = lazy(() => import("./pages/Dues"));
 const Assistant = lazy(() => import("./pages/Assistant"));
@@ -56,7 +56,7 @@ const SupplierFormPage = lazy(() => import("./features/inventory/SupplierFormPag
 const SupplierPage = lazy(() => import("./features/inventory/SupplierPage"));
 const InventoryCategoriesPage = lazy(() => import("./features/inventory/InventoryCategoriesPage"));
 const ItemAttributesPage = lazy(() => import("./features/inventory/ItemAttributesPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const NotFoundPage = lazy(() => import("./app/NotFoundPage"));
 
 /** A page that hasn't been redesigned yet keeps its old look. */
 const old = (page) => <Legacy>{page}</Legacy>;
@@ -71,7 +71,7 @@ function App() {
               <Router>
                 <Suspense fallback={<PageSkeleton />}>
                   <Routes>
-                    <Route path="/login" element={old(<Login />)} />
+                    <Route path="/login" element={<LoginPage />} />
 
                     <Route element={<ProtectedRoute />}>
                       <Route path="/" element={<MainLayout />}>
@@ -159,7 +159,7 @@ function App() {
                         <Route path="inventory-categories" element={<InventoryCategoriesPage />} />
                         <Route path="item-attributes" element={<ItemAttributesPage />} />
 
-                        <Route path="*" element={old(<NotFound />)} />
+                        <Route path="*" element={<NotFoundPage />} />
                       </Route>
                     </Route>
                   </Routes>
