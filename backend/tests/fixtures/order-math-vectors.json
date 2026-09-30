@@ -1,0 +1,81 @@
+{
+  "lineAmount": [
+    { "name": "kg line with frozen rate", "line": { "unit": "KG", "quantity_kg": "50.00", "rate_per_kg": "180.00" }, "size": { "rate_per_kg": "175.00" }, "expected": 9000 },
+    { "name": "legacy kg line without a unit field", "line": { "quantity_kg": "12.35", "rate_per_kg": "181.25" }, "size": { "rate_per_kg": "181.25" }, "expected": 2238.4375 },
+    { "name": "kg line with null rate falls back to size rate", "line": { "unit": "KG", "quantity_kg": "10.00", "rate_per_kg": null }, "size": { "rate_per_kg": "150.00" }, "expected": 1500 },
+    { "name": "pieces: 1 piece costs 0.50", "line": { "unit": "PIECES", "quantity_pieces": 5000, "price_amount": "0.5000", "price_pieces_count": 1 }, "size": {}, "expected": 2500 },
+    { "name": "pieces: 1,000 pcs cost 375", "line": { "unit": "PIECES", "quantity_pieces": 5000, "price_amount": "375.0000", "price_pieces_count": 1000 }, "size": {}, "expected": 1875 },
+    { "name": "pieces: 3 pcs cost 1 rupee, 3,000 pcs", "line": { "unit": "PIECES", "quantity_pieces": 3000, "price_amount": "1.0000", "price_pieces_count": 3 }, "size": {}, "expected": 1000 },
+    { "name": "pieces: 3 pcs cost 1 rupee, 1 pc", "line": { "unit": "PIECES", "quantity_pieces": 1, "price_amount": "1.0000", "price_pieces_count": 3 }, "size": {}, "expected": 0.33 },
+    { "name": "pieces: exact half paisa rounds up", "line": { "unit": "PIECES", "quantity_pieces": 1, "price_amount": "0.0050", "price_pieces_count": 1 }, "size": {}, "expected": 0.01 },
+    { "name": "pieces: float trap 1001 x 1.005", "line": { "unit": "PIECES", "quantity_pieces": 1001, "price_amount": "1.0050", "price_pieces_count": 1 }, "size": {}, "expected": 1006.01 },
+    { "name": "pieces: string quantity from a form", "line": { "unit": "PIECES", "quantity_pieces": "2000", "price_amount": 0.5, "price_pieces_count": "1" }, "size": {}, "expected": 1000 }
+  ],
+  "lineKg": [
+    { "name": "kg line", "line": { "unit": "KG", "quantity_kg": "50.00" }, "expected": 50 },
+    { "name": "pieces with 10,000 pcs weigh 100 kg", "line": { "unit": "PIECES", "quantity_pieces": 5000, "weight_kg": "100.000", "weight_pieces_count": 10000 }, "expected": 50 },
+    { "name": "pieces with 1 pc weighs 0.012 kg", "line": { "unit": "PIECES", "quantity_pieces": 2500, "weight_kg": "0.012", "weight_pieces_count": 1 }, "expected": 30 },
+    { "name": "pieces without weight", "line": { "unit": "PIECES", "quantity_pieces": 2000, "weight_kg": null, "weight_pieces_count": null }, "expected": null }
+  ],
+  "linePieces": [
+    { "name": "kg line", "line": { "unit": "KG", "quantity_kg": "50.00" }, "expected": 0 },
+    { "name": "pieces line", "line": { "unit": "PIECES", "quantity_pieces": 5000 }, "expected": 5000 }
+  ],
+  "orders": [
+    {
+      "name": "legacy order: kg lines, plate type charge, advance only in the column",
+      "order": {
+        "custom_plate_charge": null, "round_off_amount": "0.00", "advance_received": "2000.00",
+        "plateType": { "charge": "1500.00" },
+        "orderProductSizes": [
+          { "quantity_kg": "50.00", "rate_per_kg": "180.00", "productSize": { "rate_per_kg": "180.00" } },
+          { "quantity_kg": "20.00", "rate_per_kg": "200.00", "productSize": { "rate_per_kg": "190.00" } }
+        ],
+        "payments": []
+      },
+      "expected": { "total": 14500, "totalPaid": 0, "advanceReceived": 2000, "totalReceived": 2000, "remaining": 12500 }
+    },
+    {
+      "name": "advance recorded in both places is counted once",
+      "order": {
+        "custom_plate_charge": null, "round_off_amount": "0.00", "advance_received": "2000.00",
+        "plateType": { "charge": "1500.00" },
+        "orderProductSizes": [
+          { "unit": "KG", "quantity_kg": "50.00", "rate_per_kg": "180.00", "productSize": { "rate_per_kg": "180.00" } },
+          { "unit": "KG", "quantity_kg": "20.00", "rate_per_kg": "200.00", "productSize": { "rate_per_kg": "190.00" } }
+        ],
+        "payments": [ { "payment_type": "ADVANCE", "amount": "2000.00" }, { "payment_type": "PARTIAL", "amount": "3000.00" } ]
+      },
+      "expected": { "total": 14500, "totalPaid": 3000, "advanceReceived": 2000, "totalReceived": 5000, "remaining": 9500 }
+    },
+    {
+      "name": "mixed kg + pieces with custom plate charge and round off",
+      "order": {
+        "custom_plate_charge": "500.00", "round_off_amount": "5.00", "advance_received": "0.00",
+        "plateType": { "charge": "1500.00" },
+        "orderProductSizes": [
+          { "unit": "KG", "quantity_kg": "10.00", "rate_per_kg": "150.00", "productSize": { "rate_per_kg": "150.00" } },
+          { "unit": "PIECES", "quantity_kg": null, "rate_per_kg": null, "quantity_pieces": 5000, "price_amount": "375.0000", "price_pieces_count": 1000, "productSize": { "rate_per_kg": null } }
+        ],
+        "payments": [ { "payment_type": "FINAL", "amount": "3870.00" } ]
+      },
+      "expected": { "total": 3870, "totalPaid": 3870, "advanceReceived": 0, "totalReceived": 3870, "remaining": 0 }
+    }
+  ],
+  "volume": [
+    {
+      "name": "kg once, weighted pieces as est. kg, unweighted pieces flagged",
+      "orders": [
+        { "orderProductSizes": [
+          { "unit": "KG", "quantity_kg": "10.00" },
+          { "unit": "PIECES", "quantity_pieces": 5000, "weight_kg": "100.000", "weight_pieces_count": 10000 }
+        ] },
+        { "orderProductSizes": [
+          { "unit": "PIECES", "quantity_pieces": 2000, "weight_kg": null, "weight_pieces_count": null },
+          { "quantity_kg": "2.50" }
+        ] }
+      ],
+      "expected": { "kgFromKgLines": 12.5, "kgFromPieces": 50, "kgSold": 62.5, "piecesTotal": 7000, "piecesWithoutWeight": 2000 }
+    }
+  ]
+}
