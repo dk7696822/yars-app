@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "motion/react";
 import { queryClient } from "./lib/queryClient";
@@ -43,7 +43,7 @@ const ExpenseCategories = lazy(() => import("./pages/ExpenseCategories"));
 const CreateExpenseCategory = lazy(() => import("./pages/CreateExpenseCategory"));
 const EditExpenseCategory = lazy(() => import("./pages/EditExpenseCategory"));
 const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage"));
-const GenerateInvoice = lazy(() => import("./pages/GenerateInvoice"));
+const NewInvoicePage = lazy(() => import("./features/invoices/NewInvoicePage"));
 const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
 const History = lazy(() => import("./pages/History"));
 const Stock = lazy(() => import("./pages/Stock"));
@@ -126,7 +126,8 @@ function App() {
 
                         <Route path="invoices">
                           <Route index element={<InvoicesPage />} />
-                          <Route path="generate" element={old(<GenerateInvoice />)} />
+                          <Route path="new" element={<NewInvoicePage />} />
+                          <Route path="generate" element={<Navigate to="/invoices/new" replace />} />
                           <Route path=":id" element={<InvoicePage />} />
                         </Route>
 
