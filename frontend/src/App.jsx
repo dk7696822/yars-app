@@ -43,9 +43,8 @@ const InvoicePage = lazy(() => import("./features/invoices/InvoicePage"));
 const HistoryPage = lazy(() => import("./features/history/HistoryPage"));
 const StockPage = lazy(() => import("./features/inventory/StockPage"));
 const StockItemPage = lazy(() => import("./features/inventory/StockItemPage"));
-const InventoryItems = lazy(() => import("./pages/InventoryItems"));
-const CreateInventoryItem = lazy(() => import("./pages/CreateInventoryItem"));
-const EditInventoryItem = lazy(() => import("./pages/EditInventoryItem"));
+const ItemsPage = lazy(() => import("./features/inventory/ItemsPage"));
+const ItemFormPage = lazy(() => import("./features/inventory/ItemFormPage"));
 const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders"));
 const CreatePurchaseOrder = lazy(() => import("./pages/CreatePurchaseOrder"));
 const PurchaseOrderDetail = lazy(() => import("./pages/PurchaseOrderDetail"));
@@ -56,8 +55,8 @@ const Suppliers = lazy(() => import("./pages/Suppliers"));
 const CreateSupplier = lazy(() => import("./pages/CreateSupplier"));
 const EditSupplier = lazy(() => import("./pages/EditSupplier"));
 const SupplierDetail = lazy(() => import("./pages/SupplierDetail"));
-const InventoryCategories = lazy(() => import("./pages/InventoryCategories"));
-const ItemAttributes = lazy(() => import("./pages/ItemAttributes"));
+const InventoryCategoriesPage = lazy(() => import("./features/inventory/InventoryCategoriesPage"));
+const ItemAttributesPage = lazy(() => import("./features/inventory/ItemAttributesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 /** A page that hasn't been redesigned yet keeps its old look. */
@@ -134,9 +133,9 @@ function App() {
                         </Route>
 
                         <Route path="inventory-items">
-                          <Route index element={old(<InventoryItems />)} />
-                          <Route path="new" element={old(<CreateInventoryItem />)} />
-                          <Route path="edit/:id" element={old(<EditInventoryItem />)} />
+                          <Route index element={<ItemsPage />} />
+                          <Route path="new" element={<ItemFormPage />} />
+                          <Route path="edit/:id" element={<ItemFormPage />} />
                         </Route>
 
                         <Route path="purchase-orders">
@@ -158,8 +157,8 @@ function App() {
                           <Route path=":id" element={old(<SupplierDetail />)} />
                         </Route>
 
-                        <Route path="inventory-categories" element={old(<InventoryCategories />)} />
-                        <Route path="item-attributes" element={old(<ItemAttributes />)} />
+                        <Route path="inventory-categories" element={<InventoryCategoriesPage />} />
+                        <Route path="item-attributes" element={<ItemAttributesPage />} />
 
                         <Route path="*" element={old(<NotFound />)} />
                       </Route>

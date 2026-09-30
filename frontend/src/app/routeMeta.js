@@ -29,21 +29,21 @@ const ROUTES = [
   [/^\/expenses/, { title: "Expenses" }],
   [/^\/expense-categories/, { title: "Expense categories" }],
   [/^\/history/, { title: "History" }],
+  [/^\/inventory-items\/new$/, { title: "New item", hideNav: true }],
+  [/^\/inventory-items\/edit\/[^/]+$/, { title: "Edit item", hideNav: true }],
+  [/^\/inventory-items/, { title: "Items" }],
+  [/^\/inventory-categories/, { title: "Item categories" }],
+  [/^\/item-attributes/, { title: "Item details" }],
   // Not redesigned yet — titles as before.
   [/^\/stock-issues\/new/, { title: "New Stock Issue" }],
   [/^\/stock-issues/, { title: "Stock Issues" }],
   [/^\/stock\/[^/]+$/, { title: "Item stock", back: "/stock" }],
   [/^\/stock$/, { title: "Stock" }],
-  [/^\/inventory-items\/new/, { title: "New Inventory Item" }],
-  [/^\/inventory-items\/edit/, { title: "Edit Inventory Item" }],
-  [/^\/inventory-items/, { title: "Inventory Items" }],
   [/^\/purchase-orders\/new/, { title: "New Purchase Order" }],
   [/^\/purchase-orders/, { title: "Purchase Orders" }],
   [/^\/suppliers\/new/, { title: "New Supplier" }],
   [/^\/suppliers\/edit/, { title: "Edit Supplier" }],
   [/^\/suppliers/, { title: "Suppliers" }],
-  [/^\/inventory-categories/, { title: "Inventory Categories" }],
-  [/^\/item-attributes/, { title: "Item Attributes" }],
 ];
 
 export const routeMeta = (pathname) => {
