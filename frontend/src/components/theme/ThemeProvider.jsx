@@ -5,26 +5,23 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    // Check if theme is stored in localStorage
-    const storedTheme = localStorage.getItem('theme');
-    
-    // If theme is stored, use it
-    if (storedTheme) {
-      return storedTheme;
+    // Stored choice wins; otherwise the app opens in dark mode (Midnight Forest).
+    try {
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
+    } catch {
+      /* storage unavailable — fall through */
     }
-    
-    // Otherwise, check user's system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    
-    // Default to light theme
-    return 'light';
+    return 'dark';
   });
 
   useEffect(() => {
     // Update localStorage when theme changes
-    localStorage.setItem('theme', theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      /* ignore */
+    }
     
     // Update document class
     if (theme === 'dark') {

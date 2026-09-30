@@ -306,3 +306,19 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Midnight Forest & Brass — RGB channels so Tailwind alpha works. Validated 2026-09-30. */
+@layer base {
+  :root {
+    --c-canvas: 244 247 245; --c-surface: 255 255 255; --c-raised: 238 243 240; --c-line: 221 230 225;
+    --c-ink: 16 32 26; --c-ink-2: 85 112 106; --c-brass: 138 106 31; --c-on-brass: 255 255 255;
+    --c-good: 31 138 95; --c-warn: 183 134 11; --c-serious: 196 97 28; --c-critical: 210 59 49;
+    --c-sales: 154 116 38; --c-collected: 47 120 208; --c-kg: 107 95 208; --c-expense: 102 112 138;
+  }
+  .dark {
+    --c-canvas: 6 17 13; --c-surface: 14 31 25; --c-raised: 18 49 38; --c-line: 23 50 41;
+    --c-ink: 234 246 240; --c-ink-2: 147 179 165; --c-brass: 217 178 95; --c-on-brass: 28 22 6;
+    --c-good: 55 201 143; --c-warn: 240 194 72; --c-serious: 240 138 69; --c-critical: 255 106 94;
+    --c-sales: 173 135 51; --c-collected: 74 144 226; --c-kg: 133 124 224; --c-expense: 138 147 168;
+  }
+}
