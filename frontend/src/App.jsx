@@ -29,9 +29,8 @@ const CreateOrder = lazy(() => import("./pages/CreateOrder"));
 const EditOrder = lazy(() => import("./pages/EditOrder"));
 const OrderPage = lazy(() => import("./features/orders/OrderPage"));
 const CustomersPage = lazy(() => import("./features/customers/CustomersPage"));
-const CreateCustomer = lazy(() => import("./pages/CreateCustomer"));
+const CustomerFormPage = lazy(() => import("./features/customers/CustomerFormPage"));
 const CustomerPage = lazy(() => import("./features/customers/CustomerPage"));
-const EditCustomer = lazy(() => import("./pages/EditCustomer"));
 const PlateTypes = lazy(() => import("./pages/PlateTypes"));
 const CreatePlateType = lazy(() => import("./pages/CreatePlateType"));
 const EditPlateType = lazy(() => import("./pages/EditPlateType"));
@@ -97,8 +96,8 @@ function App() {
 
                         <Route path="customers">
                           <Route index element={<CustomersPage />} />
-                          <Route path="new" element={old(<CreateCustomer />)} />
-                          <Route path="edit/:id" element={old(<EditCustomer />)} />
+                          <Route path="new" element={<CustomerFormPage />} />
+                          <Route path="edit/:id" element={<CustomerFormPage />} />
                           <Route path=":id" element={<CustomerPage />} />
                         </Route>
 

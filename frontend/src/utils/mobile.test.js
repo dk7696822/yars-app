@@ -11,6 +11,7 @@ describe("mobile field", () => {
     expect(mobileStatus("98765")).toBe("invalid");
     expect(mobileStatus("5876543210")).toBe("invalid");
     expect(mobileStatus("98765 43210")).toBe("valid");
+    expect(mobileStatus("08217 453398")).toBe("invalid"); // a landline (0 + STD code), not a mobile
   });
   test("display", () => expect(formatMobile("9876543210")).toBe("98765 43210"));
 });
