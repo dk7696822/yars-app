@@ -42,7 +42,6 @@ const ROUTES = [
   [/^\/suppliers\/edit\/[^/]+$/, { title: "Edit supplier", hideNav: true }],
   [/^\/suppliers\/[^/]+$/, { title: "Supplier", back: "/suppliers" }],
   [/^\/suppliers/, { title: "Suppliers" }],
-  // Not redesigned yet — titles as before.
   [/^\/stock-issues\/new$/, { title: "Issue stock", hideNav: true }],
   [/^\/stock-issues/, { title: "Stock issues" }],
   [/^\/stock\/[^/]+$/, { title: "Item stock", back: "/stock" }],

@@ -9,14 +9,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { PageSkeleton } from "./ui/States";
-import "./assets/styles/index.css";
-import "./styles/button-override.css";
-import "./styles/datepicker-override.css";
-import "./styles/datepicker-dark.css";
-import "./styles/select-override.css";
-import "./styles/history-animations.css";
-import "./styles/page-animations.css";
-import "./styles/dark-theme.css";
 
 // Each page is its own chunk: opening the app only downloads what it shows.
 const LoginPage = lazy(() => import("./features/auth/LoginPage"));

@@ -92,16 +92,26 @@ plan: `docs/superpowers/plans/2026-09-30-ux-redesign-1-core.md`.
 - **Frontend:** kit in `src/ui/`, screens in `src/features/{orders,customers,
   invoices,payments}`, TanStack Query (`src/lib/queryKeys.js` →
   `invalidateMoney` after any money change), every route lazy, vendor chunks.
-  Pages not redesigned yet render inside `<Legacy>` — the old CSS applies only
-  under `.legacy` (removed in sub-project 3).
 - **Verify before release:** `NODE_ENV=production node scripts/dashboard-verify.js`
   now also cross-checks the orders list, the customer directory and every
   invoice's paid amount against SQL, and reports orders on two invoices.
 - Catalog (Sizes, Plate types) was redesigned right after release
   (`frontend/src/features/catalog`). Order lines can be Kg or Pcs whatever the
   size has saved; a ₹0 saved kg rate means "rate set on each order".
-- Still on the old look: Expenses, History (sub-project 2); Stock screens,
-  Login/Assistant re-theme, deleting legacy CSS (sub-project 3).
+- **UX redesign part 2 (branch `feature/ux-redesign-2`):** every remaining page
+  is on the kit — `src/features/{expenses,history,inventory,assistant,auth}`,
+  `src/app/NotFoundPage.jsx`. No legacy pages, components, stylesheets,
+  `<Legacy>` wrapper, react-icons or react-datepicker remain; `index.css` holds
+  only the tokens, base and the few animations in use. Spec
+  `docs/superpowers/specs/2026-09-30-ux-redesign-2-rest-design.md`, plan
+  `docs/superpowers/plans/2026-09-30-ux-redesign-2-rest.md`.
+  - `/audit-logs` date filter is India days (`services/auditFilters.js`) and
+    `entity_type` takes a comma list. History hides the before→after figures on
+    deleted payments: the delete hook only estimates "after" as received − amount.
+  - Expense form shows the total read-only — the server recalculates
+    quantity × cost on every save.
+  - Supplier page takes PO totals from `/purchase-orders?supplier_id=`
+    (`/suppliers/:id` returns orders without their lines).
 - Backend tests run with `TZ=UTC` (package.json) so they behave like Cloud Run.
 - Invoice GST: order totals exclude GST, so the invoice payment sheet offers
   "The invoice itself" — saved with `invoice_id` and no `order_id`. It counts
