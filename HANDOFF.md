@@ -1,6 +1,6 @@
 # YARS App — Handoff
 
-_Last updated: 2026-07-17, after the Inventory module shipped to production._
+_Last updated: 2026-09-30, piece-based orders built on `feature/piece-orders` (see its section; production rollout status noted there)._
 
 ## What this is
 
@@ -31,7 +31,7 @@ yars-app/
 - **Backend**: Node 20, Express 5, Sequelize 6, PostgreSQL. Entry: `backend/src/server.js`. Routes mounted in `backend/src/routes/index.js`.
 - **Frontend**: React 19, Vite, Tailwind, react-router-dom v7, axios, lucide-react. API clients: `frontend/src/services/api.js` (original modules) and `inventoryAPI.js` (inventory).
 - **DB**: Supabase Postgres — **this is production and the business's only copy of its data.** Host: `db.hqenqposkeiwyephomza.supabase.co` (credentials in `backend/.env`, untracked). A different host appears in old committed files (`render.yaml`, plan docs) — those are stale.
-- **Tests**: Jest + throwaway Dockerized Postgres (`backend/docker-compose.test.yml`, port 5433, tmpfs). `cd backend && npm run test:db:up && npm run test:migrate && npm test` → 8 suites / 50 tests. `tests/setup.js` refuses to run against anything that isn't a `*_test` DB on localhost.
+- **Tests**: Jest + throwaway Dockerized Postgres (`backend/docker-compose.test.yml`, port 5433, tmpfs). `cd backend && npm run test:db:up && npm run test:migrate && npm test` → 26 suites / 184 tests (2026-09-30). Frontend: `cd frontend && npm test` (Vitest, 37 tests). Local click-through: backend `NODE_ENV=test PORT=5055 node src/server.js` (port 5000 is taken by macOS AirPlay), frontend `VITE_API_URL=http://localhost:5055/api npx vite --port 5173`. `tests/setup.js` refuses to run against anything that isn't a `*_test` DB on localhost.
 
 ## Modules
 
@@ -44,6 +44,14 @@ Original: Customers, Orders (bag manufacturing orders: sizes, plate types), Invo
 - **The rule that matters**: ALL stock mutation goes through `backend/src/services/stockService.js` — transactions + `SELECT FOR UPDATE` row locks, input quantization to DECIMAL(12,3)/(14,2), epsilon 0.0005, audit rows written after commit. Never write batches/movements directly. Invariant: `SUM(batches.quantity_remaining) === SUM(movements.quantity)` per item — tested.
 - Document numbers (`PO-2026-0001`, `GR-…`, `ISS-…`): `documentNumber.js`, advisory-lock serialized, safe past 9999.
 - Server-side pagination (`backend/src/utils/pagination.js`, default 20/max 100) — inventory only; original modules still return all rows.
+
+**Piece-based orders (built 2026-09-30)** — each order line is sold by **KG** (kg × rate/kg, unchanged) or **PIECES** ("N pieces cost ₹X", stored exactly as typed). Sizes carry an optional kg rate, optional piece price and optional weight ("N pieces weigh W kg"); at least one price is DB-enforced. Spec `docs/superpowers/specs/2026-09-30-piece-orders-design.md`, plan `docs/superpowers/plans/2026-09-30-piece-orders.md`.
+- **All money/volume math lives in `backend/src/services/orderMath.js` and its mirror `frontend/src/utils/orderMath.js`**, both pinned by `backend/tests/fixtures/order-math-vectors.json` (Jest + Vitest run the same file). KG line amount is byte-for-byte the pre-pieces float expression (existing totals must never move); PIECES amount is exact BigInt half-up rounding to the paisa (matches Postgres `ROUND`). Change both files together.
+- **No double counting**: a line is exactly one unit — DB CHECK `order_product_sizes_unit_chk`. Kg sold = kg of KG lines + estimated kg of weighted PIECES lines; pieces sold = PIECES lines only (`volumeSummary`).
+- **Snapshots**: price/weight are copied onto the line (`services/orderLines.js`). Changing a size never rewrites lines, except back-fill: saving a size weight fills PIECES lines of that size whose `weight_kg IS NULL` (weight_source `SIZE`); `MANUAL` (measured) weights are never overwritten. Money columns are never touched by back-fill.
+- Invoiced orders stay editable but the edit screen warns the invoice won't change (delete + regenerate). `invoice_items.unit` is NULL for pre-pieces items → they render exactly as before.
+- Jarvis's canonical pending and kg/pieces SQL live between `<!-- canonical:… -->` markers in `backend/knowledge/schema.md`; `tests/knowledgeQueries.test.js` runs them through the assistant's guarded `runQuery` and asserts they match `orderMath`.
+- Migration `20260930000001-add-piece-orders` is purely additive (single transaction; `down` refuses once pieces data exists). Rollout check: `backend/scripts/piece-orders-snapshot.js` (before/after/compare — must be identical).
 
 **AI Assistant “Jarvis” (built 2026-07-23)** — in-app chat (named Jarvis in the UI and system prompt) (page at `/assistant` + floating button) that answers data questions and explains the app. Multi-provider quota-fallback chain (see `docs/superpowers/specs/2026-07-23-multi-provider-fallback-design.md`): Gemini `gemini-flash-latest` → `gemini-flash-lite-latest` → `gemini-2.0-flash` (via `@google/genai`; free-tier daily caps on the top model are tiny, ~20 req/day), then Mistral `mistral-small-latest`, then Groq `llama-3.3-70b-versatile` (free tier is 12k tokens/min — barely one request with our ~11k-token knowledge base, so it 413s often; treated as quota → steps down), then `open-mistral-nemo`. Architecture: `agentLoop.js` (provider-neutral loop) + `providerChain.js` (per-entry cooldown failover) + `providers/geminiProvider.js` / `providers/openaiCompatProvider.js` (adapters own provider quirks: Gemini thought-signature echo, Mistral 9-char tool_call ids). SSE streaming (`POST /api/assistant/conversations/:id/messages`); conversations persisted (`assistant_conversations`/`assistant_messages`). Data access is READ-ONLY through three layers: (1) SELECT-only Postgres role `yars_assistant_ro` (`backend/scripts/create-assistant-role.sql`, connection in `ASSISTANT_DB_URL`), (2) strict SQL validator `src/services/assistant/sqlGuard.js`, (3) LIMIT 200 wrap + 5s statement timeout. Env vars: `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `GROQ_API_KEY` (each provider optional — chain entries are skipped when the key is absent), `ASSISTANT_DB_URL`. **Maintenance rule: any PR that changes a screen's UI must update that module's `backend/knowledge/*.md` in the same commit** — the assistant's answers are only as accurate as those files.
 
