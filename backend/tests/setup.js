@@ -43,6 +43,7 @@ const TABLES = [
   "plate_types",
   "customers",
   "audit_logs",
+  "assistant_actions",
   "assistant_messages",
   "assistant_conversations",
   "stock_movements",

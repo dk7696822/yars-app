@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "conversation_id",
         as: "messages",
       });
+      AssistantConversation.hasMany(models.AssistantAction, { foreignKey: "conversation_id", as: "actions" });
     }
   }
 

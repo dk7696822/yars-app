@@ -1,9 +1,11 @@
 "use strict";
 
 const { READ_TOOLS } = require("./tools");
+const { ACTIONS } = require("./actionKit/registry");
+const { actionTool } = require("./actionKit/actionTool");
 
-/** Every tool. Action tools join in the action kit. */
-const allTools = () => [...READ_TOOLS];
+/** Every tool: read tools (always on), then one propose_ tool per action (on with its area). */
+const allTools = () => [...READ_TOOLS, ...ACTIONS.map(actionTool)];
 
 /**
  * The switchboard: a tool without an area is always on; an area's tools are on

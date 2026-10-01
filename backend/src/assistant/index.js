@@ -8,6 +8,7 @@ const { executeTool } = require("./tools/executeTool");
 const { buildSystemPrompt } = require("./prompt/buildSystemPrompt");
 const { fitHistory } = require("./history");
 const { HISTORY_BUDGET } = require("./config");
+const { ACTIONS } = require("./actionKit/registry");
 const { todayIST } = require("../services/dashboard/dateRanges");
 
 /**
@@ -22,7 +23,7 @@ const runAssistant = async (history, { onDelta, onStatus, onAction }, ctx = {}, 
   const open = new Set(deps.openAreas || areasFor(fitted[fitted.length - 1]?.content));
   const current = () => toolsFor(open, every);
   return runAgent({
-    system: deps.system ?? buildSystemPrompt({ today: todayIST(), actions: deps.actions || [] }),
+    system: deps.system ?? buildSystemPrompt({ today: todayIST(), actions: deps.actions || ACTIONS }),
     history: fitted,
     tools: () => current().map((t) => t.declaration),
     stream: deps.stream || ((request) => getChain().stream(request)),
