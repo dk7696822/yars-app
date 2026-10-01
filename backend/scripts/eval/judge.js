@@ -25,7 +25,7 @@ const judge = (expect, run, ids) => {
     return { pass: false, why: mine.length ? mine.map((c) => `${tool} args ${JSON.stringify(c.args)}`).join("; ") : `no ${tool} card (tools: ${run.calls.map((c) => c.name).join(", ") || "none"})` };
   }
   if (expect.asks) {
-    const asked = run.text.includes("?") || /\b(please (tell|share|confirm|let me know|give)|which one|could you)\b/i.test(run.text);
+    const asked = run.text.includes("?") || /\b(please (tell|share|confirm|let me know|give|provide)|which one|could you)\b/i.test(run.text);
     const pass = cards.length === 0 && asked;
     return { pass, why: pass ? "" : cards.length ? `made a card instead of asking: ${cards[0].name}` : "no question in the answer" };
   }

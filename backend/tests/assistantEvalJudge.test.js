@@ -29,6 +29,7 @@ describe("eval judge", () => {
 
   test("a question asked without a question mark still counts as asking", () => {
     expect(judge({ asks: true }, { calls: [], text: "Please tell me the rate per kg for 14 x 18." }, ids).pass).toBe(true);
+    expect(judge({ asks: true }, { calls: [], text: "Sure! Please provide the customer's name." }, ids).pass).toBe(true);
     expect(judge({ asks: true }, { calls: [], text: "Done." }, ids).pass).toBe(false);
   });
 

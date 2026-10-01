@@ -24,7 +24,7 @@ describe("agent loop", () => {
   test("a plain answer is streamed and returned", async () => {
     const deltas = [];
     const final = await runAgent(base({ stream: fakeStream([[{ text: "Hello " }, { text: "there" }]]), executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }));
-    expect([final, deltas]).toEqual(["Hello there", ["Hello ", "there"]]);
+    expect([final, deltas]).toEqual(["Hello there", ["Hello there"]]); // a round is shown once it is known to be clean
   });
 
   test("a tool round runs the tool, shows a status and feeds the result back", async () => {
@@ -64,6 +64,46 @@ describe("agent loop", () => {
 
   test("an empty answer never reaches the person blank", async () => {
     expect(await runAgent(base({ stream: fakeStream([[]]), executeTool: jest.fn() }))).toMatch(/couldn't come up with an answer/);
+  });
+});
+
+describe("broken replies never reach the person", () => {
+  const garbled = (text) => async () => {
+    const stream = fakeStream([[{ text }], [{ text: "You are owed ₹10." }]]);
+    const deltas = [];
+    const final = await runAgent(base({ stream, executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }));
+    expect([final, deltas]).toEqual(["You are owed ₹10.", ["You are owed ₹10."]]);
+    expect(stream.requests[1].messages.at(-1).role).toBe("user"); // the model is asked again
+  };
+
+  test("leaked reasoning is thrown away and the model asked again", garbled("analysis: The user wants to refund ₹500 to Bombay"));
+  test("raw tool markup counts as broken", garbled("<tool_call> <function=propose_record_payment> <parameter=amount> 5000"));
+  test("a tool call written out as text counts as broken", garbled('First open the area: open_area({ "area": "payments" })'));
+  test("a word repeated over and over counts as broken", garbled("The user wants dues dues dues dues dues dues dues"));
+  test("claiming a card that was never made counts as broken", garbled("I'll record ₹500. Please tap **Confirm** on the card that appears."));
+
+  test("a card that was made can be mentioned", async () => {
+    const stream = fakeStream([[{ toolCalls: [{ id: "c1", name: "propose_x", args: {} }] }], [{ text: "Tap **Confirm** to add Om Traders." }]]);
+    const final = await runAgent(base({ stream, executeTool: jest.fn().mockResolvedValue({ text: "Card shown", action: { id: "a1" } }) }));
+    expect(final).toBe("Tap **Confirm** to add Om Traders.");
+  });
+
+  test("a card still pending from earlier in the conversation can be pointed to", async () => {
+    const history = [
+      { role: "user", content: "add Om Traders" },
+      { role: "assistant", content: "Tap Confirm to add Om Traders.\n[card: New customer Om Traders — pending]" },
+      { role: "user", content: "what now?" },
+    ];
+    const stream = fakeStream([[{ text: "Tap **Confirm** on the card above." }]]);
+    expect(await runAgent(base({ history, stream, executeTool: jest.fn() }))).toBe("Tap **Confirm** on the card above.");
+  });
+
+  test("broken twice: the person gets the plain fallback, not the garbage", async () => {
+    const stream = fakeStream([[{ text: "analysis: hmm" }], [{ text: "analysis: hmm again" }]]);
+    const deltas = [];
+    const final = await runAgent(base({ stream, executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }));
+    expect(final).toMatch(/couldn't come up with an answer/);
+    expect(deltas.join("")).not.toMatch(/analysis/);
   });
 });
 
