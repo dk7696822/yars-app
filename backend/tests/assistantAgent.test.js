@@ -98,6 +98,17 @@ describe("broken replies never reach the person", () => {
     expect(await runAgent(base({ history, stream, executeTool: jest.fn() }))).toBe("Tap **Confirm** on the card above.");
   });
 
+  test("a how-to that says to tap Confirm (no card claimed) is shown", async () => {
+    const stream = fakeStream([[{ text: "Open the order and tap Confirm to save." }]]);
+    expect(await runAgent(base({ stream, executeTool: jest.fn() }))).toBe("Open the order and tap Confirm to save.");
+  });
+
+  test("a reply the caller's check rejects (e.g. a made-up link) is asked again", async () => {
+    const stream = fakeStream([[{ text: "See [Payments](/payments)." }], [{ text: "See [Orders](/orders)." }]]);
+    const final = await runAgent(base({ stream, executeTool: jest.fn(), validate: (t) => !t.includes("/payments") }));
+    expect(final).toBe("See [Orders](/orders).");
+  });
+
   test("broken twice: the person gets the plain fallback, not the garbage", async () => {
     const stream = fakeStream([[{ text: "analysis: hmm" }], [{ text: "analysis: hmm again" }]]);
     const deltas = [];

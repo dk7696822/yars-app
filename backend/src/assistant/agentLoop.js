@@ -18,7 +18,8 @@ const statusFor = (name) => STATUS[name] || (String(name).startsWith("propose_")
  * `tools` is the declarations, or a function giving them (re-read every round, so
  * an area opened in one round is available in the next).
  * `executeTool(call)` resolves to { text, action? }; a card goes to onAction.
- * Text is sent to onDelta one round at a time, after the broken-reply check.
+ * Text is sent to onDelta one round at a time, after the broken-reply check;
+ * `validate(text)` adds the caller's own check (e.g. links must be real screens).
  */
 const FALLBACK = "I couldn't come up with an answer — please try rephrasing.";
 const ASK_AGAIN = "(That reply came out garbled and was not shown. Answer the person again in plain words, or call a tool.)";
@@ -30,10 +31,11 @@ const ASK_AGAIN = "(That reply came out garbled and was not shown. Answer the pe
  */
 const LEAK = /<tool_call>|<function=|<\|channel\|>|^\s*analysis\b|\bassistant(?:commentary|final)\b|\bto=functions\.|\b(?:propose_\w+|open_area|run_query|customer_summary|period_summary)\b/i;
 const LOOP = /\b(\w+)\b(?:\W+\1\b){5,}/i;
-const CLAIMS_CARD = /\btap\W{0,3}confirm/i;
-const isBroken = (text, cardsShown) => LEAK.test(text) || LOOP.test(text) || (CLAIMS_CARD.test(text) && cardsShown === 0);
+// "tap Confirm on the card" when no card exists; a how-to's "tap Confirm to save" is fine.
+const CLAIMS_CARD = (text) => /\btap\W{0,3}confirm/i.test(text) && /\bcards?\b/i.test(text);
+const isBroken = (text, cardsShown, validate) => LEAK.test(text) || LOOP.test(text) || (CLAIMS_CARD(text) && cardsShown === 0) || !validate(text);
 
-const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS }) => {
+const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS, validate = () => true }) => {
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
   let finalText = "";
   // A card still pending from earlier in the conversation may be pointed to.
@@ -51,7 +53,8 @@ const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, 
     }
 
     // A round's text is shown only once it is known to be clean.
-    if (roundText && isBroken(roundText, cardsShown)) {
+    if (roundText && isBroken(roundText, cardsShown, validate)) {
+      console.warn("assistant: hid a broken reply:", (process.env.ASSISTANT_DEBUG ? roundText : roundText.slice(0, 300)).replace(/\s+/g, " "));
       if (calls.length === 0) {
         if (retried) return finalText || FALLBACK;
         retried = true;

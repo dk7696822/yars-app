@@ -4,6 +4,7 @@ const { runAgent } = require("./agentLoop");
 const { getChain } = require("./llm");
 const { allTools, toolsFor } = require("./toolset");
 const { areasFor } = require("./router");
+const { linksAreKnown } = require("./links");
 const { executeTool } = require("./tools/executeTool");
 const { buildSystemPrompt } = require("./prompt/buildSystemPrompt");
 const { fitHistory } = require("./history");
@@ -35,6 +36,7 @@ const runAssistant = async (history, { onDelta, onStatus, onAction }, ctx = {}, 
     onDelta,
     onStatus,
     onAction,
+    validate: linksAreKnown(),
   });
 };
 
