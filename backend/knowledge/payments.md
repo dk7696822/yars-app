@@ -1,53 +1,21 @@
+---
+area: payments
+summary: Recording, editing and refunding payments; received and due
+keywords: paid, pay, pays, payment, payments, refund, upi, cash, cheque, received, advance
+tables: payments
+---
 # Payments
 
-What it is: money received from customers. There is no standalone Payments page —
-payments are recorded and managed in two places:
-- on an **order's** detail page (`/orders/:id`) → payment gets `order_id`
-- on an **invoice's** detail page (`/invoices/:id`) → payment gets `invoice_id`
-Every payment also stores the customer. The order-time **Advance Received**
-field is separate (a column on the order, not a payments row) but is counted in
-"Total Paid".
+Money received from customers. Recorded on an **order's page** (`/orders/:id`) or an **invoice's page** (`/invoices/:id`) — there is no separate payments screen. Methods: **Cash, UPI, Bank, Cheque, Other**. Types: Advance, Part payment, Final payment, Refund.
 
-Payment types: **Advance Payment**, **Partial Payment**, **Final Payment**,
-**Refund**. Methods: **Cash**, **Bank Transfer**, **UPI**, **Check**, **Other**.
+## On an order
+Open the order (from [Orders](/orders)) → **＋ Record payment**: **Amount** (or **Full due ₹…**), method, **Date** (today by default), optional reference or note. The whole due or more is saved as a **Final payment**, less as a **Part payment**. Paying more than the due asks once ("Save anyway") and shows as extra received. **⋯ → Record advance** and **⋯ → Record refund** are separate; a refund can't be more than what was received, and it raises the due again. A cancelled order takes no payments.
 
-A **Refund** is money given back to the customer: it is subtracted from what
-the order has received (so the due goes up again). A refund can't be more than
-the order has received.
+## On an invoice
+Invoice page → **＋ Payment** → under **Money is for** choose one of its orders or **The invoice itself** (e.g. its GST). Money on the invoice itself counts toward the invoice's due, not any order's or the dashboard's Collected.
 
-## Recording a payment against an order
-1. Open the order ([Orders](/orders) → tap it, `/orders/:id`). The money card at
-   the top shows **Total**, **Received** and **Due** (or "Paid in full ✓").
-2. Tap **＋ Record payment**. A sheet opens: type the **Amount** (or tap
-   **Full due ₹…**), pick how it was paid (**Cash / UPI / Bank / Cheque /
-   Other**), check the **Date** (today by default; Today / Yesterday
-   shortcuts), and optionally **＋ Add reference or note**.
-3. The type is worked out from the amount: the whole due (or more) is saved as
-   a **Final payment**, less as a **Part payment**. If the amount is more than
-   the due, the sheet says by how much and the button becomes **Save anyway**.
-4. **Advance** and **Refund** are separate: the order's **⋯** menu has
-   **Record advance** and **Record refund** (a refund can't be more than what
-   was received).
+## Editing or deleting
+Order page → **Payments** tab → **⋯** on a payment: **Edit payment** or **Delete payment** (asks first). Every change shows on [History](/history) with the order's received and due before and after.
 
-## Recording a payment against an invoice
-1. Open the invoice (`/invoices/:id`) and tap **＋ Payment**. Under **Money is
-   for**, choose an order on the invoice (orders still owing are listed first,
-   oldest first; paid ones follow) or **The invoice itself** — for money that
-   isn't for one order, such as the invoice's GST. When every order is already
-   paid, "The invoice itself" is preselected. Then the same sheet as above;
-   "Full due" is the invoice's due (GST included).
-2. A payment on "the invoice itself" has no order: it counts toward the
-   invoice's due, but not toward any order's due or the dashboard's Collected
-   (the dashboard notes it separately).
-
-## Editing or deleting a payment
-1. On the order page, open the **Payments** tab. Each payment has a **⋯**
-   button: **Edit payment** (same sheet, where the type can also be changed)
-   or **Delete payment** (asks first).
-2. Invoice and customer pages list payments read-only.
-
-Notes:
-- Payment create/update/delete are audited with before/after order metrics
-  (total, received, outstanding) — visible on [History](/history).
-- Payments are hard-deleted rows (no `is_archived`), so SQL sums over `payments`
-  always reflect the current truth.
+## Table `payments`
+`id`, `order_id` (NULL for invoice-only money), `invoice_id`, `customer_id` (always set), `payment_type` ADVANCE|PARTIAL|FINAL|REFUND, `amount`, `payment_date`, `payment_method` CASH|BANK_TRANSFER|UPI|CHECK|OTHER, `reference_number`, `notes`. Hard-deleted (no is_archived). Refunds are money given back: subtract them.

@@ -3,7 +3,9 @@
 const { AssistantConversation, AssistantMessage } = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
-const { runAgent, formatWait } = require("../services/assistant/assistantService");
+const { runAssistant } = require("../assistant");
+const { formatWait } = require("../assistant/chain");
+const { ASSISTANT_NAME } = require("../assistant/config");
 
 const listConversations = async (req, res) => {
   try {
@@ -92,16 +94,20 @@ const sendMessage = async (req, res) => {
 
     let finalText;
     try {
-      finalText = await runAgent(history, {
-        onDelta: (t) => sendEvent(res, "delta", { text: t }),
-        onStatus: (t) => sendEvent(res, "status", { text: t }),
-      });
+      finalText = await runAssistant(
+        history,
+        {
+          onDelta: (t) => sendEvent(res, "delta", { text: t }),
+          onStatus: (t) => sendEvent(res, "status", { text: t }),
+        },
+        { conversationId: id, userId: req.user?.sub || null, requestText: text }
+      );
     } catch (err) {
-      console.error("agent failed:", err);
+      console.error("assistant failed:", err);
       const message =
         err.name === "QuotaExhaustedError"
-          ? `The assistant's free daily quota is used up for now. Please try again in about ${formatWait(err.retryAfterSeconds)}.`
-          : "The assistant is busy right now — try again in a minute.";
+          ? `${ASSISTANT_NAME}'s free daily limit is used up for now. Please try again in about ${formatWait(err.retryAfterSeconds)}.`
+          : `${ASSISTANT_NAME} is busy right now — try again in a minute.`;
       sendEvent(res, "error", { message });
       return res.end();
     }

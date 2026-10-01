@@ -1,25 +1,23 @@
+---
+area: expenses
+summary: Adding and finding expenses and their categories
+keywords: expense, expenses, spent, spend, vendor
+tables: expenses, expense_categories
+---
 # Expenses
 
-What it is: money spent running the factory — each expense has a bill date, a
-category, what it was for, who was paid, quantity × cost each (the total is
-always quantity × cost), paid or unpaid, and an optional pay-by date.
+Money spent running the factory: bill date, category, what it was for, who was paid, quantity × cost each (the total is always quantity × cost), paid or unpaid, and an optional pay-by date.
 
 ## Seeing expenses
-[Expenses](/expenses) lists expenses grouped by bill date, newest first. Chips:
-**This month** (default) · **Last month** · **All** · **Unpaid**, plus one chip
-per category; search matches the description or who was paid. The card at the
-top shows the total for what is listed, how many, and how much is unpaid.
-**⋯ → Download Excel of this list** exports exactly the listed expenses.
+[Expenses](/expenses): grouped by bill date, newest first. Chips **This month** (default) · **Last month** · **All** · **Unpaid**, and one per category; search matches what it was for or who was paid. The top card shows the total, how many and how much is unpaid. **⋯ → Download Excel of this list**.
 
-## Adding or editing an expense
-1. Tap **New** (or tap an expense to edit it).
-2. Fill **Bill date** (Today / Yesterday shortcuts), **Category** (search;
-   **＋ New category** adds one on the spot), **What was it for**, **Paid to**,
-   **Quantity** and **Cost each** — the total is worked out. Choose **Paid** or
-   **Unpaid** and, optionally, a **Pay by** date.
-3. Tap **Save expense**. On an existing expense, **Delete expense** asks first.
+## Adding or editing
+Tap **New** (or tap an expense). Fill **Bill date**, **Category** (search; **＋ New category**), **What was it for**, **Paid to**, **Quantity**, **Cost each** (total worked out), **Paid** or **Unpaid**, optional **Pay by**. Tap **Save expense**. **Delete expense** (on an existing one) asks first.
 
 ## Categories
-**⋯ → Expense categories** (or [Expense categories](/expense-categories)):
-add, rename or delete. A category still used by expenses can't be deleted —
-the app says so.
+[Expense categories](/expense-categories) (or **⋯ → Expense categories**): add, rename, delete. A category used by expenses can't be deleted.
+
+## Tables
+`expenses`: `id`, `bill_date`, `category_id`, `description`, `vendor`, `quantity`, `unit_cost`, `total_cost`, `due_date`, `payment_status` PAID|UNPAID, `is_archived`.
+`expense_categories`: `id`, `name`, `is_archived`.
+For a period's total and categories, prefer period_summary.

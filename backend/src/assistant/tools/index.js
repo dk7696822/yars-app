@@ -6,6 +6,7 @@ const READ_TOOLS = [
   require("./customerSummary"),
   require("./periodSummary"),
   require("./find"),
+  require("./openArea"),
   require("./runQuery"),
 ];
 

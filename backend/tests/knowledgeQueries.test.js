@@ -1,16 +1,16 @@
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
 const db = require("../src/models");
 const { runQuery, closePool } = require("../src/assistant/db/assistantDb");
 const { orderTotal, paymentPosition, volumeSummary } = require("../src/services/orderMath");
 const { createCustomer, createPlateType, createSize, createOrderWithLines } = require("./helpers/orderFactories");
 
-const schemaMd = fs.readFileSync(path.join(__dirname, "../knowledge/schema.md"), "utf8");
+const { loadGuides } = require("../src/assistant/guides");
+
+const guidesText = loadGuides().map((g) => g.body).join("\n");
 const canonical = (name) => {
-  const m = schemaMd.match(new RegExp(`<!-- canonical:${name} -->([\\s\\S]*?)<!-- /canonical:${name} -->`));
-  if (!m) throw new Error(`canonical:${name} block missing from schema.md`);
+  const m = guidesText.match(new RegExp(`<!-- canonical:${name} -->([\\s\\S]*?)<!-- /canonical:${name} -->`));
+  if (!m) throw new Error(`canonical:${name} block missing from the guides`);
   return m[1].trim();
 };
 
@@ -18,7 +18,7 @@ afterAll(async () => {
   await closePool();
 });
 
-describe("Jarvis canonical queries match the app", () => {
+describe("the guides' tested SQL matches the app", () => {
   let customerA;
   let customerB;
 

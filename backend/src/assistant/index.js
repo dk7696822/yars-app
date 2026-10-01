@@ -1,0 +1,40 @@
+"use strict";
+
+const { runAgent } = require("./agentLoop");
+const { getChain } = require("./llm");
+const { allTools, toolsFor } = require("./toolset");
+const { areasFor } = require("./router");
+const { executeTool } = require("./tools/executeTool");
+const { buildSystemPrompt } = require("./prompt/buildSystemPrompt");
+const { fitHistory } = require("./history");
+const { HISTORY_BUDGET } = require("./config");
+const { todayIST } = require("../services/dashboard/dateRanges");
+
+/**
+ * Answer one message. `history`: saved messages, oldest first, the new question
+ * last. `ctx`: { conversationId, userId, requestText } — what a proposal records.
+ * `deps` replaces the model stream, tools, prompt or open areas in tests and evals.
+ */
+const runAssistant = async (history, { onDelta, onStatus, onAction }, ctx = {}, deps = {}) => {
+  const every = deps.tools || allTools();
+  const fitted = fitHistory(history, HISTORY_BUDGET);
+  // The switchboard: areas the question's words point at start open; Sage opens others with open_area.
+  const open = new Set(deps.openAreas || areasFor(fitted[fitted.length - 1]?.content));
+  const current = () => toolsFor(open, every);
+  return runAgent({
+    system: deps.system ?? buildSystemPrompt({ today: todayIST(), actions: deps.actions || [] }),
+    history: fitted,
+    tools: () => current().map((t) => t.declaration),
+    stream: deps.stream || ((request) => getChain().stream(request)),
+    executeTool: async (call) => {
+      const out = await executeTool(current(), call, ctx);
+      if (out.openArea) open.add(out.openArea);
+      return out;
+    },
+    onDelta,
+    onStatus,
+    onAction,
+  });
+};
+
+module.exports = { runAssistant };
