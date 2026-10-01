@@ -116,6 +116,11 @@ describe("executeTool", () => {
     expect(parseArgs(schema, { a: null, list: [{ b: null }] })).toEqual({ list: [{}] });
   });
 
+  test("a missing id tells the model to look it up first", () => {
+    const { recordId } = require("../src/assistant/tools/fields");
+    expect(() => parseArgs(z.object({ customer_id: recordId() }), {})).toThrow("customer_id: missing — call find first to get this id");
+  });
+
   test("money accepts text with ₹ and commas", () => {
     const schema = z.object({ amount: money() });
     expect(["5,000", "₹5000", "5000.00", 5000].map((amount) => parseArgs(schema, { amount }).amount)).toEqual([5000, 5000, 5000, 5000]);

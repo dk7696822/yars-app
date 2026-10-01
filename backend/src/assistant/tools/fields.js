@@ -5,7 +5,7 @@ const { z } = require("zod");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** An id the model got from find — never a name. */
-const recordId = () => z.string().regex(UUID, { error: "use an id from find, not a name" });
+const recordId = () => z.string({ error: "missing — call find first to get this id" }).regex(UUID, { error: "use an id from find, not a name" });
 
 const isoDate = () => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "use a date like 2026-10-01" });
 
