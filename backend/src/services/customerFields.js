@@ -1,6 +1,8 @@
 "use strict";
 
-class CustomerFieldError extends Error {}
+const { ValidationError } = require("../commands/errors");
+
+class CustomerFieldError extends ValidationError {}
 
 const OPTIONAL = ["email", "phone", "address", "city", "gstin"];
 const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;

@@ -1,0 +1,6 @@
+"use strict";
+
+const PAYMENT_METHODS = ["CASH", "BANK_TRANSFER", "UPI", "CHECK", "OTHER"];
+const PAYMENT_TYPES = ["ADVANCE", "PARTIAL", "FINAL", "REFUND"];
+
+module.exports = { PAYMENT_METHODS, PAYMENT_TYPES };

@@ -1,7 +1,9 @@
 "use strict";
 
 /** A client-facing validation failure on one order line → HTTP 400. */
-class LineError extends Error {}
+const { ValidationError } = require("../commands/errors");
+
+class LineError extends ValidationError {}
 
 const isBlank = (v) => v === undefined || v === null || v === "";
 

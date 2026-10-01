@@ -10,6 +10,8 @@ const { buildDirectory, buildCustomerSummary, customerStats } = require("../serv
 const { ListError } = require("../services/lists/orderList");
 const { findSimilar } = require("../services/customerSimilar");
 const { readCustomerBody, CustomerFieldError } = require("../services/customerFields");
+const { httpRoute } = require("../commands/httpRoute");
+const createCustomerCommand = require("../commands/customers/createCustomer");
 
 const liveCustomers = async () =>
   (await Customer.findAll({ where: { is_archived: false }, attributes: ["id", "name", "metadata", "created_at"] })).map((c) => c.toJSON());
@@ -20,17 +22,11 @@ const liveCustomers = async () =>
  * @param {Object} res - Response object
  * @returns {Object} Response object
  */
-const createCustomer = async (req, res) => {
-  try {
-    const { name, patch } = readCustomerBody(req.body);
-    const customer = await Customer.create({ name, metadata: patch });
-    return success(res, 201, "Customer created successfully", customer);
-  } catch (err) {
-    if (err instanceof CustomerFieldError) return error(res, 400, err.message);
-    console.error("Error creating customer:", err);
-    return error(res, 500, "Failed to create customer", err.message);
-  }
-};
+/** Add a customer (POST /customers) — the save is the customers.create command. */
+const createCustomer = httpRoute(createCustomerCommand, {
+  respond: async ({ id }) => ({ status: 201, message: "Customer created successfully", data: await Customer.findByPk(id) }),
+  failMessage: "Failed to create customer",
+});
 
 /**
  * Get all customers
