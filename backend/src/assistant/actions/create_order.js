@@ -41,8 +41,10 @@ module.exports = defineAction({
   trialRunSafe: true,
   command,
   grounded: (args, { userText }) => {
+    // "0.6 per piece" / "0.6 each" is a price for 1 piece, though no "1" was typed.
+    const perPiece = /\b(?:per|a|each|every)\s+(?:piece|pc|pcs|bag)\b|\beach\b/i.test(userText);
     const given = [
-      ...args.lines.flatMap((l) => [l.quantity, l.rate_per_kg, l.price, l.price_per]),
+      ...args.lines.flatMap((l) => [l.quantity, l.rate_per_kg, l.price, l.price_per === 1 && perPiece ? undefined : l.price_per]),
       args.advance,
       args.custom_plate_charge,
     ].filter((v) => v !== undefined);

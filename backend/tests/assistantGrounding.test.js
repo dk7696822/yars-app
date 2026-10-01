@@ -42,6 +42,13 @@ describe("a card only uses values the person gave", () => {
     await expect(propose("create_order", { ...args, lines: [{ ...args.lines[0], quantity: 20 }] }, "order for Bombay, 20 kg of 12 x 16 at 200")).resolves.toMatchObject({ status: "pending" });
   });
 
+  test("'per piece' / 'each' counts as a price for 1 piece", async () => {
+    const args = (per) => ({ customer_id: bombay.id, plate_type_id: plate.id, lines: [{ size_id: size.id, unit: "PIECES", quantity: 2000, price: 0.6, price_per: per }] });
+    await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 per piece")).resolves.toMatchObject({ status: "pending" });
+    await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 60 paise each")).rejects.toThrow(/0.6/);
+    await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 each")).resolves.toMatchObject({ status: "pending" });
+  });
+
   test("a payment amount must be what was said, or the order's full due", async () => {
     await expect(propose("record_payment", { order_id: order.id, amount: 5000 }, "Bombay paid 500")).rejects.toThrow(/5000|5,000/);
     await expect(propose("record_payment", { order_id: order.id, amount: 3300 }, "Bombay paid the full due")).resolves.toMatchObject({ status: "pending" });
