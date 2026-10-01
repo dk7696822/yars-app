@@ -1,11 +1,16 @@
 "use strict";
 
-const { AssistantConversation, AssistantMessage } = require("../models");
+const { AssistantConversation, AssistantMessage, AssistantAction } = require("../models");
 const { success, error } = require("../utils/response");
 const { getPagination, buildPaginatedResponse } = require("../utils/pagination");
 const { runAssistant } = require("../assistant");
 const { formatWait } = require("../assistant/chain");
 const { ASSISTANT_NAME } = require("../assistant/config");
+const { present } = require("../assistant/actionKit/actionService");
+const { withCards } = require("../assistant/history");
+
+const actionsOf = async (conversationId) =>
+  (await AssistantAction.findAll({ where: { conversation_id: conversationId }, order: [["created_at", "ASC"]] })).map(present);
 
 const listConversations = async (req, res) => {
   try {
@@ -41,7 +46,7 @@ const getConversation = async (req, res) => {
       order: [[{ model: AssistantMessage, as: "messages" }, "created_at", "ASC"]],
     });
     if (!conv) return error(res, 404, "Conversation not found");
-    return success(res, 200, "Conversation", conv);
+    return success(res, 200, "Conversation", { ...conv.toJSON(), actions: await actionsOf(conv.id) });
   } catch (err) {
     console.error(err);
     return error(res, 500, "Failed to load conversation");
@@ -88,9 +93,9 @@ const sendMessage = async (req, res) => {
     });
     res.flushHeaders();
 
-    const history = (
-      await AssistantMessage.findAll({ where: { conversation_id: id }, order: [["created_at", "ASC"]] })
-    ).map((m) => ({ role: m.role, content: m.content }));
+    const saved = await AssistantMessage.findAll({ where: { conversation_id: id }, order: [["created_at", "ASC"]] });
+    const history = withCards(saved, await actionsOf(id));
+    const shownActions = [];
 
     let finalText;
     try {
@@ -99,6 +104,10 @@ const sendMessage = async (req, res) => {
         {
           onDelta: (t) => sendEvent(res, "delta", { text: t }),
           onStatus: (t) => sendEvent(res, "status", { text: t }),
+          onAction: (a) => {
+            shownActions.push(a.id);
+            sendEvent(res, "action", a);
+          },
         },
         { conversationId: id, userId: req.user?.sub || null, requestText: text }
       );
@@ -112,7 +121,8 @@ const sendMessage = async (req, res) => {
       return res.end();
     }
 
-    const saved = await AssistantMessage.create({ conversation_id: id, role: "assistant", content: finalText });
+    const reply = await AssistantMessage.create({ conversation_id: id, role: "assistant", content: finalText });
+    if (shownActions.length) await AssistantAction.update({ message_id: reply.id }, { where: { id: shownActions } });
 
     let title;
     if (isFirst) {
@@ -123,7 +133,7 @@ const sendMessage = async (req, res) => {
       await conv.update({ updated_at: new Date() }); // bump ordering
     }
 
-    sendEvent(res, "done", { messageId: saved.id, conversationId: id, ...(title ? { title } : {}) });
+    sendEvent(res, "done", { messageId: reply.id, conversationId: id, ...(title ? { title } : {}) });
     return res.end();
   } catch (err) {
     console.error("sendMessage failed:", err);

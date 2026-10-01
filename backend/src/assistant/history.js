@@ -20,4 +20,12 @@ const fitHistory = (messages, budgetTokens) => {
   return out;
 };
 
-module.exports = { fitHistory };
+/** Each assistant message gets one line per card it showed, so the model knows what was proposed and what happened. */
+const withCards = (messages, actions) =>
+  messages.map((m) => {
+    const cards = actions.filter((a) => a.messageId === m.id);
+    const content = cards.length ? `${m.content}\n${cards.map((a) => `[card: ${a.card.title} — ${a.status}]`).join("\n")}` : m.content;
+    return { role: m.role, content };
+  });
+
+module.exports = { fitHistory, withCards };
