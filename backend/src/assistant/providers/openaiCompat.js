@@ -155,7 +155,7 @@ class OpenAiCompatProvider {
       const header = parseFloat(err.retryAfterHeader);
       let s = Number.isFinite(header) && header > 0 ? Math.ceil(header) : parseDuration(err.message);
       if (s === null) s = DAILY.test(String(err.message)) ? 3600 : 60;
-      return { cooldownS: s, waitable: s <= SHORT_WAIT_S };
+      return { cooldownS: s, waitable: s <= SHORT_WAIT_S, rate: true };
     }
     if (status === 400) return { cooldownS: 0, waitable: false }; // the model fumbled a tool call
     if (status === 401 || status === 403 || status === 404) return { cooldownS: 600, waitable: false };

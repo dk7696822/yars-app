@@ -41,6 +41,29 @@ describe("chain", () => {
     expect(a.calls).toEqual(["m1", "m1"]);
   });
 
+  test("a caller may allow longer waits on rate limits (evals grade one model, not throughput)", async () => {
+    const a = scripted([{ verdict: { cooldownS: 16, waitable: false, rate: true } }, "ok"]);
+    const sleep = jest.fn().mockResolvedValue();
+    const chain = createChain([{ label: "a", provider: a, model: "m1" }], { sleep, log: () => {}, maxWaitS: 60 });
+    expect(await collect(chain.stream({}))).toBe("from m1");
+    expect(sleep).toHaveBeenCalledWith(16000);
+  });
+
+  test("when the caller allows it, keeps waiting while the limit keeps coming back", async () => {
+    const limited = { verdict: { cooldownS: 2, waitable: true, rate: true } };
+    const a = scripted([limited, limited, limited, "ok"]);
+    const sleep = jest.fn().mockResolvedValue();
+    const chain = createChain([{ label: "a", provider: a, model: "m1" }], { sleep, log: () => {}, maxWaitS: 60 });
+    expect(await collect(chain.stream({}))).toBe("from m1");
+    expect(sleep).toHaveBeenCalledTimes(3);
+  });
+
+  test("without that, a 16 s rate limit moves on", async () => {
+    const a = scripted([{ verdict: { cooldownS: 16, waitable: false, rate: true } }]);
+    const chain = createChain([{ label: "a", provider: a, model: "m1" }], { now: () => 0, log: () => {} });
+    await expect(collect(chain.stream({}))).rejects.toBeInstanceOf(QuotaExhaustedError);
+  });
+
   test("anything else moves to the next model and cools the first down", async () => {
     let t = 0;
     const a = scripted([{ verdict: { cooldownS: 600, waitable: false } }]);

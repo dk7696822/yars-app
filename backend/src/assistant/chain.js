@@ -27,9 +27,10 @@ const formatWait = (seconds) => {
  * a short per-minute limit is waited out once on the same model; any other
  * failure rests that entry for the provider's cooldown and tries the next.
  * After the first chunk, errors propagate — replaying a half-streamed answer
- * on another model would duplicate it.
+ * on another model would duplicate it. `maxWaitS` lets a caller (the evals,
+ * which grade one model) wait out longer rate limits instead of moving on.
  */
-const createChain = (entries, { now = Date.now, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.warn } = {}) => {
+const createChain = (entries, { now = Date.now, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = console.warn, maxWaitS = null } = {}) => {
   const restUntil = entries.map(() => 0);
 
   async function* stream(request) {
@@ -42,13 +43,17 @@ const createChain = (entries, { now = Date.now, sleep = (ms) => new Promise((r) 
       }
 
       let opened = null;
-      for (let attempt = 0; attempt < 2 && !opened; attempt += 1) {
+      let waited = 0;
+      for (let attempt = 0; !opened; attempt += 1) {
         const iterator = entry.provider.stream({ ...request, model: entry.model, options: entry.options })[Symbol.asyncIterator]();
         try {
           opened = { iterator, first: await iterator.next() };
         } catch (err) {
-          const { cooldownS, waitable } = entry.provider.classify(err);
-          if (waitable && attempt === 0) {
+          const { cooldownS, waitable, rate } = entry.provider.classify(err);
+          // Production waits out one short limit; a caller with maxWaitS keeps waiting up to that total.
+          const allowed = maxWaitS !== null ? rate && waited + cooldownS <= maxWaitS : waitable && attempt === 0;
+          if (allowed) {
+            waited += cooldownS;
             await sleep(cooldownS * 1000);
             continue;
           }

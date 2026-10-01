@@ -67,11 +67,11 @@ describe("OpenAiCompatProvider", () => {
     const err = (status, message = "", retryAfterHeader) => Object.assign(new Error(message), { status, retryAfterHeader });
 
     test.each([
-      ["per-minute limit with a short retry-after is waited out", err(429, "", "3"), { cooldownS: 3, waitable: true }],
-      ["per-minute limit from the message", err(429, "Please try again in 2.36s"), { cooldownS: 3, waitable: true }],
-      ["daily limit with a long wait", err(429, "tokens per day (TPD): try again in 7m12.3s"), { cooldownS: 433, waitable: false }],
-      ["daily limit with no time given", err(429, "daily free allocation exceeded"), { cooldownS: 3600, waitable: false }],
-      ["too large for this model's minute", err(413, "Request too large"), { cooldownS: 60, waitable: false }],
+      ["per-minute limit with a short retry-after is waited out", err(429, "", "3"), { cooldownS: 3, waitable: true, rate: true }],
+      ["per-minute limit from the message", err(429, "Please try again in 2.36s"), { cooldownS: 3, waitable: true, rate: true }],
+      ["daily limit with a long wait", err(429, "tokens per day (TPD): try again in 7m12.3s"), { cooldownS: 433, waitable: false, rate: true }],
+      ["daily limit with no time given", err(429, "daily free allocation exceeded"), { cooldownS: 3600, waitable: false, rate: true }],
+      ["too large for this model's minute", err(413, "Request too large"), { cooldownS: 60, waitable: false, rate: true }],
       ["a fumbled tool call: try the next model, no cooldown", err(400, "tool_use_failed"), { cooldownS: 0, waitable: false }],
       ["model gone or key wrong", err(404, "model not found"), { cooldownS: 600, waitable: false }],
       ["server error or network", err(undefined, "fetch failed"), { cooldownS: 60, waitable: false }],
