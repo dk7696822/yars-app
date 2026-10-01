@@ -56,9 +56,14 @@ const trialRun = async (action, resolved, input) => {
   }
 };
 
-const propose = async (action, rawArgs, { conversationId, userId = null, requestText = null } = {}) => {
+const propose = async (action, rawArgs, { conversationId, userId = null, requestText = null, userText = null } = {}) => {
   const args = parseArgs(action.input, rawArgs);
   const resolved = await action.resolve(args, { models: db, today: todayIST() });
+  // The card may only use what the person said (checked whenever their words are known).
+  if (action.grounded && userText) {
+    const problem = action.grounded(args, { userText, resolved });
+    if (problem) throw new ActionError(problem);
+  }
   const payload = action.toCommandInput(resolved);
   const card = await trialRun(action, resolved, payload);
   const id = uuidv4();

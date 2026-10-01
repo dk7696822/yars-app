@@ -8,6 +8,7 @@ const { recordId, isoDate, money } = require("../tools/fields");
 const { lineAmount } = require("../../services/orderMath");
 const { rupee, dayText } = require("../format");
 const command = require("../../commands/orders/createOrder");
+const { saidNumber, notSaid } = require("../actionKit/grounding");
 
 const count = () => z.preprocess((v) => (typeof v === "string" ? Number(v.replace(/[,\s]/g, "")) : v), z.number().positive());
 
@@ -39,6 +40,15 @@ module.exports = defineAction({
   }),
   trialRunSafe: true,
   command,
+  grounded: (args, { userText }) => {
+    const given = [
+      ...args.lines.flatMap((l) => [l.quantity, l.rate_per_kg, l.price, l.price_per]),
+      args.advance,
+      args.custom_plate_charge,
+    ].filter((v) => v !== undefined);
+    const invented = given.find((v) => !saidNumber(userText, v));
+    return invented === undefined ? null : notSaid(String(invented));
+  },
   resolve: async (args, { models, today }) => {
     const customer = await models.Customer.findOne({ where: { id: args.customer_id, is_archived: false } });
     if (!customer) throw new ActionError("No customer has that id. Use find with kind customer.");

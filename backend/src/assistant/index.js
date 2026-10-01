@@ -23,13 +23,15 @@ const runAssistant = async (history, { onDelta, onStatus, onAction }, ctx = {}, 
   // The switchboard: areas the question's words point at start open; Sage opens others with open_area.
   const open = new Set(deps.openAreas || areasFor(fitted[fitted.length - 1]?.content));
   const current = () => toolsFor(open, every);
+  // The person's recent words: a card may only use names and numbers from them.
+  const words = { ...ctx, userText: history.filter((m) => m.role === "user").slice(-3).map((m) => m.content).join("\n") };
   return runAgent({
     system: deps.system ?? buildSystemPrompt({ today: todayIST(), actions: deps.actions || ACTIONS }),
     history: fitted,
     tools: () => current().map((t) => t.declaration),
     stream: deps.stream || ((request) => getChain().stream(request)),
     executeTool: async (call) => {
-      const out = await executeTool(current(), call, ctx);
+      const out = await executeTool(current(), call, words);
       if (out.openArea) open.add(out.openArea);
       return out;
     },

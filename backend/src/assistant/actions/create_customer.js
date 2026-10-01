@@ -5,6 +5,7 @@ const { defineAction } = require("../actionKit/defineAction");
 const { findSimilar } = require("../../services/customerSimilar");
 const { mobileStatus, mobileDigits } = require("../../services/phone");
 const command = require("../../commands/customers/createCustomer");
+const { mentions, notSaid } = require("../actionKit/grounding");
 
 const FIELDS = [["name", "Name"], ["phone", "Phone"], ["city", "City"], ["email", "Email"], ["address", "Address"], ["gstin", "GSTIN"]];
 
@@ -32,6 +33,7 @@ module.exports = defineAction({
     const all = (await models.Customer.findAll({ where: { is_archived: false }, attributes: ["id", "name", "metadata"] })).map((c) => c.toJSON());
     return { fields, similar: findSimilar(fields.name, all, null, 3) };
   },
+  grounded: (args, { userText }) => (mentions(userText, args.name) ? null : notSaid(`The name "${args.name}"`)),
   toCommandInput: (r) => r.fields,
   preview: async (r) => ({
     title: `New customer ${r.fields.name}`,

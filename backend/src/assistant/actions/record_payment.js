@@ -9,6 +9,7 @@ const { paymentTypeFor, overpayment } = require("../../services/paymentType");
 const { rupee, dayText, METHOD_LABEL, PAYMENT_TYPE_LABEL } = require("../format");
 const { ASSISTANT_NAME } = require("../config");
 const command = require("../../commands/payments/createPayment");
+const { saidNumber, notSaid } = require("../actionKit/grounding");
 const { PAYMENT_METHODS } = require("../../commands/payments/constants");
 
 module.exports = defineAction({
@@ -27,6 +28,9 @@ module.exports = defineAction({
   }),
   trialRunSafe: true,
   command,
+  // The amount is one the person said, or the order's whole due ("paid the full due").
+  grounded: (args, { userText, resolved }) =>
+    saidNumber(userText, args.amount) || Math.abs(args.amount - resolved.view.row.due) < 0.005 ? null : notSaid(`₹${args.amount}`),
   resolve: async (args, { models, today }) => {
     const view = await orderView(models, args.order_id);
     if (!view) throw new ActionError("No live order has that id. Use find with kind order.");
