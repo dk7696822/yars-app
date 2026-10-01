@@ -4,10 +4,11 @@
  * Live orders with everything money needs. Every include is required:false so
  * no order or line is ever dropped because a size/customer/plate was archived.
  */
-const loadOrders = async (models, where = { is_archived: false }) => {
+const loadOrders = async (models, where = { is_archived: false }, { transaction } = {}) => {
   const { Order, Customer, PlateType, OrderProductSize, ProductSize, Payment } = models;
   const rows = await Order.findAll({
     where,
+    transaction,
     attributes: ["id", "customer_id", "order_date", "created_at", "status", "custom_plate_charge", "round_off_amount", "advance_received", "invoice_id", "is_archived"],
     include: [
       { model: Customer, as: "customer", attributes: ["id", "name", "metadata"], required: false },

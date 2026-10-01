@@ -169,6 +169,7 @@ module.exports = (sequelize, DataTypes) => {
               order_date: order.order_date,
             },
             transaction: options.transaction,
+            actor: options.actor,
           });
         },
 
@@ -211,6 +212,7 @@ module.exports = (sequelize, DataTypes) => {
                 is_soft_delete: action === "DELETE",
               },
               transaction: options.transaction,
+              actor: options.actor,
             });
           }
         },

@@ -143,6 +143,7 @@ module.exports = (sequelize, DataTypes) => {
               after_metrics: afterMetrics,
             },
             transaction: options.transaction,
+            actor: options.actor,
           });
         },
 
@@ -188,6 +189,7 @@ module.exports = (sequelize, DataTypes) => {
               after_metrics: afterMetrics,
             },
             transaction: options.transaction,
+            actor: options.actor,
           });
         },
 
@@ -230,6 +232,7 @@ module.exports = (sequelize, DataTypes) => {
               after_metrics: afterMetrics,
             },
             transaction: options.transaction,
+            actor: options.actor,
           });
         },
       },

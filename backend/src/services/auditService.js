@@ -19,7 +19,14 @@ const { orderTotal, paymentPosition } = require("./orderMath");
  * @param {Object} options.metadata - Additional context
  * @param {Object} options.transaction - Sequelize transaction (optional)
  */
-const createAuditLog = async (AuditLog, { entityType, entityId, action, oldValues, newValues, metadata, transaction }) => {
+/** Who made a change: a screen ("app") unless the save says otherwise. */
+const withSource = (metadata, actor) => ({
+  ...(metadata || {}),
+  source: actor?.source || "app",
+  ...(actor?.actionId ? { assistant_action_id: actor.actionId } : {}),
+});
+
+const createAuditLog = async (AuditLog, { entityType, entityId, action, oldValues, newValues, metadata, transaction, actor }) => {
   try {
     // Calculate changed fields for updates
     let changedFields = null;
@@ -37,7 +44,7 @@ const createAuditLog = async (AuditLog, { entityType, entityId, action, oldValue
         old_values: oldValues,
         new_values: newValues,
         changed_fields: changedFields,
-        metadata,
+        metadata: withSource(metadata, actor),
       },
       { transaction }
     );
