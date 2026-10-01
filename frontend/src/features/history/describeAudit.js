@@ -1,6 +1,7 @@
 import { inr } from "../../utils/dashboardFormat";
 import { addDays, todayIST } from "../../utils/istDate";
 import { ORDER_STATUS } from "../../utils/statusMeta";
+import { ASSISTANT_NAME } from "../../app/assistant";
 
 export const HISTORY_TYPES = [
   { value: "all", label: "All" },
@@ -101,9 +102,15 @@ const describeStock = (r) => {
 };
 
 /** One audit row → one plain sentence. Unknown shapes still show ("<Entity> <action>"). */
-export const describeAudit = (r) => {
+const describeEntry = (r) => {
   if (r.entity_type === "PAYMENT") return describePayment(r);
   if (r.entity_type === "ORDER") return describeOrder(r);
   if (["PURCHASE_ORDER", "GOODS_RECEIPT", "STOCK_ISSUE"].includes(r.entity_type)) return describeStock(r);
   return { kind: "other", title: `${ENTITY_WORD[r.entity_type] || titleCase(r.entity_type)} ${String(r.action || "").toLowerCase()}`.trim(), detail: "", link: null, impact: null, tone: "muted" };
+};
+
+/** One History entry; a change confirmed on an assistant card says so. */
+export const describeAudit = (r) => {
+  const d = describeEntry(r);
+  return r.metadata?.source === "assistant" ? { ...d, via: ASSISTANT_NAME } : d;
 };

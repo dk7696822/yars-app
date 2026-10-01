@@ -6,6 +6,7 @@ import Header from "./Header";
 import BottomNav from "./BottomNav";
 import { PageSkeleton } from "../../ui/States";
 import { routeMeta } from "../../app/routeMeta";
+import { ASSISTANT_NAME } from "../../app/assistant";
 
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -31,10 +32,10 @@ const MainLayout = () => {
       </div>
 
       {!hideNav && !pathname.startsWith("/assistant") && (
-        <button type="button" aria-label="Ask Jarvis" onClick={() => navigate("/assistant")}
+        <button type="button" aria-label={`Ask ${ASSISTANT_NAME}`} onClick={() => navigate("/assistant")}
           className="fixed bottom-24 right-4 z-40 grid h-12 w-12 place-items-center rounded-full bg-brass text-brass-on shadow-lg shadow-black/30 transition active:scale-95 lg:bottom-6">
-          <span aria-hidden="true" className="jarvis-ring absolute inset-0 rounded-full bg-brass/50" />
-          <Sparkles className="jarvis-wiggle relative h-5 w-5" aria-hidden="true" />
+          <span aria-hidden="true" className="assistant-ring absolute inset-0 rounded-full bg-brass/50" />
+          <Sparkles className="assistant-wiggle relative h-5 w-5" aria-hidden="true" />
         </button>
       )}
 

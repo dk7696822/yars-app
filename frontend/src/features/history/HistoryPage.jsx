@@ -23,7 +23,7 @@ function Entry({ row }) {
     <>
       <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${TONE_DOT[d.tone]}`}><Icon className="h-4 w-4" aria-hidden="true" /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-ink">{d.title}</span>
+        <span className="block text-sm font-semibold text-ink">{d.title}{d.via && <span className="ml-1.5 rounded-full bg-brass/15 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-brass">via {d.via}</span>}</span>
         {d.detail && <span className="block truncate text-xs text-ink-2">{d.detail}</span>}
         {impact && <span className="mt-1 block font-num text-xs tabular-nums text-ink-2">{impact} <span className="opacity-70">(at that time)</span></span>}
       </span>

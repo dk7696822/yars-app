@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 import { Plus, ArrowLeft, Trash2, SendHorizontal, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -12,8 +13,12 @@ import ConfirmDialog from "../../ui/ConfirmDialog";
 import { ListSkeleton } from "../../ui/States";
 import { relativeTime } from "../../utils/relativeTime";
 import { useToast } from "../../context/ToastContext";
+import { errorText } from "../../lib/errors";
+import { ASSISTANT_NAME } from "../../app/assistant";
+import ActionCard from "./ActionCard";
+import { attachActions, replaceAction, keysAfter } from "./actionCard";
 
-const SUGGESTIONS = ["Who owes me the most money?", "Which items are low on stock?", "How much did we spend this month?", "How do I record a payment?"];
+const SUGGESTIONS = ["Who owes me the most?", "What were sales this month?", "Record a payment", "Start a new order"];
 
 // Links to app paths become in-app buttons; tables scroll inside the bubble.
 function AssistantMarkdown({ text }) {
@@ -58,20 +63,27 @@ function Hero() {
     <div className="rounded-3xl bg-gradient-to-b from-raised to-surface p-5 shadow-[inset_0_1px_0_rgb(var(--c-brass)/0.25)]">
       <div className="flex items-center gap-4">
         <div className="relative grid h-14 w-14 shrink-0 place-items-center">
-          <span aria-hidden="true" className="jarvis-ring absolute inset-0 rounded-full bg-brass/40" />
-          <div className="jarvis-float relative grid h-12 w-12 place-items-center rounded-full bg-brass text-brass-on"><Sparkles className="h-5 w-5" /></div>
+          <span aria-hidden="true" className="assistant-ring absolute inset-0 rounded-full bg-brass/40" />
+          <div className="assistant-float relative grid h-12 w-12 place-items-center rounded-full bg-brass text-brass-on"><Sparkles className="h-5 w-5" /></div>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-ink">Hi, I’m Jarvis 👋</h1>
-          <p className="text-sm text-ink-2">I can look up your live business data — pending payments, stock levels, orders, expenses — and guide you step-by-step through anything in the app. Ask me in English or Hindi.</p>
+          <h1 className="text-xl font-bold text-ink">Hi, I’m {ASSISTANT_NAME} 👋</h1>
+          <p className="text-sm text-ink-2">Ask about dues, orders, stock or expenses. I can also prepare a payment, a customer, an order or a status change — you check it and tap Confirm.</p>
         </div>
       </div>
     </div>
   );
 }
 
+const withLast = (list, change) => {
+  const next = [...list];
+  next[next.length - 1] = change(next[next.length - 1]);
+  return next;
+};
+
 export default function AssistantPage() {
   const toast = useToast();
+  const qc = useQueryClient();
   const [conversations, setConversations] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [activeId, setActiveId] = useState(null);
@@ -109,9 +121,10 @@ export default function AssistantPage() {
   const openConversation = async (id) => {
     try {
       const res = await assistantAPI.getConversation(id);
+      const conv = res.data.data;
       setActiveId(id);
       setDraft(false);
-      setMessages(res.data.data.messages.map((m) => ({ role: m.role, content: m.content })));
+      setMessages(attachActions(conv.messages.map((m) => ({ id: m.id, role: m.role, content: m.content })), conv.actions || []));
     } catch {
       toast.error("Couldn't open that conversation. Try again.");
     }
@@ -131,6 +144,23 @@ export default function AssistantPage() {
     }
   };
 
+  /** Confirm or cancel a card; the server's answer replaces it in place. */
+  const actOn = async (kind, action) => {
+    try {
+      const res = kind === "confirm" ? await assistantAPI.confirmAction(action.id) : await assistantAPI.cancelAction(action.id);
+      const updated = res.data.data;
+      setMessages((prev) => replaceAction(prev, updated));
+      if (updated.status === "confirmed" && kind === "confirm") {
+        toast.success("Saved");
+        await Promise.all(keysAfter(updated.name).map((queryKey) => qc.invalidateQueries({ queryKey })));
+      } else if (updated.status === "failed") {
+        toast.error(updated.error || "Couldn't save. Ask again.");
+      }
+    } catch (err) {
+      toast.error(errorText(err, "That didn't work. Check your connection and try again."));
+    }
+  };
+
   const send = async (typed) => {
     const text = (typed ?? input).trim();
     if (!text || streaming) return;
@@ -141,27 +171,20 @@ export default function AssistantPage() {
         id = res.data.data.id;
         setActiveId(id);
       } catch {
-        toast.error("Couldn't reach Jarvis. Check your internet and try again.");
+        toast.error(`Couldn't reach ${ASSISTANT_NAME}. Check your internet and try again.`);
         return;
       }
     }
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "auto";
     setStreaming(true);
-    setMessages((prev) => [...prev, { role: "user", content: text }, { role: "assistant", content: "" }]);
+    setMessages((prev) => [...prev, { role: "user", content: text, actions: [] }, { role: "assistant", content: "", actions: [] }]);
     await streamMessage(id, text, {
-      onDelta: (t) => setMessages((prev) => {
-        const next = [...prev];
-        next[next.length - 1] = { ...next[next.length - 1], content: next[next.length - 1].content + t };
-        return next;
-      }),
+      onDelta: (t) => setMessages((prev) => withLast(prev, (m) => ({ ...m, content: m.content + t }))),
       onStatus: (t) => setStatusLine(t),
+      onAction: (a) => setMessages((prev) => withLast(prev, (m) => ({ ...m, actions: [...(m.actions || []), a] }))),
       onDone: () => { setStatusLine(null); loadConversations(); },
-      onError: (msg) => setMessages((prev) => {
-        const next = [...prev];
-        next[next.length - 1] = { role: "assistant", content: `⚠️ ${msg}` };
-        return next;
-      }),
+      onError: (msg) => setMessages((prev) => withLast(prev, (m) => ({ ...m, content: `⚠️ ${msg}` }))),
     });
     setStatusLine(null);
     setStreaming(false);
@@ -189,19 +212,19 @@ export default function AssistantPage() {
   );
 
   const lastMessage = messages[messages.length - 1];
-  const showTyping = streaming && lastMessage?.role === "assistant" && lastMessage.content === "";
+  const showTyping = streaming && lastMessage?.role === "assistant" && lastMessage.content === "" && !lastMessage.actions?.length;
   const chat = (
     <>
       <div className="flex items-center gap-2 border-b border-line/70 px-3 py-3">
         {!desktop && <IconButton label="Back to conversations" onClick={backToList} className="bg-transparent"><ArrowLeft className="h-5 w-5" /></IconButton>}
-        <h1 className="flex-1 font-num text-base font-semibold text-ink">Jarvis</h1>
+        <h1 className="flex-1 font-num text-base font-semibold text-ink">{ASSISTANT_NAME}</h1>
         {desktop && <Button size="sm" variant="secondary" onClick={startNew}><Plus className="h-4 w-4" aria-hidden="true" />New</Button>}
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="space-y-4">
             {desktop && <Hero />}
-            <p className="text-sm text-ink-2">Try asking:</p>
+            <p className="text-sm text-ink-2">Try:</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-line bg-surface px-3.5 py-2 text-left text-sm font-medium text-ink hover:border-brass focus-visible:outline focus-visible:outline-2 focus-visible:outline-brass">{s}</button>
@@ -210,15 +233,18 @@ export default function AssistantPage() {
           </div>
         )}
         {messages.map((m, i) => (m.role === "user" ? (
-          <div key={i} className="flex justify-end"><div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-brass px-4 py-2.5 text-sm text-brass-on">{m.content}</div></div>
+          <div key={m.id || i} className="flex justify-end"><div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-brass px-4 py-2.5 text-sm text-brass-on">{m.content}</div></div>
         ) : (
-          <div key={i} className="flex justify-start">
+          <div key={m.id || i} className="flex justify-start">
             <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-line/70 bg-surface px-4 py-2.5 text-ink">
-              {m.content === "" && showTyping ? (
-                <span className="inline-flex gap-1 py-1" aria-label="Jarvis is typing">
+              {m.content === "" && showTyping && i === messages.length - 1 ? (
+                <span className="inline-flex gap-1 py-1" aria-label={`${ASSISTANT_NAME} is typing`}>
                   {[0, 150, 300].map((d) => <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-2" style={{ animationDelay: `${d}ms` }} />)}
                 </span>
-              ) : <AssistantMarkdown text={m.content} />}
+              ) : m.content ? <AssistantMarkdown text={m.content} /> : null}
+              {(m.actions || []).map((a) => (
+                <ActionCard key={a.id} action={a} onConfirm={(x) => actOn("confirm", x)} onCancel={(x) => actOn("cancel", x)} />
+              ))}
             </div>
           </div>
         )))}
@@ -227,7 +253,7 @@ export default function AssistantPage() {
       </div>
       <div className="bg-canvas px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
         <div className="flex items-end gap-1.5 rounded-[26px] border border-line bg-surface px-2 py-1.5 transition focus-within:border-brass/60 focus-within:ring-2 focus-within:ring-brass/20">
-          <textarea ref={inputRef} value={input} rows={1} placeholder="Ask Jarvis…" aria-label="Message Jarvis"
+          <textarea ref={inputRef} value={input} rows={1} placeholder={`Ask ${ASSISTANT_NAME}…`} aria-label={`Message ${ASSISTANT_NAME}`}
             onChange={(e) => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 96)}px`; }}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !isCoarsePointer) { e.preventDefault(); send(); } }}
             onFocus={() => setTimeout(() => bottomRef.current?.scrollIntoView({ block: "end" }), 300)}

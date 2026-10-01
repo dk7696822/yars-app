@@ -1,3 +1,4 @@
+import { ASSISTANT_NAME } from "./assistant";
 /**
  * Header title, where Back goes, and whether the bottom bar hides. Forms have
  * no header Back: their own footer Back asks before discarding what was typed.
@@ -17,7 +18,7 @@ const ROUTES = [
   [/^\/invoices\/[^/]+$/, { title: "Invoice", back: "/invoices" }],
   [/^\/invoices$/, { title: "Invoices" }],
   [/^\/dues/, { title: "Dues" }],
-  [/^\/assistant/, { title: "Jarvis" }],
+  [/^\/assistant/, { title: ASSISTANT_NAME }],
   [/^\/plate-types\/new$/, { title: "New plate type", hideNav: true }],
   [/^\/plate-types\/edit\/[^/]+$/, { title: "Edit plate type", hideNav: true }],
   [/^\/plate-types/, { title: "Plate types" }],

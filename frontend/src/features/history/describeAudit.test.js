@@ -79,3 +79,13 @@ describe("filters and times", () => {
     expect(timeIST("2026-09-30T09:35:00.000Z")).toBe("3:05 pm");
   });
 });
+
+describe("describeAudit — who made it", () => {
+  test("a change confirmed on a Sage card says so", () => {
+    const d = describeAudit(row({ entity_type: "ORDER", action: "UPDATE", metadata: { source: "assistant", customer_name: "A", previous_status: "PENDING", new_status: "DELIVERED" } }));
+    expect(d.via).toBe("Sage");
+  });
+  test("a change from a screen doesn't", () => {
+    expect(describeAudit(row({ entity_type: "ORDER", action: "UPDATE", metadata: { source: "app", previous_status: "PENDING", new_status: "DELIVERED" } })).via).toBeUndefined();
+  });
+});

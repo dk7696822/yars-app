@@ -1,3 +1,4 @@
+import { ASSISTANT_NAME } from "./assistant";
 import {
   LayoutDashboard, ClipboardList, Users, FileText, HandCoins, Wallet, History, Warehouse, PackageMinus,
   ShoppingCart, Tags, Truck, Ruler, Layers, Sparkles, House,
@@ -25,7 +26,7 @@ export const NAV_GROUPS = [
   { title: "Setup", items: [
     { to: "/product-sizes", label: "Sizes", icon: Ruler },
     { to: "/plate-types", label: "Plate types", icon: Layers },
-    { to: "/assistant", label: "Jarvis", icon: Sparkles },
+    { to: "/assistant", label: ASSISTANT_NAME, icon: Sparkles },
   ] },
 ];
 

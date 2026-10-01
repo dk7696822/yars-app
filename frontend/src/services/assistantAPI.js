@@ -1,5 +1,6 @@
 import axios from "axios";
 import { attachAuthInterceptors, TOKEN_KEY } from "./api";
+import { ASSISTANT_NAME } from "../app/assistant";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -14,6 +15,10 @@ export const assistantAPI = {
   createConversation: () => client.post("/assistant/conversations"),
   getConversation: (id) => client.get(`/assistant/conversations/${id}`),
   deleteConversation: (id) => client.delete(`/assistant/conversations/${id}`),
+  getAction: (id) => client.get(`/assistant/actions/${id}`),
+  confirmAction: (id) => client.post(`/assistant/actions/${id}/confirm`),
+  cancelAction: (id) => client.post(`/assistant/actions/${id}/cancel`),
+  completedInForm: (id, body) => client.post(`/assistant/actions/${id}/completed-in-form`, body),
 };
 
 /**
@@ -21,7 +26,7 @@ export const assistantAPI = {
  * Authorization header). Calls the handlers as events arrive; resolves when
  * the stream ends.
  */
-export const streamMessage = async (conversationId, text, { onDelta, onStatus, onDone, onError }) => {
+export const streamMessage = async (conversationId, text, { onDelta, onStatus, onAction, onDone, onError }) => {
   const token = localStorage.getItem(TOKEN_KEY);
   let response;
   try {
@@ -41,7 +46,7 @@ export const streamMessage = async (conversationId, text, { onDelta, onStatus, o
     return;
   }
   if (!response.ok || !response.body) {
-    onError?.("The assistant is unavailable right now.");
+    onError?.(`${ASSISTANT_NAME} is unavailable right now.`);
     return;
   }
 
@@ -65,6 +70,7 @@ export const streamMessage = async (conversationId, text, { onDelta, onStatus, o
     }
     if (event === "delta") onDelta?.(payload.text);
     else if (event === "status") onStatus?.(payload.text);
+    else if (event === "action") onAction?.(payload);
     else if (event === "done") onDone?.(payload);
     else if (event === "error") onError?.(payload.message);
   };
