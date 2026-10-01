@@ -2,15 +2,16 @@
 
 const { Order, Customer, PlateType, ProductSize, OrderProductSize, Payment, Invoice, sequelize } = require("../models");
 const { lineAmount, lineKg, orderTotal, paymentPosition, volumeSummary } = require("../services/orderMath");
-const { buildLineRow } = require("../services/orderLines");
 const { orderFacts, rupees } = require("../services/orderFacts");
-const { LineError } = require("../services/pieceFields");
 const { success, error } = require("../utils/response");
 const { Op } = require("sequelize");
 const { todayIST } = require("../services/dashboard/dateRanges");
 const models = require("../models");
 const { loadOrders } = require("../services/dashboard/ledger");
 const { buildOrderList, ListError } = require("../services/lists/orderList");
+const { httpRoute } = require("../commands/httpRoute");
+const createOrderCommand = require("../commands/orders/createOrder");
+const updateOrderCommand = require("../commands/orders/updateOrder");
 
 /** Attach computed money + volume fields to a plain order (shared by list and detail). */
 const withComputedFields = (orderData) => {
@@ -56,82 +57,11 @@ const orderIncludes = () => [
   { model: Invoice, as: "invoice", attributes: ["id", "invoice_number"], required: false },
 ];
 
-/** Validate + create every line of an order inside `transaction`. Throws LineError. */
-const createLines = async (orderId, productSizes, transaction) => {
-  for (const ps of productSizes) {
-    if (!ps.product_size_id) throw new LineError("Product size ID and quantity are required");
-    const productSize = await ProductSize.findByPk(ps.product_size_id, { transaction });
-    if (!productSize) throw new LineError("Invalid product size ID");
-    const row = buildLineRow(ps, productSize);
-    await OrderProductSize.create({ order_id: orderId, product_size_id: ps.product_size_id, ...row }, { transaction });
-  }
-};
-
-/**
- * Create a new order
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
-const createOrder = async (req, res) => {
-  const transaction = await sequelize.transaction();
-
-  try {
-    const { customer_id, order_date, advance_received, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
-
-    // Validate required fields
-    if (!customer_id || !plate_type_id || !product_sizes || !product_sizes.length) {
-      await transaction.rollback();
-      return error(res, 400, "Missing required fields");
-    }
-
-    // Create the order
-    const order = await Order.create(
-      {
-        customer_id,
-        order_date: order_date || todayIST(),
-        advance_received: advance_received || 0,
-        plate_type_id,
-        status: status || "PENDING",
-        custom_plate_charge: custom_plate_charge ? parseFloat(custom_plate_charge) : null,
-        round_off_amount: round_off_amount ? parseFloat(round_off_amount) : 0,
-      },
-      { transaction }
-    );
-
-    // If advance payment was provided, create a payment record
-    if (advance_received && parseFloat(advance_received) > 0) {
-      await Payment.create(
-        {
-          order_id: order.id,
-          customer_id,
-          amount: parseFloat(advance_received),
-          payment_date: order_date || todayIST(),
-          payment_method: "CASH", // Default to cash, can be updated later
-          payment_type: "ADVANCE",
-          notes: "Advance payment at order creation",
-        },
-        { transaction }
-      );
-    }
-
-    await createLines(order.id, product_sizes, transaction);
-
-    await transaction.commit();
-
-    // Fetch the complete order with associations
-    const createdOrder = await Order.findByPk(order.id, { include: orderIncludes() });
-
-    return success(res, 201, "Order created successfully", createdOrder);
-  } catch (err) {
-    await transaction.rollback();
-    if (err instanceof LineError) {
-      return error(res, 400, err.message);
-    }
-    console.error("Error creating order:", err);
-    return error(res, 500, "Failed to create order", err.message);
-  }
-};
+/** Create an order (POST /orders) — the save is the orders.create command. */
+const createOrder = httpRoute(createOrderCommand, {
+  respond: async ({ id }) => ({ status: 201, message: "Order created successfully", data: await Order.findByPk(id, { include: orderIncludes() }) }),
+  failMessage: "Failed to create order",
+});
 
 /**
  * Get all orders with filtering
@@ -242,78 +172,16 @@ const getOrderById = async (req, res) => {
   }
 };
 
-/**
- * Update an order
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- * @returns {Object} Response object
- */
-const updateOrder = async (req, res) => {
-  const transaction = await sequelize.transaction();
-
-  try {
-    const { id } = req.params;
-    const { customer_id, order_date, plate_type_id, product_sizes, status, custom_plate_charge, round_off_amount } = req.body;
-
-    // Check if order exists
-    const order = await Order.findOne({
-      where: {
-        id,
-        is_archived: false,
-      },
-    });
-    if (!order) {
-      await transaction.rollback();
-      return error(res, 404, "Order not found");
-    }
-
-    // Update order details. The advance is set only when an order is created;
-    // later advances or corrections are recorded as payments — editing never
-    // rewrites them.
-    await order.update(
-      {
-        customer_id: customer_id || order.customer_id,
-        order_date: order_date || order.order_date,
-        plate_type_id: plate_type_id || order.plate_type_id,
-        status: status || order.status,
-        custom_plate_charge: custom_plate_charge !== undefined ? (custom_plate_charge ? parseFloat(custom_plate_charge) : null) : order.custom_plate_charge,
-        round_off_amount: round_off_amount !== undefined ? parseFloat(round_off_amount || 0) : order.round_off_amount,
-      },
-      { transaction }
-    );
-
-    // Update product sizes if provided
-    if (product_sizes && product_sizes.length > 0) {
-      // Delete existing order product sizes
-      await OrderProductSize.destroy({
-        where: { order_id: id },
-        transaction,
-      });
-
-      await createLines(id, product_sizes, transaction);
-    }
-
-    await transaction.commit();
-
-    // Fetch the updated order with associations
-    const updatedOrder = await Order.findOne({
-      where: {
-        id,
-        is_archived: false,
-      },
-      include: orderIncludes(),
-    });
-
-    return success(res, 200, "Order updated successfully", updatedOrder);
-  } catch (err) {
-    await transaction.rollback();
-    if (err instanceof LineError) {
-      return error(res, 400, err.message);
-    }
-    console.error("Error updating order:", err);
-    return error(res, 500, "Failed to update order", err.message);
-  }
-};
+/** Update an order (PUT /orders/:id) — the save is the orders.update command. */
+const updateOrder = httpRoute(updateOrderCommand, {
+  toInput: (req) => ({ ...req.body, id: req.params.id }),
+  respond: async ({ id }) => ({
+    status: 200,
+    message: "Order updated successfully",
+    data: await Order.findOne({ where: { id, is_archived: false }, include: orderIncludes() }),
+  }),
+  failMessage: "Failed to update order",
+});
 
 /**
  * Delete an order
