@@ -16,7 +16,7 @@ const call = async (fn, req = {}) => {
 };
 
 const canonicalPending = () => {
-  const md = fs.readFileSync(path.join(__dirname, "../knowledge/schema.md"), "utf8");
+  const md = fs.readFileSync(path.join(__dirname, "../knowledge/money-sql.md"), "utf8");
   return md.match(/<!-- canonical:pending -->([\s\S]*?)<!-- \/canonical:pending -->/)[1].trim();
 };
 
@@ -44,7 +44,7 @@ describe("dashboard endpoints", () => {
     await gone.update({ is_archived: true });
   });
 
-  test("overview reconciles with the Orders screen and Jarvis's pending query", async () => {
+  test("overview reconciles with the Orders screen and the guides' pending query", async () => {
     const { status, body } = await call(overview);
     expect(status).toBe(200);
     const o = body.data;

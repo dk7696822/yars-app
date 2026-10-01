@@ -20,7 +20,7 @@ const { invoiceMoneyFor } = require("../src/services/invoiceMoney");
 const paise = (x) => Math.round(Number(x) * 100);
 
 const canonicalPending = () => {
-  const md = fs.readFileSync(path.join(__dirname, "../knowledge/schema.md"), "utf8");
+  const md = fs.readFileSync(path.join(__dirname, "../knowledge/money-sql.md"), "utf8");
   return md.match(/<!-- canonical:pending -->([\s\S]*?)<!-- \/canonical:pending -->/)[1].trim();
 };
 
