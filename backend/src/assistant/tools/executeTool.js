@@ -19,6 +19,7 @@ const executeTool = async (tools, call, ctx) => {
     return typeof out === "string" ? { text: cap(out) } : { ...out, text: cap(out.text) };
   } catch (err) {
     if (!err.expected) console.error(`assistant tool ${call.name} failed:`, err);
+    else if (process.env.ASSISTANT_DEBUG) console.warn(`assistant tool ${call.name} said:`, err.message);
     return { text: errorText(err.message) };
   }
 };

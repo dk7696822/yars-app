@@ -38,7 +38,19 @@ const RAW_ID = (text) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 const isBroken = (text, cardsShown, validate) =>
   LEAK.test(text) || LOOP.test(text) || RAW_ID(text) || (CLAIMS_CARD(text) && cardsShown === 0) || !validate(text);
 
-const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS, validate = () => true }) => {
+const runAgent = async (opts) => {
+  // Whatever the run ends with, the person sees it: a fallback is streamed like any answer.
+  let streamed = "";
+  const onDelta = (t) => {
+    streamed += t;
+    opts.onDelta(t);
+  };
+  const final = await runRounds({ ...opts, onDelta });
+  if (!streamed) onDelta(final); // nothing shown yet: the fallback is the answer
+  return final;
+};
+
+const runRounds = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS, validate = () => true }) => {
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
   let finalText = "";
   // A card still pending from earlier in the conversation may be pointed to.

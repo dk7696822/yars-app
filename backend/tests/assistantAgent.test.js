@@ -63,7 +63,9 @@ describe("agent loop", () => {
   });
 
   test("an empty answer never reaches the person blank", async () => {
-    expect(await runAgent(base({ stream: fakeStream([[]]), executeTool: jest.fn() }))).toMatch(/couldn't come up with an answer/);
+    const deltas = [];
+    expect(await runAgent(base({ stream: fakeStream([[]]), executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }))).toMatch(/couldn't come up with an answer/);
+    expect(deltas).toHaveLength(1);
   });
 });
 
@@ -121,7 +123,7 @@ describe("broken replies never reach the person", () => {
     const deltas = [];
     const final = await runAgent(base({ stream, executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }));
     expect(final).toMatch(/couldn't come up with an answer/);
-    expect(deltas.join("")).not.toMatch(/analysis/);
+    expect(deltas.join("")).toBe(final); // the person sees the fallback, not an empty bubble
   });
 });
 
