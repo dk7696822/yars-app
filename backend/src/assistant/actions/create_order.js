@@ -14,7 +14,7 @@ const count = () => z.preprocess((v) => (typeof v === "string" ? Number(v.replac
 
 const lineText = (l) =>
   l.unit === "PIECES"
-    ? `${l.quantity_pieces} pcs at ${rupee(l.price_amount)} per ${l.price_pieces_count} = ${rupee(lineAmount(l))}`
+    ? `${l.quantity_pieces} pcs at ${rupee(l.price_amount)} per ${Number(l.price_pieces_count) === 1 ? "piece" : l.price_pieces_count} = ${rupee(lineAmount(l))}`
     : `${Number(l.quantity_kg)} kg × ${rupee(l.rate_per_kg)} = ${rupee(lineAmount(l))}`;
 
 module.exports = defineAction({

@@ -51,7 +51,8 @@ describe("a card only uses values the person gave", () => {
 
   test("'per piece' / 'each' counts as a price for 1 piece", async () => {
     const args = (per) => ({ customer_id: bombay.id, plate_type_id: plate.id, lines: [{ size_id: size.id, unit: "PIECES", quantity: 2000, price: 0.6, price_per: per }] });
-    await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 per piece")).resolves.toMatchObject({ status: "pending" });
+    const shown = await propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 per piece");
+    expect(shown.card.rows.find((r) => r.label === "12 x 16").value).toBe("2000 pcs at ₹0.6 per piece = ₹1,200");
     await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 60 paise each")).rejects.toThrow(/0.6/);
     await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 each")).resolves.toMatchObject({ status: "pending" });
   });
