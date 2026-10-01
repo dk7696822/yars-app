@@ -131,7 +131,10 @@ All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
 
 | Tool | Kind | Does |
 |---|---|---|
-| `run_query(sql)` | read | As today: SELECT-only role, `sqlGuard`, LIMIT 200, 5 s timeout. |
+| `dues()` | read | Who owes what: total to collect, credit, and each customer owing with amount, orders and oldest unpaid date. Same code as the dashboard (`computeOverview`). |
+| `customer_summary(customer_id)` | read | One customer: owes, credit, total business, received, orders (date, sizes, total, received, due, status), recent payments. Same code as the customer page (`buildCustomerSummary`). |
+| `period_summary(preset \| from,to)` | read | Sales, collected, kg sold, expenses by category for a period (`this_month`, `last_month`, `this_fy`, `all`, or custom dates). Same code as the dashboard period card (`computePeriod`). |
+| `run_query(sql)` | read | Fallback for anything the typed tools don't cover. As today: SELECT-only role, `sqlGuard`, LIMIT 200, 5 s timeout. |
 | `read_guide(area)` | read | Returns one guide. |
 | `find(kind, text, …)` | read | `customer` (uses `customerSimilar` scoring plus phone match), `product_size` (label like "12 x 16"), `plate_type`, `order` (a customer's orders, newest first, with due, label = date + sizes). Returns a few compact lines with IDs. |
 | `propose_<action>(…)` | action | One per registered action. Returns a one-line summary to the model and a card to the app. |
@@ -139,6 +142,11 @@ All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
 Every tool is declared once with a Zod schema; the tool declaration sent to
 the model is generated from it (`z.toJSONSchema`) and the same schema checks
 the model's arguments.
+
+The core instructions tell the model to use the typed read tools for dues,
+a customer's position and period totals, and `run_query` only for other
+questions. Figures from typed tools are identical to the screens by
+construction.
 
 ## 4. Actions (the registry)
 
@@ -152,7 +160,8 @@ module.exports = defineAction({
   input: z.object({ order_id: z.string().uuid(), amount: z.number().positive(), … }),
   resolve: async (input, ctx) => {…},   // load records; throw ActionError for the model to relay
   preview: async (resolved, ctx) => ({ title, rows, warnings }),
-  execute: async (resolved, { transaction, actor }) => {…}, // shared save function
+  command: require("../../commands/payments/createPayment"),  // the save the screens use
+  toCommandInput: (resolved) => ({ order_id, amount, … }),     // execute = runCommand(command, toCommandInput(resolved), ctx)
   touches: (resolved) => [{ model: "Order", id }],          // for the changed-since check
   formLink: (resolved) => `/orders/${id}?pay=assistant:${actionId}`,
   evals: [ { ask: "Sharma Traders paid 5000 by UPI", expect: { tool: "propose_record_payment", args: { amount: 5000, payment_method: "UPI" } } }, … ],
@@ -163,20 +172,34 @@ module.exports = defineAction({
 declarations, the action index in the core prompt, and the eval set.
 **Adding a feature to Sage = one action file + its guide. No app code.**
 
-### Shared save functions
+### Commands: one definition for every save
 
-The save logic for the phase-1 actions moves from controllers into
-`backend/src/services/writes/`:
+A **command** is the single definition of one save, used by both the
+screens' API routes and Sage's actions (`backend/src/commands/`):
 
-- `payments.js`: `createPayment(input, { transaction, actor })`
-- `orders.js`: `createOrder(input, { transaction, actor })`,
-  `setOrderStatus(id, status, { transaction, actor })`
-- `customers.js`: `createCustomer(input, { transaction, actor })`
+```js
+module.exports = defineCommand({
+  name: "payments.create",
+  input: z.object({ … }),                 // Zod: shape + types, with the app's exact messages
+  run: async (input, { transaction, actor }) => { … return { id }; },
+});
+```
 
-They throw typed errors (`ValidationError`, `NotFoundError`) instead of
-writing HTTP responses. The controllers become thin wrappers that map those
-errors to the same status codes and messages as today. The existing backend
-suite must stay green with no test changes other than imports.
+- `runCommand(command, rawInput, { actor, transaction? })` checks the input,
+  opens a transaction (or joins the caller's), runs, commits or rolls back.
+- Errors are typed: `ValidationError` (400), `NotFoundError` (404). Business
+  checks keep today's exact messages ("Missing required fields…", "A refund
+  can't be more than received (₹600)", line errors from `buildLineRow`).
+- `httpRoute(command, { toInput, respond })` turns a command into an Express
+  handler: `toInput(req)` builds the input, `respond` loads and returns the
+  same response body as today (status 201/200, same message, same
+  includes). The controller functions keep their names
+  (`createPayment`, `createOrder`, `updateOrder`, `createCustomer`) so the
+  existing tests call them unchanged and guard that nothing changed.
+- Phase 1 moves: `payments.create`, `orders.create`, `orders.update` (the
+  order screen's status chips use it), `customers.create`. Other areas move
+  when their Sage phase comes; a guard test lists which write routes are
+  still plain controllers.
 
 `actor` = `{ userId, source: "app" | "assistant", actionId? }`. It is
 passed through Sequelize options to the model hooks, which add
@@ -290,8 +313,10 @@ assistant_messages, null until the reply is saved · `user_id` · `name` ·
 
 ## 10. Testing
 
-- **Backend (Jest, Docker test DB):** each shared save function (moved code,
-  existing tests); each action's resolve/preview/execute; trial run leaves
+- **Backend (Jest, Docker test DB):** each command (the existing controller
+  tests run unchanged against the command-backed routes); each action's
+  resolve/preview/execute; each typed read tool returns the same figures as
+  its screen endpoint; trial run leaves
   every table unchanged (row counts and a checksum of the touched rows);
   confirm once / twice; expired; changed since proposal; audit metadata
   `source: "assistant"`; chain moves past a 404 model; guard tests above.
