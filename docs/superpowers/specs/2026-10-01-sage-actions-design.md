@@ -66,29 +66,44 @@ fail when a new feature is forgotten.
 
 All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
 
-| Order | Model | Provider | Free limit (approx., Sep 2026) |
+| Order | Model | Provider | Free limit |
 |---|---|---|---|
-| 1 | `openai/gpt-oss-120b` | Groq | 30 req/min, 1k req/day, 200k tokens/day |
-| 2 | Qwen 3.8 27B | Groq (separate quota) | 200k tokens/day |
-| 3 | `@cf/openai/gpt-oss-120b` | Cloudflare Workers AI | 10k neurons/day ≈ 150–300k tokens |
+| 1 | `openai/gpt-oss-120b` | Groq | 1,000 req/day, **8,000 tokens/min** (measured 2026-10-01); ~200k tokens/day (docs) |
+| 2 | `qwen/qwen3.8-27b` | Groq (own quota) | same as above (measured) |
+| 3 | `@cf/openai/gpt-oss-120b` | Cloudflare Workers AI | 10k neurons/day ≈ 150–300k tokens; no per-minute token cap |
+| 4 | `openai/gpt-oss-20b` | Groq (own quota) | same as Groq above (measured) |
 
-- Exact model IDs and limits are checked against each provider's model list
-  when implementing; the chain lists them in one config file.
-- Env: `GROQ_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`. A
-  provider without its key is left out (as today). The owner creates the
-  Cloudflare account and token and sets them on Cloud Run.
+- Measured on the production Groq key (2026-10-01): the three model IDs
+  above exist; `llama-3.3-70b-versatile` (today's Groq entry) no longer
+  does. The free tier has **no prompt caching** (a repeated 1.7k-token
+  prompt counted in full both times) and is fast (0.65 s for that call).
+- The chain lists the models in one config file.
+- Env: `GROQ_API_KEY` (already set on Cloud Run), `CLOUDFLARE_ACCOUNT_ID`,
+  `CLOUDFLARE_API_TOKEN`. A provider without its key is left out (as today).
+  The owner creates the Cloudflare account and token and adds them to
+  `backend/.env` (git-ignored); the deploy copies them to Cloud Run.
+  `GEMINI_API_KEY` and `MISTRAL_API_KEY` are removed from Cloud Run.
 - Removed: Gemini adapter, `@google/genai`, Mistral entries.
 - Chain fix: a provider error before the first streamed chunk that is not
   the user's fault (model not found, 5xx, timeout, quota) cools that entry
   down and moves on. Errors after the first chunk still stop (no duplicated
   output).
-- Budget: ~7k tokens per round, ~2.5 rounds per message ≈ 40–50 messages per
-  day across the chain. When every entry is cooling down, the user sees when
-  it comes back (as today).
+- **Token budget, set by Groq's 8k tokens/minute:** each round's input stays
+  ≤ 3k tokens, so a normal two-round message (~6–7k) fits one model's minute.
+  Core instructions + tool declarations ≤ 2k; each guide ≤ 800; the
+  conversation history sent is trimmed to the newest messages that fit
+  (older ones stay saved, and each card is sent as a one-line summary).
+- **Per-minute vs per-day limits are handled differently.** A 429 whose
+  `retry-after` is ≤ 8 s waits and retries the same model (keeps one model
+  per answer). A longer per-minute wait moves to the next entry with a
+  cooldown equal to `retry-after` (no 120 s floor). A daily limit keeps the
+  long cooldown.
+- Capacity: ≈ 30 messages/day per Groq model × 3 + Cloudflare ≈ 100+ per
+  day. When every entry is cooling down, the user sees when it comes back.
 
 ## 2. Prompt: small core + guides on demand
 
-- **Core instructions** (`backend/src/assistant/prompt/core.md`, ~2k tokens):
+- **Core instructions** (`backend/src/assistant/prompt/core.md`, ~1.2k tokens):
   who Sage is, money format, read-only SQL rules, how to use `find`, the
   propose/confirm rules (below), "never say something is saved", "never
   delete — link instead", "English only", and an auto-generated list of
@@ -109,7 +124,8 @@ All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
 - **`read_guide(area)`** returns one guide. The model reads the guide for an
   area before writing SQL about it.
 - **Prompt budget test:** core instructions + all tool declarations must stay
-  ≤ 5k tokens (estimated as characters ÷ 4). Fails the suite if exceeded.
+  ≤ 2k tokens, and each guide ≤ 800 tokens (estimated as characters ÷ 4).
+  Fails the suite if exceeded.
 
 ## 3. Tools
 
@@ -253,7 +269,7 @@ assistant_messages, null until the reply is saved · `user_id` · `name` ·
   fails the suite until someone decides.
 - **Contract:** every action has a guide for its `area`, ≥ 3 `evals`, a Zod
   input, and a `trialRunSafe` decision.
-- **Prompt budget:** core + tool declarations ≤ 5k tokens.
+- **Prompt budget:** core + tool declarations ≤ 2k tokens; each guide ≤ 800.
 
 ## 8. Learning loop (free, no training)
 
