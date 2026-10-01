@@ -34,9 +34,15 @@ const LOOP = /\b(\w+)\b(?:\W+\1\b){5,}/i;
 // "tap Confirm on the card" when no card exists; a how-to's "tap Confirm to save" is fine.
 const CLAIMS_CARD = (text) => /\btap\W{0,3}confirm/i.test(text) && /\bcards?\b/i.test(text);
 // A record id shown to the person (outside a link's address).
-const RAW_ID = (text) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(text.replace(/\]\([^)]*\)/g, "]"));
-const isBroken = (text, cardsShown, validate) =>
-  LEAK.test(text) || LOOP.test(text) || RAW_ID(text) || (CLAIMS_CARD(text) && cardsShown === 0) || !validate(text);
+// Models often write ids with non-breaking or other dashes (U+2010–U+2015, U+2212).
+const D = "[-\\u2010-\\u2015\\u2212]";
+const ID_PATTERN = new RegExp(`[0-9a-f]{8}${D}[0-9a-f]{4}${D}[0-9a-f]{4}${D}[0-9a-f]{4}${D}[0-9a-f]{12}`, "i");
+const RAW_ID = (text) => ID_PATTERN.test(text.replace(/\]\([^)]*\)/g, "]"));
+// After a card in this answer, "order created" / "has been saved" is false: nothing is saved before Confirm.
+const SAYS_DONE = /\b(?:is|has been|was|been|now)\s+(?:saved|created|recorded|added|updated|done)\b|\b(?:order|payment|customer|status)\s+(?:created|saved|recorded|added|updated)\b/i;
+const isBroken = (text, cardsShown, validate, cardsThisAnswer = 0) =>
+  LEAK.test(text) || LOOP.test(text) || RAW_ID(text) || (CLAIMS_CARD(text) && cardsShown === 0) ||
+  (cardsThisAnswer > 0 && SAYS_DONE.test(text)) || !validate(text);
 
 const runAgent = async (opts) => {
   // Whatever the run ends with, the person sees it: a fallback is streamed like any answer.
@@ -56,6 +62,7 @@ const runRounds = async ({ system, history, tools, stream, executeTool, onDelta,
   // A card still pending from earlier in the conversation may be pointed to.
   let cardsShown = history.some((m) => /\[card: .* — pending\]/.test(m.content)) ? 1 : 0;
   let retried = false;
+  let cardsThisAnswer = 0;
 
   for (let round = 0; round <= maxRounds; round += 1) {
     const allowTools = round < maxRounds;
@@ -68,7 +75,7 @@ const runRounds = async ({ system, history, tools, stream, executeTool, onDelta,
     }
 
     // A round's text is shown only once it is known to be clean.
-    if (roundText && isBroken(roundText, cardsShown, validate)) {
+    if (roundText && isBroken(roundText, cardsShown, validate, cardsThisAnswer)) {
       console.warn("assistant: hid a broken reply:", (process.env.ASSISTANT_DEBUG ? roundText : roundText.slice(0, 300)).replace(/\s+/g, " "));
       if (calls.length === 0) {
         if (retried) return finalText || FALLBACK;
@@ -91,6 +98,7 @@ const runRounds = async ({ system, history, tools, stream, executeTool, onDelta,
       const out = await executeTool(call);
       if (out.action) {
         cardsShown += 1;
+        cardsThisAnswer += 1;
         onAction(out.action);
       }
       results.push({ id: call.id, name: call.name, result: out.text });

@@ -84,6 +84,21 @@ describe("broken replies never reach the person", () => {
   test("a word repeated over and over counts as broken", garbled("The user wants dues dues dues dues dues dues dues"));
   test("claiming a card that was never made counts as broken", garbled("I'll record ₹500. Please tap **Confirm** on the card that appears."));
 
+  test("after a card, saying it is already created/saved counts as broken", async () => {
+    const stream = fakeStream([
+      [{ toolCalls: [{ id: "c1", name: "propose_x", args: {} }] }],
+      [{ text: "New order created for Baba Shoes – tap **Confirm** on the card." }],
+      [{ text: "Here is the order — tap **Confirm** to save it." }],
+    ]);
+    const final = await runAgent(base({ stream, executeTool: jest.fn().mockResolvedValue({ text: "Card shown", action: { id: "a1" } }) }));
+    expect(final).toBe("Here is the order — tap **Confirm** to save it.");
+  });
+
+  test("talking about things created in the past is fine when no card was made", async () => {
+    const stream = fakeStream([[{ text: "12 orders were created this month; the last payment was recorded on 3 Sep." }]]);
+    expect(await runAgent(base({ stream, executeTool: jest.fn() }))).toMatch(/^12 orders/);
+  });
+
   test("a card that was made can be mentioned", async () => {
     const stream = fakeStream([[{ toolCalls: [{ id: "c1", name: "propose_x", args: {} }] }], [{ text: "Tap **Confirm** to add Om Traders." }]]);
     const final = await runAgent(base({ stream, executeTool: jest.fn().mockResolvedValue({ text: "Card shown", action: { id: "a1" } }) }));
@@ -112,6 +127,8 @@ describe("broken replies never reach the person", () => {
   });
 
   test("a raw id in the text counts as broken", garbled("I found **Relax Mens Wear** (ID b06b6f82-f086-4fe4-a023-e46e9498d33a)."));
+
+  test("an id written with non-breaking hyphens is still caught", garbled("Only one order has a due: **cf9f8ca8\u2011ece4\u20114e31\u2011b5bd\u2011d39c109324cb**."));
 
   test("an id inside a link's address is fine", async () => {
     const stream = fakeStream([[{ text: "[Open the order](/orders/b06b6f82-f086-4fe4-a023-e46e9498d33a)" }]]);
