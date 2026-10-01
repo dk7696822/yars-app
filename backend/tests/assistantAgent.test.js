@@ -109,6 +109,13 @@ describe("broken replies never reach the person", () => {
     expect(final).toBe("See [Orders](/orders).");
   });
 
+  test("a raw id in the text counts as broken", garbled("I found **Relax Mens Wear** (ID b06b6f82-f086-4fe4-a023-e46e9498d33a)."));
+
+  test("an id inside a link's address is fine", async () => {
+    const stream = fakeStream([[{ text: "[Open the order](/orders/b06b6f82-f086-4fe4-a023-e46e9498d33a)" }]]);
+    expect(await runAgent(base({ stream, executeTool: jest.fn() }))).toMatch(/^\[Open the order\]/);
+  });
+
   test("broken twice: the person gets the plain fallback, not the garbage", async () => {
     const stream = fakeStream([[{ text: "analysis: hmm" }], [{ text: "analysis: hmm again" }]]);
     const deltas = [];

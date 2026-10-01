@@ -33,7 +33,10 @@ const LEAK = /<tool_call>|<function=|<\|channel\|>|^\s*analysis\b|\bassistant(?:
 const LOOP = /\b(\w+)\b(?:\W+\1\b){5,}/i;
 // "tap Confirm on the card" when no card exists; a how-to's "tap Confirm to save" is fine.
 const CLAIMS_CARD = (text) => /\btap\W{0,3}confirm/i.test(text) && /\bcards?\b/i.test(text);
-const isBroken = (text, cardsShown, validate) => LEAK.test(text) || LOOP.test(text) || (CLAIMS_CARD(text) && cardsShown === 0) || !validate(text);
+// A record id shown to the person (outside a link's address).
+const RAW_ID = (text) => /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(text.replace(/\]\([^)]*\)/g, "]"));
+const isBroken = (text, cardsShown, validate) =>
+  LEAK.test(text) || LOOP.test(text) || RAW_ID(text) || (CLAIMS_CARD(text) && cardsShown === 0) || !validate(text);
 
 const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS, validate = () => true }) => {
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
