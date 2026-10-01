@@ -40,11 +40,23 @@ module.exports = defineAction({
   }),
   trialRunSafe: true,
   command,
-  grounded: (args, { userText }) => {
+  grounded: (args, { userText, resolved }) => {
     // "0.6 per piece" / "0.6 each" is a price for 1 piece, though no "1" was typed.
     const perPiece = /\b(?:per|a|each|every)\s+(?:piece|pc|pcs|bag)\b|\beach\b/i.test(userText);
+    // Spelling out the size's own saved rate or piece price is not inventing one.
+    const saved = (l) => resolved.saved[l.size_id] || {};
+    const same = (a, b) => b !== null && b !== undefined && Math.abs(Number(a) - Number(b)) < 0.005;
     const given = [
-      ...args.lines.flatMap((l) => [l.quantity, l.rate_per_kg, l.price, l.price_per === 1 && perPiece ? undefined : l.price_per]),
+      ...args.lines.flatMap((l) => {
+        const s = saved(l);
+        const savedPrice = same(l.price, s.price) && same(l.price_per, s.per);
+        return [
+          l.quantity,
+          same(l.rate_per_kg, s.rate) ? undefined : l.rate_per_kg,
+          savedPrice ? undefined : l.price,
+          savedPrice || (l.price_per === 1 && perPiece) ? undefined : l.price_per,
+        ];
+      }),
       args.advance,
       args.custom_plate_charge,
     ].filter((v) => v !== undefined);
@@ -58,10 +70,16 @@ module.exports = defineAction({
     if (!plate) throw new ActionError("No plate type has that id. Use find with kind plate.");
 
     const lines = [];
+    const saved = {};
     for (const [i, l] of args.lines.entries()) {
       const n = `Line ${i + 1}`;
       const size = await models.ProductSize.findOne({ where: { id: l.size_id, is_archived: false } });
       if (!size) throw new ActionError(`${n}: no size has that id. Use find with kind size.`);
+      saved[size.id] = {
+        rate: Number(size.rate_per_kg) > 0 ? Number(size.rate_per_kg) : null,
+        price: size.piece_price_amount != null ? Number(size.piece_price_amount) : null,
+        per: size.piece_price_count,
+      };
       if (l.unit === "KG") {
         // A saved ₹0 rate means "no rate saved", as on the order form.
         const rate = l.rate_per_kg ?? (Number(size.rate_per_kg) > 0 ? Number(size.rate_per_kg) : null);
@@ -86,6 +104,7 @@ module.exports = defineAction({
       customer: { id: customer.id, name: customer.name, phone: customer.metadata?.phone || null },
       plate,
       lines,
+      saved,
       date: args.order_date || today,
       advance: args.advance || 0,
       customPlateCharge: args.custom_plate_charge ?? null,

@@ -42,6 +42,13 @@ describe("a card only uses values the person gave", () => {
     await expect(propose("create_order", { ...args, lines: [{ ...args.lines[0], quantity: 20 }] }, "order for Bombay, 20 kg of 12 x 16 at 200")).resolves.toMatchObject({ status: "pending" });
   });
 
+  test("the size's own saved rate or piece price may be spelled out", async () => {
+    const pcs = await createSize({ size_label: "S", rate_per_kg: "190.00", piece_price_amount: "375", piece_price_count: 1000 });
+    const args = { customer_id: bombay.id, plate_type_id: plate.id, lines: [{ size_id: pcs.id, unit: "PIECES", quantity: 3000, price: 375, price_per: 1000 }, { size_id: pcs.id, unit: "KG", quantity: 5, rate_per_kg: 190 }] };
+    await expect(propose("create_order", args, "New order for Bombay: 3000 pcs of S and 5 kg of S")).resolves.toMatchObject({ status: "pending" });
+    await expect(propose("create_order", { ...args, lines: [{ ...args.lines[0], price: 400 }] }, "New order for Bombay: 3000 pcs of S")).rejects.toThrow(/400/);
+  });
+
   test("'per piece' / 'each' counts as a price for 1 piece", async () => {
     const args = (per) => ({ customer_id: bombay.id, plate_type_id: plate.id, lines: [{ size_id: size.id, unit: "PIECES", quantity: 2000, price: 0.6, price_per: per }] });
     await expect(propose("create_order", args(1), "2000 pcs of 12 x 16 at 0.6 per piece")).resolves.toMatchObject({ status: "pending" });
