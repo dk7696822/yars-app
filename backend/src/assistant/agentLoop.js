@@ -29,8 +29,10 @@ const ASK_AGAIN = "(That reply came out garbled and was not shown. Answer the pe
  * written as text, loop on one word, or claim a card that was never made.
  * Such a round is never shown: the model is asked once more instead.
  */
-const LEAK = /<tool_call>|<function=|<\|channel\|>|^\s*analysis\b|\bassistant(?:commentary|final)\b|\bto=functions\.|\b(?:propose_\w+|open_area|run_query|customer_summary|period_summary)\b/i;
-const LOOP = /\b(\w+)\b(?:\W+\1\b){5,}/i;
+const LEAK = /<tool_call>|<function=|<\|channel\|>|^\s*analysis(?::|\s{2,}|\s+(?:the user|we need|we should|let me|let's|i need|i should)\b)|\bassistant(?:commentary|final)\b|\bto=functions\.|\b(?:propose_\w+|open_area|run_query|customer_summary|period_summary)\b/i;
+// A word of 3+ letters six times in a row; table rows and list items repeat legitimately.
+const LOOP_WORDS = /\b([a-z][a-z0-9]{2,})\b(?:\W+\1\b){5,}/i;
+const LOOP = { test: (text) => LOOP_WORDS.test(text.split("\n").filter((l) => !/\||^\s*(?:[-*•]|\d+[.)])\s/.test(l)).join("\n")) };
 // "tap Confirm on the card" when no card exists; a how-to's "tap Confirm to save" is fine.
 const CLAIMS_CARD = (text) => /\btap\W{0,3}confirm/i.test(text) && /\bcards?\b/i.test(text);
 // A record id shown to the person (outside a link's address).
@@ -38,8 +40,11 @@ const CLAIMS_CARD = (text) => /\btap\W{0,3}confirm/i.test(text) && /\bcards?\b/i
 const D = "[-\\u2010-\\u2015\\u2212]";
 const ID_PATTERN = new RegExp(`[0-9a-f]{8}${D}[0-9a-f]{4}${D}[0-9a-f]{4}${D}[0-9a-f]{4}${D}[0-9a-f]{12}`, "i");
 const RAW_ID = (text) => ID_PATTERN.test(text.replace(/\]\([^)]*\)/g, "]"));
-// After a card in this answer, "order created" / "has been saved" is false: nothing is saved before Confirm.
-const SAYS_DONE = /\b(?:is|has been|was|been|now)\s+(?:saved|created|recorded|added|updated|done)\b|\b(?:order|payment|customer|status)\s+(?:created|saved|recorded|added|updated)\b/i;
+// After a card in this answer, "order created" / "has been saved" is false: nothing is saved
+// before Confirm. Conditional sentences ("once you tap Confirm it is recorded") are fine.
+const DONE_WORDS = /\b(?:is|has been|was|been|now)\s+(?:saved|created|recorded|added|updated|done)\b|\b(?:order|payment|customer|status)\s+(?:created|saved|recorded|added|updated)\b/i;
+const CONDITIONAL = /\b(?:until|once|after|when|before|if|will)\b/i;
+const SAYS_DONE = { test: (text) => text.split(/(?<=[.!?])\s+|\n+/).some((s) => DONE_WORDS.test(s) && !CONDITIONAL.test(s)) };
 const isBroken = (text, cardsShown, validate, cardsThisAnswer = 0) =>
   LEAK.test(text) || LOOP.test(text) || RAW_ID(text) || (CLAIMS_CARD(text) && cardsShown === 0) ||
   (cardsThisAnswer > 0 && SAYS_DONE.test(text)) || !validate(text);
@@ -59,8 +64,8 @@ const runAgent = async (opts) => {
 const runRounds = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS, validate = () => true }) => {
   const messages = history.map((m) => ({ role: m.role, content: m.content }));
   let finalText = "";
-  // A card still pending from earlier in the conversation may be pointed to.
-  let cardsShown = history.some((m) => /\[card: .* — pending\]/.test(m.content)) ? 1 : 0;
+  // A card from earlier in the conversation may be pointed to.
+  let cardsShown = history.some((m) => /\[card: .* — \w+\]/.test(m.content)) ? 1 : 0;
   let retried = false;
   let cardsThisAnswer = 0;
 

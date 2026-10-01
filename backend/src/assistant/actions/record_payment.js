@@ -75,11 +75,14 @@ module.exports = defineAction({
     };
   },
   context: (r) => ({ customer: r.view.row.customer, refund: r.refund }),
-  // Another payment, an edit or a status change since the card was made changes the due it showed.
+  // Everything the card shows that can change before Confirm: another payment, a line edit
+  // (which may leave updated_at alone), a status change.
   fingerprint: async (payload, { models, transaction }) => {
     const view = await orderView(models, payload.order_id, transaction);
     const order = await models.Order.findByPk(payload.order_id, { attributes: ["updated_at", "status"], transaction });
-    return view && order ? { received: view.row.received, status: order.status, updated: new Date(order.updated_at).toISOString() } : null;
+    return view && order
+      ? { total: view.row.total, received: view.row.received, due: view.row.due, status: order.status, updated: new Date(order.updated_at).toISOString() }
+      : null;
   },
   staleMessage: `This order changed after ${ASSISTANT_NAME} suggested the payment (another payment or an edit) — ask again.`,
   resultLink: (result, payload) => `/orders/${payload.order_id}`,

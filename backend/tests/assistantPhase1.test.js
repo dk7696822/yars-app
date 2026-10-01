@@ -59,6 +59,16 @@ describe("record_payment", () => {
     expect(done.error).toMatch(/changed/);
   });
 
+  test("record_payment refuses after the order's lines were edited", async () => {
+    const shown = await propose("record_payment", { order_id: order.id, amount: 500 });
+    const updateOrder = require("../src/commands/orders/updateOrder");
+    const { runCommand } = require("../src/commands/runCommand");
+    await runCommand(updateOrder, { id: order.id, product_sizes: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: 20, rate_per_kg: 180 }] });
+    const done = await service.confirm(registry, shown.id, {});
+    expect(done.status).toBe("failed");
+    expect(await db.Payment.count({ where: { order_id: order.id } })).toBe(1); // only the original payment
+  });
+
   test("a refund above what was received is refused by the app's own rule", async () => {
     await expect(propose("record_payment", { order_id: order.id, amount: 1500, refund: true })).rejects.toThrow("The app would refuse this: A refund can't be more than received (₹1,000)");
   });
@@ -133,6 +143,14 @@ describe("set_order_status", () => {
     const shown = await propose("set_order_status", { order_id: order.id, status: "CANCELLED" });
     expect(shown.card.title).toBe("Cancel order");
     expect(row(shown.card, "Due in totals")).toMatchObject({ before: "₹2,300", after: "not counted (cancelled)" });
+  });
+
+  test("set_order_status refuses after the order's lines were edited", async () => {
+    const shown = await propose("set_order_status", { order_id: order.id, status: "CANCELLED" });
+    const updateOrder = require("../src/commands/orders/updateOrder");
+    const { runCommand } = require("../src/commands/runCommand");
+    await runCommand(updateOrder, { id: order.id, product_sizes: [{ product_size_id: kgSize.id, unit: "KG", quantity_kg: 20, rate_per_kg: 180 }] });
+    expect((await service.confirm(registry, shown.id, {})).status).toBe("failed");
   });
 
   test("same status, or a cancelled order going anywhere but Pending, is refused", async () => {

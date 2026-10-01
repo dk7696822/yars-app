@@ -135,6 +135,31 @@ describe("broken replies never reach the person", () => {
     expect(await runAgent(base({ stream, executeTool: jest.fn() }))).toMatch(/^\[Open the order\]/);
   });
 
+  describe("good replies the checks must not hide", () => {
+    const card = { text: "Card shown", action: { id: "a1" } };
+    const afterCard = (text) => async () => {
+      const stream = fakeStream([[{ toolCalls: [{ id: "c1", name: "propose_x", args: {} }] }], [{ text }]]);
+      expect(await runAgent(base({ stream, executeTool: jest.fn().mockResolvedValue(card) }))).toBe(text);
+    };
+    const plain = (text, history) => async () => {
+      const stream = fakeStream([[{ text }]]);
+      expect(await runAgent(base({ stream, executeTool: jest.fn(), ...(history ? { history } : {}) }))).toBe(text);
+    };
+
+    test("'nothing is saved until you tap Confirm'", afterCard("Nothing is saved until you tap **Confirm** on the card."));
+    test("'once you tap Confirm the payment is recorded'", afterCard("Once you tap **Confirm** the payment is recorded."));
+    test("a table with repeated cells", plain("| Month | Jan | Feb | Mar | Apr | May | Jun |\n|---|---|---|---|---|---|---|\n| Due | ₹0 | ₹0 | ₹0 | ₹0 | ₹0 | ₹0 |"));
+    test("a list of repeated statuses", plain("- Pending\n- Pending\n- Pending\n- Pending\n- Pending\n- Pending\n- Delivered"));
+    test("a reply that starts with the word Analysis", plain("Analysis of this month: sales are up 12% on last month."));
+    test("pointing to a card confirmed earlier", plain("Yes — you tapped **Confirm** on the card, so it is saved.", [
+      { role: "user", content: "add Om" },
+      { role: "assistant", content: "Tap Confirm.\n[card: New customer Om — confirmed]" },
+      { role: "user", content: "did it work?" },
+    ]));
+  });
+
+  test("leaked reasoning without a colon is still caught", garbled("analysis  The user wants to refund ₹500 to Bombay"));
+
   test("broken twice: the person gets the plain fallback, not the garbage", async () => {
     const stream = fakeStream([[{ text: "analysis: hmm" }], [{ text: "analysis: hmm again" }]]);
     const deltas = [];
