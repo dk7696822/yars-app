@@ -1,4 +1,4 @@
-import { keys } from "../../lib/queryKeys";
+import { MONEY_KEYS } from "../../lib/queryKeys";
 
 const NOTE = {
   confirmed: "Saved",
@@ -36,8 +36,5 @@ export const attachActions = (messages, actions) => {
 export const replaceAction = (messages, updated) =>
   messages.map((m) => (m.actions?.some((a) => a.id === updated.id) ? { ...m, actions: m.actions.map((a) => (a.id === updated.id ? updated : a)) } : m));
 
-const MONEY = [keys.orders.all, keys.customers.all, keys.invoices.all];
-const AFTER = { record_payment: MONEY, create_order: MONEY, set_order_status: MONEY, create_customer: MONEY };
-
-/** Cached screens to refresh after a card is saved. Unknown (newer) actions refresh the money screens. */
-export const keysAfter = (name) => AFTER[name] || MONEY;
+/** Cached screens to refresh after a card is saved: every phase-1 action changes money screens. */
+export const keysAfter = () => MONEY_KEYS;

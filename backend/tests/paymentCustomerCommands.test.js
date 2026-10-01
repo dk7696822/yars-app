@@ -60,6 +60,18 @@ describe("customers.create through the route", () => {
     expect(await call(createCustomer, { body: { name: "Shop", gstin: "123" } })).toMatchObject({ status: 400, body: { message: "GSTIN should be 15 characters, like 29ABCDE1234F1Z5" } });
   });
 
+  test("a phone sent as a number is saved as text, as before", async () => {
+    const res = await call(createCustomer, { body: { name: "Numeric Phone", phone: 9876543210 } });
+    expect(res).toMatchObject({ status: 201, body: { data: { metadata: { phone: "9876543210" } } } });
+  });
+
+  test("the save passes who made it, like every command", async () => {
+    const spy = jest.spyOn(db.Customer, "create");
+    await call(createCustomer, { body: { name: "Actor Shop" }, user: { sub: "u1" } });
+    expect(spy.mock.calls[0][1]).toMatchObject({ actor: { source: "app", userId: "u1" } });
+    spy.mockRestore();
+  });
+
   test("contact fields are saved in metadata", async () => {
     const res = await call(createCustomer, { body: { name: " Laxmi ", phone: "9876543210", city: "Bidar" } });
     expect(res).toMatchObject({ status: 201, body: { message: "Customer created successfully", data: { name: "Laxmi", metadata: { phone: "9876543210", city: "Bidar" } } } });

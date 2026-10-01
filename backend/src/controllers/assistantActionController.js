@@ -22,7 +22,7 @@ const getAction = handle((req) => service.formData(req.params.id), "Couldn't loa
 const confirmAction = handle((req) => service.confirm(registry, req.params.id, { userId: req.user?.sub || null }), "Couldn't save this — try again");
 const cancelAction = handle((req) => service.cancel(req.params.id), "Couldn't cancel this card");
 const completedInForm = handle(
-  (req) => service.completedInForm(req.params.id, { resultId: req.body?.result_id || null, saved: req.body?.saved || {} }),
+  (req) => service.completedInForm(req.params.id, { resultId: UUID.test(req.body?.result_id || "") ? req.body.result_id : null, saved: req.body?.saved || {} }),
   "Couldn't record that"
 );
 

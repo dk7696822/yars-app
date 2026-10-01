@@ -131,6 +131,23 @@ describe("cancel and open in form", () => {
     expect((await db.AssistantAction.findByPk(id)).outcome).toEqual({ changed: ["name", "phone"] });
   });
 
+  test("changedKeys compares form lines only on the fields the card set", () => {
+    const card = { product_sizes: [{ product_size_id: "s1", unit: "KG", quantity_kg: 20, rate_per_kg: 180 }] };
+    expect(service.changedKeys(card, { product_sizes: [{ product_size_id: "s1", unit: "KG", quantity_kg: "20", rate_per_kg: 180, weight_kg: "", weight_source: null }] })).toEqual([]);
+    expect(service.changedKeys(card, { product_sizes: [{ product_size_id: "s1", unit: "KG", quantity_kg: 25, rate_per_kg: 180 }] })).toEqual(["product_sizes"]);
+    expect(service.changedKeys(card, { product_sizes: [...card.product_sizes, { product_size_id: "s2" }] })).toEqual(["product_sizes"]);
+  });
+
+  test("finishing in the form with a bad result id still records the outcome (id dropped)", async () => {
+    const { completedInForm } = require("../src/controllers/assistantActionController");
+    const { mockRes } = require("./helpers/http");
+    const { id } = await propose("Bad Id Shop");
+    const res = mockRes();
+    await completedInForm({ params: { id }, body: { result_id: "not-a-uuid", saved: { name: "Bad Id Shop" } } }, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect((await db.AssistantAction.findByPk(id)).result_id).toBeNull();
+  });
+
   test("changedKeys ignores number formatting", () => {
     expect(service.changedKeys({ amount: 5000, lines: [{ q: "10" }] }, { amount: "5000.00", lines: [{ q: 10 }] })).toEqual([]);
   });

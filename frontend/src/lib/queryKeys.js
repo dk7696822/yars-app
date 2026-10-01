@@ -25,6 +25,7 @@ export const keys = {
   assistant: { conversations: ["assistant", "conversations"], action: (id) => ["assistant", "action", id] },
 };
 
-/** After any change to an order, payment, customer or invoice, every screen showing money refreshes. */
-export const invalidateMoney = (queryClient) =>
-  Promise.all([keys.orders.all, keys.customers.all, keys.invoices.all].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+/** The screens that show money: refreshed after any change to an order, payment, customer or invoice. */
+export const MONEY_KEYS = [keys.orders.all, keys.customers.all, keys.invoices.all];
+
+export const invalidateMoney = (queryClient) => Promise.all(MONEY_KEYS.map((queryKey) => queryClient.invalidateQueries({ queryKey })));

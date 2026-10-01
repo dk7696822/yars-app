@@ -45,8 +45,8 @@ export default function CustomerFormPage() {
           : <ErrorState title="Couldn't load this customer." onRetry={() => existing.refetch()} />}
       </div>
     );
-  }  if (assistantId && actionQ.isPending) return <PageSkeleton />;
-
+  }
+  if (assistantId && actionQ.isPending) return <PageSkeleton />;
 
   const form = edited ?? initial;
   const set = (patch) => setEdited((prev) => ({ ...(prev ?? initial), ...patch }));

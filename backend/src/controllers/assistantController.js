@@ -117,6 +117,11 @@ const sendMessage = async (req, res) => {
         err.name === "QuotaExhaustedError"
           ? `${ASSISTANT_NAME}'s free daily limit is used up for now. Please try again in about ${formatWait(err.retryAfterSeconds)}.`
           : `${ASSISTANT_NAME} is busy right now — try again in a minute.`;
+      // A card already shown keeps a reply of its own, so it stays in place when reopened.
+      if (shownActions.length) {
+        const failed = await AssistantMessage.create({ conversation_id: id, role: "assistant", content: `⚠️ ${message}` });
+        await AssistantAction.update({ message_id: failed.id }, { where: { id: shownActions } });
+      }
       sendEvent(res, "error", { message });
       return res.end();
     }

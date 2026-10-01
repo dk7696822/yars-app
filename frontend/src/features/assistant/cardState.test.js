@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { cardState, attachActions, replaceAction, keysAfter } from "./cardState";
+import { MONEY_KEYS } from "../../lib/queryKeys";
 
 const NOW = Date.parse("2026-10-01T10:00:00Z");
 const card = (o) => ({ id: "a1", name: "record_payment", status: "pending", card: { title: "t", rows: [], warnings: [] }, error: null, formLink: "/orders/o1?pay=assistant:a1", resultLink: null, expiresAt: "2026-10-01T10:10:00Z", messageId: "m2", ...o });
@@ -32,6 +33,10 @@ describe("placing cards", () => {
     const placed = attachActions(messages, [card()]);
     expect(replaceAction(placed, card({ status: "confirmed" }))[1].actions[0].status).toBe("confirmed");
   });
+  test("cards refresh exactly the screens every money save refreshes (one shared list)", () => {
+    expect(keysAfter("record_payment")).toBe(MONEY_KEYS);
+  });
+
   test("a confirmed card refreshes the money screens", () => {
     expect(keysAfter("record_payment")).toEqual([["orders"], ["customers"], ["invoices"]]);
     expect(keysAfter("anything_new")).toEqual([["orders"], ["customers"], ["invoices"]]);

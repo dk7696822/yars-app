@@ -77,9 +77,10 @@ module.exports = defineAction({
   context: (r) => ({ customer: r.view.row.customer, refund: r.refund }),
   // Everything the card shows that can change before Confirm: another payment, a line edit
   // (which may leave updated_at alone), a status change.
+  // At confirm the order row is locked first, so two cards on one order confirm one after the other.
   fingerprint: async (payload, { models, transaction }) => {
+    const order = await models.Order.findByPk(payload.order_id, { attributes: ["id", "updated_at", "status"], transaction, lock: transaction ? transaction.LOCK.UPDATE : undefined });
     const view = await orderView(models, payload.order_id, transaction);
-    const order = await models.Order.findByPk(payload.order_id, { attributes: ["updated_at", "status"], transaction });
     return view && order
       ? { total: view.row.total, received: view.row.received, due: view.row.due, status: order.status, updated: new Date(order.updated_at).toISOString() }
       : null;

@@ -63,6 +63,15 @@ describe("every write endpoint is accounted for", () => {
     for (const [route, reason] of Object.entries(SCREEN_ONLY)) expect([route, reason.length > 5]).toEqual([route, true]);
   });
 
+  test("no route file mounts a sub-router (the walker above reads one level)", () => {
+    const fsx = require("fs");
+    const dir = path.join(__dirname, "../src/routes");
+    for (const f of fsx.readdirSync(dir).filter((x) => x !== "index.js")) {
+      const router = require(path.join(dir, f));
+      expect([f, router.stack.filter((l) => !l.route && l.handle && l.handle.stack).length]).toEqual([f, 0]);
+    }
+  });
+
   test("the screen-only list has no stale or double entries", () => {
     expect(Object.keys(SCREEN_ONLY).filter((r) => !routes.includes(r))).toEqual([]);
     expect(Object.keys(SCREEN_ONLY).filter((r) => viaSage.has(r))).toEqual([]);

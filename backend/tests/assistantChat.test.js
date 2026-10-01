@@ -66,6 +66,21 @@ describe("chat with cards", () => {
     expect(runAssistant.mock.calls[0][2]).toMatchObject({ conversationId: convId, requestText: "add Om Traders" });
   });
 
+  test("if the answer fails after a card was made, the card keeps its own reply", async () => {
+    runAssistant.mockImplementation(async (history, { onAction }, ctx) => {
+      onAction(await service.propose(registry.get("create_customer"), { name: "Late Fail" }, ctx));
+      throw new Error("model fell over");
+    });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const events = await send(convId, "add Late Fail");
+    console.error.mockRestore();
+    expect(events.map((e) => e.event)).toEqual(["action", "error"]);
+    const conv = await open(convId);
+    const reply = conv.messages.find((m) => m.role === "assistant");
+    expect(reply.content).toMatch(/busy/);
+    expect(conv.actions[0].messageId).toBe(reply.id);
+  });
+
   test("the model sees earlier cards and what happened to them", async () => {
     proposingAnswer();
     await send(convId, "add Om Traders");

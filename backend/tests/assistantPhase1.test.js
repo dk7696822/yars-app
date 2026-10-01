@@ -69,6 +69,14 @@ describe("record_payment", () => {
     expect(await db.Payment.count({ where: { order_id: order.id } })).toBe(1); // only the original payment
   });
 
+  test("two different payment cards on one order confirmed at once: only one saves", async () => {
+    const a = await propose("record_payment", { order_id: order.id, amount: 300 });
+    const b = await propose("record_payment", { order_id: order.id, amount: 400 });
+    const results = await Promise.all([service.confirm(registry, a.id, {}), service.confirm(registry, b.id, {})]);
+    expect(results.map((r) => r.status).sort()).toEqual(["confirmed", "failed"]);
+    expect(await db.Payment.count({ where: { order_id: order.id } })).toBe(2); // the original + exactly one
+  });
+
   test("a refund above what was received is refused by the app's own rule", async () => {
     await expect(propose("record_payment", { order_id: order.id, amount: 1500, refund: true })).rejects.toThrow("The app would refuse this: A refund can't be more than received (₹1,000)");
   });

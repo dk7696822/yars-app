@@ -45,8 +45,8 @@ module.exports = defineAction({
   context: (r) => ({ customer: r.view.row.customer }),
   // The status and the figures the card shows ("Due in totals").
   fingerprint: async (payload, { models, transaction }) => {
+    const order = await models.Order.findByPk(payload.id, { attributes: ["id", "status", "updated_at"], transaction, lock: transaction ? transaction.LOCK.UPDATE : undefined });
     const view = await orderView(models, payload.id, transaction);
-    const order = await models.Order.findByPk(payload.id, { attributes: ["status", "updated_at"], transaction });
     return view && order
       ? { total: view.row.total, due: view.row.due, status: order.status, updated: new Date(order.updated_at).toISOString() }
       : null;
