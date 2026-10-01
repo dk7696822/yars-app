@@ -1,7 +1,7 @@
 "use strict";
 
 const { loadKnowledge } = require("./knowledgeLoader");
-const { runQuery: dbRunQuery } = require("./assistantDb");
+const { runQuery: dbRunQuery } = require("../../assistant/db/assistantDb");
 const { runAgent: runAgentLoop, MAX_ROUNDS } = require("./agentLoop");
 const { getChain } = require("../../assistant/llm");
 const { QuotaExhaustedError, formatWait } = require("../../assistant/chain");

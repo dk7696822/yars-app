@@ -1,6 +1,6 @@
 "use strict";
 
-const { runQuery, closePool } = require("../src/services/assistant/assistantDb");
+const { runQuery, closePool } = require("../src/assistant/db/assistantDb");
 const db = require("../src/models");
 
 afterAll(async () => {

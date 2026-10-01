@@ -1,6 +1,6 @@
 "use strict";
 
-const { validateAndWrap } = require("../src/services/assistant/sqlGuard");
+const { validateAndWrap } = require("../src/assistant/db/sqlGuard");
 
 describe("sqlGuard.validateAndWrap", () => {
   // --- allowed ---

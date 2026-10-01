@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const db = require("../src/models");
-const { runQuery, closePool } = require("../src/services/assistant/assistantDb");
+const { runQuery, closePool } = require("../src/assistant/db/assistantDb");
 const { orderTotal, paymentPosition, volumeSummary } = require("../src/services/orderMath");
 const { createCustomer, createPlateType, createSize, createOrderWithLines } = require("./helpers/orderFactories");
 
