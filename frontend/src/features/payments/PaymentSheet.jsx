@@ -23,14 +23,14 @@ const TYPE_OPTIONS = Object.entries(PAYMENT_TYPE_LABEL).map(([value, label]) => 
  * Record or edit one payment. Give it a new `key` each time it opens so it starts
  * fresh. `orderChoices` (invoice page): which of the invoice's orders it is for.
  */
-export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, due = 0, received = 0, payment = null, orderChoices = null }) {
+export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, due = 0, received = 0, payment = null, orderChoices = null, prefill = null, onSaved }) {
   const toast = useToast();
   const save = useSavePayment();
-  const [form, setForm] = useState(() => initialPaymentForm(payment));
+  const [form, setForm] = useState(() => initialPaymentForm(payment || prefill));
   const [choice, setChoice] = useState(() => (orderChoices ? defaultInvoiceChoice(orderChoices) : orderId));
   const [errors, setErrors] = useState({});
   const [overpay, setOverpay] = useState(0);
-  const [more, setMore] = useState(Boolean(payment?.reference || payment?.notes));
+  const [more, setMore] = useState(Boolean((payment || prefill)?.reference || (payment || prefill)?.notes));
 
   // On an invoice, "due" is the invoice's due (GST included); the chosen order only decides where the money is saved.
   const picked = orderChoices?.find((o) => o.id === choice);
@@ -54,7 +54,8 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
     // Money for the invoice as a whole (e.g. GST) is saved without an order.
     const body = { ...result.payload, ...(choice === INVOICE_ONLY ? {} : { order_id: choice }), ...(invoiceId ? { invoice_id: invoiceId } : {}) };
     save.mutate({ id: payment?.id, body }, {
-      onSuccess: () => {
+      onSuccess: (saved) => {
+        onSaved?.(saved, body);
         toast.success(text.done);
         onClose();
       },
@@ -133,6 +134,8 @@ export default function PaymentSheet({ open, onClose, mode, orderId, invoiceId, 
 PaymentSheet.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  prefill: PropTypes.object,
+  onSaved: PropTypes.func,
   mode: PropTypes.oneOf(["payment", "advance", "refund", "edit"]).isRequired,
   orderId: PropTypes.string,
   invoiceId: PropTypes.string,

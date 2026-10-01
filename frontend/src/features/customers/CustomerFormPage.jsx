@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { useCustomer, useSaveCustomer } from "./api";
 import SimilarWarning from "./SimilarWarning";
 import { emptyCustomer, formFromCustomer, validateCustomer, toCustomerPayload } from "./customerForm";
+import { useAssistantAction, reportFinishedInForm } from "../assistant/api";
+import { customerFormFromAction } from "../assistant/formPrefill";
 import Field from "../../ui/Field";
 import TextInput from "../../ui/TextInput";
 import PhoneInput from "../../ui/PhoneInput";
@@ -24,9 +26,11 @@ export default function CustomerFormPage() {
   const existing = useCustomer(id);
   const save = useSaveCustomer(id);
   const presetName = search.get("name") || "";
+  const assistantId = isEdit ? null : search.get("assistant");
+  const actionQ = useAssistantAction(assistantId);
   const initial = useMemo(
-    () => (isEdit ? (existing.data ? formFromCustomer(existing.data) : null) : { ...emptyCustomer(), name: presetName }),
-    [isEdit, existing.data, presetName]
+    () => (isEdit ? (existing.data ? formFromCustomer(existing.data) : null) : assistantId && actionQ.data ? customerFormFromAction(actionQ.data) : { ...emptyCustomer(), name: presetName }),
+    [isEdit, existing.data, presetName, assistantId, actionQ.data]
   );
   const [edited, setEdited] = useState(null);
   const [shown, setShown] = useState(false);
@@ -41,7 +45,8 @@ export default function CustomerFormPage() {
           : <ErrorState title="Couldn't load this customer." onRetry={() => existing.refetch()} />}
       </div>
     );
-  }
+  }  if (assistantId && actionQ.isPending) return <PageSkeleton />;
+
 
   const form = edited ?? initial;
   const set = (patch) => setEdited((prev) => ({ ...(prev ?? initial), ...patch }));
@@ -59,6 +64,7 @@ export default function CustomerFormPage() {
     }
     save.mutate(toCustomerPayload(form), {
       onSuccess: (c) => {
+        reportFinishedInForm(assistantId, c.id, toCustomerPayload(form));
         toast.success(isEdit ? "Changes saved" : "Customer added");
         navigate(`/customers/${isEdit ? id : c.id}`, { replace: true });
       },

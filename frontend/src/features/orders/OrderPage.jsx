@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Ellipsis, Phone, MessageCircle } from "lucide-react";
 import { useOrder, useOrderStatus, useDeleteOrder } from "./api";
 import PaymentSheet from "../payments/PaymentSheet";
 import PaymentList from "../payments/PaymentList";
 import { useDeletePayment } from "../payments/api";
 import { toPaymentRow } from "../payments/paymentForm";
+import { useAssistantAction, reportFinishedInForm } from "../assistant/api";
+import { paymentFromAction } from "../assistant/formPrefill";
 import Button from "../../ui/Button";
 import IconButton from "../../ui/IconButton";
 import Chips from "../../ui/Chips";
@@ -42,6 +44,18 @@ export default function OrderPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState({ open: false, mode: "payment", payment: null, key: 0 });
   const [confirm, setConfirm] = useState(null);
+
+  // "Open in form" from a Sage payment card: /orders/:id?pay=assistant:<cardId>
+  const [search, setSearch] = useSearchParams();
+  const pay = search.get("pay");
+  const payCardId = pay?.startsWith("assistant:") ? pay.slice("assistant:".length) : null;
+  const payCard = useAssistantAction(payCardId);
+  useEffect(() => {
+    if (!order || payCard.data?.name !== "record_payment") return;
+    const { mode, prefill } = paymentFromAction(payCard.data);
+    setSheet({ open: true, mode, payment: null, prefill, cardId: payCardId, key: Date.now() });
+    setSearch((s) => { s.delete("pay"); return s; }, { replace: true });
+  }, [order, payCard.data, payCardId, setSearch]);
 
   if (isPending) return <PageSkeleton />;
   if (isError) {
@@ -212,7 +226,8 @@ export default function OrderPage() {
       {confirmText && <ConfirmDialog open title={confirmText.title} message={confirmText.message} confirmLabel={confirmText.confirmLabel} cancelLabel={confirmText.cancelLabel} busy={busy} onConfirm={runConfirm} onClose={() => setConfirm(null)} />}
       <PaymentSheet key={sheet.key} open={sheet.open} mode={sheet.mode} payment={sheet.payment} orderId={id}
         received={sheet.payment ? received - signed(sheet.payment) : received}
-        due={sheet.payment ? due + signed(sheet.payment) : due} onClose={() => setSheet((s) => ({ ...s, open: false }))} />
+        due={sheet.payment ? due + signed(sheet.payment) : due} onClose={() => setSheet((s) => ({ ...s, open: false }))}
+        prefill={sheet.prefill || null} onSaved={(saved, body) => reportFinishedInForm(sheet.cardId, saved.id, body)} />
     </div>
   );
 }

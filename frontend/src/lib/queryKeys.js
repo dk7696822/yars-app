@@ -22,7 +22,7 @@ export const keys = {
   purchaseOrders: { all: ["purchase-orders"], list: (p) => ["purchase-orders", "list", p], detail: (id) => ["purchase-orders", "detail", id] },
   stockIssues: { all: ["stock-issues"], list: (p) => ["stock-issues", "list", p] },
   suppliers: { all: ["suppliers"], list: (p) => ["suppliers", "list", p], picker: ["suppliers", "picker"], detail: (id) => ["suppliers", "detail", id] },
-  assistant: { conversations: ["assistant", "conversations"] },
+  assistant: { conversations: ["assistant", "conversations"], action: (id) => ["assistant", "action", id] },
 };
 
 /** After any change to an order, payment, customer or invoice, every screen showing money refreshes. */

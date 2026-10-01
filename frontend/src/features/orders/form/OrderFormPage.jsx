@@ -7,6 +7,8 @@ import CustomerStep from "./CustomerStep";
 import ItemsStep from "./ItemsStep";
 import ExtrasStep from "./ExtrasStep";
 import { STEPS, newDraft, draftFromOrder, stepErrors, draftTotals, toPayload } from "./draft";
+import { useAssistantAction, reportFinishedInForm } from "../../assistant/api";
+import { orderDraftFromAction } from "../../assistant/formPrefill";
 import Stepper from "../../../ui/Stepper";
 import PageHeader from "../../../ui/PageHeader";
 import StickyFooter from "../../../ui/StickyFooter";
@@ -27,6 +29,8 @@ export default function OrderFormPage() {
   const isEdit = Boolean(id);
   const [search] = useSearchParams();
   const presetId = isEdit ? null : search.get("customer");
+  const assistantId = isEdit ? null : search.get("assistant");
+  const actionQ = useAssistantAction(assistantId);
   const navigate = useNavigate();
   const toast = useToast();
   const qc = useQueryClient();
@@ -51,13 +55,14 @@ export default function OrderFormPage() {
 
   const initial = useMemo(() => {
     if (isEdit) return orderQ.data ? draftFromOrder(orderQ.data) : null;
+    if (assistantId) return actionQ.data ? orderDraftFromAction(actionQ.data) : actionQ.isError ? newDraft() : null;
     if (!presetId) return newDraft();
     if (presetQ.data) {
       const c = presetQ.data.customer;
       return newDraft({ id: c.id, name: c.name, phone: c.phone, due: presetQ.data.owes });
     }
     return presetQ.isError ? newDraft() : null;
-  }, [isEdit, orderQ.data, presetId, presetQ.data, presetQ.isError]);
+  }, [isEdit, orderQ.data, presetId, presetQ.data, presetQ.isError, assistantId, actionQ.data, actionQ.isError]);
   const [edited, setEdited] = useState(null);
   const draft = edited ?? initial;
   const update = (patch) => setEdited((prev) => {
@@ -100,8 +105,10 @@ export default function OrderFormPage() {
 
   const submit = () => {
     if (!steps.validateAll()) return;
-    save.mutate(toPayload(draft, { isEdit }), {
+    const payload = toPayload(draft, { isEdit });
+    save.mutate(payload, {
       onSuccess: (order) => {
+        reportFinishedInForm(assistantId, order.id, payload);
         toast.success(isEdit ? "Order updated" : "Order saved");
         navigate(`/orders/${isEdit ? id : order.id}`, { replace: true });
       },
