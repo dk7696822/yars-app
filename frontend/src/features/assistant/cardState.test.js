@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { cardState, attachActions, replaceAction, keysAfter } from "./actionCard";
+import { cardState, attachActions, replaceAction, keysAfter } from "./cardState";
 
 const NOW = Date.parse("2026-10-01T10:00:00Z");
 const card = (o) => ({ id: "a1", name: "record_payment", status: "pending", card: { title: "t", rows: [], warnings: [] }, error: null, formLink: "/orders/o1?pay=assistant:a1", resultLink: null, expiresAt: "2026-10-01T10:10:00Z", messageId: "m2", ...o });

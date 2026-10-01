@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import Button from "../../ui/Button";
-import { cardState } from "./actionCard";
+import { cardState } from "./cardState";
 
 const TONE = { info: "text-brass", good: "text-status-good", muted: "text-ink-2", critical: "text-status-critical" };
 

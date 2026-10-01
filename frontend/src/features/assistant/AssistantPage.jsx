@@ -16,7 +16,7 @@ import { useToast } from "../../context/ToastContext";
 import { errorText } from "../../lib/errors";
 import { ASSISTANT_NAME } from "../../app/assistant";
 import ActionCard from "./ActionCard";
-import { attachActions, replaceAction, keysAfter } from "./actionCard";
+import { attachActions, replaceAction, keysAfter } from "./cardState";
 
 const SUGGESTIONS = ["Who owes me the most?", "What were sales this month?", "Record a payment", "Start a new order"];
 
