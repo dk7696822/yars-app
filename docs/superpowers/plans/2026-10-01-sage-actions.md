@@ -7,7 +7,7 @@
 **Architecture:**
 - **Commands** (`backend/src/commands/`): each save is one Zod-checked definition, run in a transaction and recording who made it. Express routes and Sage actions are thin adapters over commands.
 - **Assistant** (`backend/src/assistant/`):
-  - A small core prompt plus guides loaded on demand.
+  - A small core prompt. **Areas are switches:** a round sends only the open areas' tools; areas open from keywords in the message or when Sage calls `open_area`.
   - Typed read tools built on the dashboard and customer code.
   - An action kit: propose = trial run in a rolled-back transaction, then save a card in `assistant_actions`; Confirm runs the same command for real.
   - A provider chain over free Groq and Cloudflare models.
@@ -30,8 +30,9 @@
 - Free providers only: Groq + Cloudflare Workers AI. No Gemini, no Mistral. English only.
 - Sage never deletes. A delete request gets a link to the record's screen.
 - **Prompt budgets:**
-  - Core instructions + all tool declarations ≤ 2000 tokens.
+  - Core instructions + the always-on tools ≤ 2000 tokens.
   - Each guide ≤ 800 tokens.
+  - Each opened area (its guide + its `propose_` tools) ≤ 1400 tokens.
   - Tokens are estimated as `Math.ceil(chars / 4)`.
 
 **Naming and money:**
@@ -74,11 +75,12 @@
 
 **Backend — assistant (new):**
 - `src/assistant/config.js`: name, budgets, model chain.
-- `src/assistant/tokens.js`, `format.js`, `history.js`, `agentLoop.js`, `guides.js`, `index.js` (`runAssistant`).
+- `src/assistant/tokens.js`, `format.js`, `history.js`, `agentLoop.js`, `guides.js`, `toolset.js` (`allTools`, `toolsFor`), `index.js` (`runAssistant`).
 - `src/assistant/providers/openaiCompat.js`, `chain.js`, `llm.js`
 - `src/assistant/prompt/{core.md,buildSystemPrompt.js}`
 - `src/assistant/db/{sqlGuard,assistantDb}.js`: moved from `src/services/assistant/`.
-- `src/assistant/tools/{defineTool,executeTool,find,dues,customerSummary,periodSummary,runQuery,readGuide,index}.js`
+- `src/assistant/tools/{defineTool,executeTool,find,dues,customerSummary,periodSummary,runQuery,openArea,index}.js`
+- `src/assistant/router.js`: the switchboard's first guess, which areas a message is about.
 - `src/assistant/actionKit/{defineAction,actionService,actionTool,registry}.js`
 - `src/assistant/actions/{record_payment,create_customer,create_order,set_order_status}.js`
 - `src/assistant/screenOnly.js`: write routes Sage does not cover, each with a reason.
@@ -1130,7 +1132,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Produces:
-  - `config.js`: `ASSISTANT_NAME`, `MAX_ROUNDS` (6), `CORE_BUDGET` (2000), `GUIDE_BUDGET` (800), `HISTORY_BUDGET` (900), `TOOL_RESULT_CHARS` (2400), `ACTION_TTL_MINUTES` (15), `SHORT_WAIT_S` (8), `PROVIDERS`, `MODEL_CHAIN`.
+  - `config.js`: `ASSISTANT_NAME`, `MAX_ROUNDS` (6), `CORE_BUDGET` (2000), `GUIDE_BUDGET` (800), `AREA_BUDGET` (1400), `HISTORY_BUDGET` (900), `TOOL_RESULT_CHARS` (2400), `ACTION_TTL_MINUTES` (15), `SHORT_WAIT_S` (8), `PROVIDERS`, `MODEL_CHAIN`.
   - `estimateTokens(text) → number` from `tokens.js`.
   - `OpenAiCompatProvider({ key, baseUrl, apiKey, fetchFn?, timeoutMs? })`:
     - `.stream({ model, system, messages, tools, options })`: an async iterable of `{ text }` / `{ toolCalls: [{ id, name, args }] }`.
@@ -1360,6 +1362,7 @@ const MAX_ROUNDS = 6; // model calls per message; tools are withheld on the last
 // two-round answer fits in a minute.
 const CORE_BUDGET = 2000; // core instructions + every tool declaration
 const GUIDE_BUDGET = 800; // each knowledge guide
+const AREA_BUDGET = 1400; // an opened area: its guide + its propose_ tools
 const HISTORY_BUDGET = 900; // earlier messages sent with a new question
 const TOOL_RESULT_CHARS = 2400; // ≈ 600 tokens per tool result
 const ACTION_TTL_MINUTES = 15;
@@ -1394,7 +1397,7 @@ const MODEL_CHAIN = [
 ];
 
 module.exports = {
-  ASSISTANT_NAME, MAX_ROUNDS, CORE_BUDGET, GUIDE_BUDGET, HISTORY_BUDGET,
+  ASSISTANT_NAME, MAX_ROUNDS, CORE_BUDGET, GUIDE_BUDGET, AREA_BUDGET, HISTORY_BUDGET,
   TOOL_RESULT_CHARS, ACTION_TTL_MINUTES, SHORT_WAIT_S, PROVIDERS, MODEL_CHAIN,
 };
 ```
@@ -2305,12 +2308,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
 ---
-### Task 6: Guides on demand, core instructions, agent loop, and the chat switched to Sage
+### Task 6: Areas as switches (guides + tools on demand), core instructions, agent loop, and the chat switched to Sage
 
 **Files:**
-- Create: `backend/src/assistant/guides.js`, `backend/src/assistant/prompt/core.md`, `backend/src/assistant/prompt/buildSystemPrompt.js`, `backend/src/assistant/tools/readGuide.js`, `backend/src/assistant/toolset.js`, `backend/src/assistant/history.js`, `backend/src/assistant/agentLoop.js`, `backend/src/assistant/index.js`
+- Create: `backend/src/assistant/guides.js`, `backend/src/assistant/router.js`, `backend/src/assistant/prompt/core.md`, `backend/src/assistant/prompt/buildSystemPrompt.js`, `backend/src/assistant/tools/openArea.js`, `backend/src/assistant/toolset.js`, `backend/src/assistant/history.js`, `backend/src/assistant/agentLoop.js`, `backend/src/assistant/index.js`
 - Rewrite: every file in `backend/knowledge/` (front matter, ≤ 800 tokens each, split as listed in Step 4)
-- Modify: `backend/src/assistant/tools/index.js` (add `read_guide`), `backend/src/controllers/assistantController.js` (`sendMessage` uses `runAssistant`), `backend/tests/knowledgeQueries.test.js` (find the tested SQL in any guide)
+- Modify: `backend/src/assistant/tools/index.js` (add `open_area`), `backend/src/controllers/assistantController.js` (`sendMessage` uses `runAssistant`), `backend/tests/knowledgeQueries.test.js` (find the tested SQL in any guide)
 - Delete: `backend/src/services/assistant/` (`agentLoop.js`, `assistantService.js`, `knowledgeLoader.js`), `backend/tests/assistantService.test.js`, `backend/tests/knowledgeLoader.test.js`, `backend/knowledge/00-instructions.md`, `backend/knowledge/schema.md`, `backend/knowledge/routes.md`
 - Test: `backend/tests/assistantAgent.test.js`, `backend/tests/assistantGuides.test.js`
 
@@ -2318,16 +2321,23 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Consumes: `READ_TOOLS`, `executeTool` (Task 5); `getChain`, config budgets (Task 4).
 - Produces:
   - **From `guides.js`:**
-    - `parseGuide(file, text) → { file, area, summary, tables: string[], body }` (throws on missing front matter).
+    - `parseGuide(file, text) → { file, area, summary, keywords: string[], tables: string[], body }` (throws on missing front matter).
     - `loadGuides(dir?) → Guide[]`, cached.
     - `guideIndex(guides?) → string`.
-  - `buildSystemPrompt({ today, actions = [] }) → string`, where `actions` is `[{ toolName, summary }]`.
-  - `allTools() → Tool[]` from `toolset.js`. Task 7 adds action tools here.
+  - `areasFor(text, guides?) → string[]` from `router.js`: at most 3 areas whose keywords appear in the text.
+  - `open_area` tool: `run({ area }) → { text: guideBody, openArea: area }`.
+  - `buildSystemPrompt({ today, actions = [] }) → string`, where `actions` is `[{ area, toolName, summary }]`.
+  - **From `toolset.js`:**
+    - `allTools() → Tool[]` (Task 7 adds action tools).
+    - `toolsFor(open: Set<string>, tools = allTools()) → Tool[]`: tools without `area` are always on; a tool with `area` only when that area is open.
   - `fitHistory(messages, budgetTokens) → messages`.
-  - `runAgent({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction?, maxRounds? }) → Promise<string>`. `executeTool(call)` resolves to `{ text, action? }`, and each `action` is passed to `onAction`.
+  - `runAgent({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction?, maxRounds? }) → Promise<string>`:
+    - `tools` is an array of declarations, or a function returning one, re-read every round.
+    - `executeTool(call)` resolves to `{ text, action?, openArea? }`, and each `action` is passed to `onAction`.
   - `runAssistant(history, { onDelta, onStatus, onAction? }, ctx = {}, deps = {}) → Promise<string>`:
+    - Opens `areasFor(question)` first, and opens more when a tool result carries `openArea`.
     - `ctx` is `{ conversationId, userId, requestText }`.
-    - `deps` is `{ stream?, tools?, system? }`, for tests.
+    - `deps` is `{ stream?, tools?, system?, actions?, openAreas? }`, for tests and evals.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2336,9 +2346,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```js
 "use strict";
 
+const { z } = require("zod");
 const { runAgent } = require("../src/assistant/agentLoop");
 const { fitHistory } = require("../src/assistant/history");
 const { runAssistant } = require("../src/assistant");
+const { READ_TOOLS } = require("../src/assistant/tools");
 
 const fakeStream = (rounds) => {
   let call = 0;
@@ -2382,6 +2394,13 @@ describe("agent loop", () => {
     expect(onAction).toHaveBeenCalledWith(card);
   });
 
+  test("tools given as a function are read fresh every round", async () => {
+    const stream = fakeStream([[{ toolCalls: [{ name: "dues", args: {} }] }], [{ text: "ok" }]]);
+    let round = 0;
+    await runAgent(base({ stream, tools: () => [{ name: `t${(round += 1)}` }], executeTool: jest.fn().mockResolvedValue({ text: "x" }) }));
+    expect(stream.requests.map((r) => r.tools[0].name)).toEqual(["t1", "t2"]);
+  });
+
   test("tools are withheld from the last round, so it must answer", async () => {
     const stream = fakeStream([[{ toolCalls: [{ name: "dues", args: {} }] }]]);
     const final = await runAgent(base({ stream, executeTool: jest.fn().mockResolvedValue({ text: "x" }), maxRounds: 2 }));
@@ -2408,13 +2427,39 @@ describe("fitHistory", () => {
 });
 
 describe("runAssistant", () => {
-  test("sends Sage's instructions, every tool and the fitted history", async () => {
+  test("sends Sage's instructions, the always-on tools and the fitted history", async () => {
     const stream = fakeStream([[{ text: "ok" }]]);
     expect(await runAssistant([{ role: "user", content: "hi" }], { onDelta: noop, onStatus: noop }, {}, { stream })).toBe("ok");
     const req = stream.requests[0];
     expect(req.system).toMatch(/^You are Sage/);
-    expect(req.tools.map((t) => t.name)).toEqual(expect.arrayContaining(["dues", "customer_summary", "period_summary", "find", "read_guide", "run_query"]));
+    expect(req.tools.map((t) => t.name)).toEqual(expect.arrayContaining(["dues", "customer_summary", "period_summary", "find", "open_area", "run_query"]));
     expect(req.messages).toEqual([{ role: "user", content: "hi" }]);
+  });
+
+  describe("the switchboard", () => {
+    // A stand-in for an action tool in the payments area.
+    const paymentsTool = { name: "propose_x", area: "payments", input: z.object({}), declaration: { name: "propose_x", description: "x", parameters: { type: "object" } }, run: async () => "ok" };
+    const tools = () => [...READ_TOOLS, paymentsTool];
+    const names = (req) => req.tools.map((t) => t.name);
+
+    test("an area's tools are off until the area is open", async () => {
+      const stream = fakeStream([[{ text: "Hello!" }]]);
+      await runAssistant([{ role: "user", content: "hello" }], { onDelta: noop, onStatus: noop }, {}, { stream, tools: tools() });
+      expect(names(stream.requests[0])).not.toContain("propose_x");
+    });
+
+    test("words in the message open likely areas up front", async () => {
+      const stream = fakeStream([[{ text: "ok" }]]);
+      await runAssistant([{ role: "user", content: "Bombay Saree Centre paid 500" }], { onDelta: noop, onStatus: noop }, {}, { stream, tools: tools() });
+      expect(names(stream.requests[0])).toContain("propose_x");
+    });
+
+    test("open_area switches an area on for the next round", async () => {
+      const stream = fakeStream([[{ toolCalls: [{ id: "c1", name: "open_area", args: { area: "payments" } }] }], [{ text: "done" }]]);
+      await runAssistant([{ role: "user", content: "hello" }], { onDelta: noop, onStatus: noop }, {}, { stream, tools: tools() });
+      expect([names(stream.requests[0]).includes("propose_x"), names(stream.requests[1]).includes("propose_x")]).toEqual([false, true]);
+      expect(stream.requests[1].messages.at(-1).results[0].result).toMatch(/payment/i); // the guide came back
+    });
   });
 });
 ```
@@ -2425,8 +2470,9 @@ describe("runAssistant", () => {
 "use strict";
 
 const { loadGuides, parseGuide } = require("../src/assistant/guides");
+const { areasFor } = require("../src/assistant/router");
 const { buildSystemPrompt } = require("../src/assistant/prompt/buildSystemPrompt");
-const { allTools } = require("../src/assistant/toolset");
+const { toolsFor } = require("../src/assistant/toolset");
 const { estimateTokens } = require("../src/assistant/tokens");
 const { CORE_BUDGET, GUIDE_BUDGET } = require("../src/assistant/config");
 
@@ -2458,12 +2504,30 @@ describe("guides", () => {
   test("a guide without front matter is refused", () => {
     expect(() => parseGuide("x.md", "# Title\nbody")).toThrow(/front matter/);
   });
+
+  test("keywords are single lower-case words", () => {
+    for (const g of guides) for (const k of g.keywords) expect(k).toMatch(/^[a-z0-9]+$/);
+  });
+});
+
+describe("switchboard first guess", () => {
+  test.each([
+    ["Bombay Saree Centre paid 5000 by UPI", "payments"],
+    ["new order for Laxmi Stores, 20 kg", "orders"],
+    ["add a customer Ganesh Textiles", "customers"],
+    ["how much did we spend on expenses this month", "expenses"],
+  ])("%s → %s", (text, area) => expect(areasFor(text)).toContain(area));
+
+  test("nothing matched opens nothing, and never more than 3", () => {
+    expect(areasFor("hello there")).toEqual([]);
+    expect(areasFor("order payment customer expense stock invoice supplier").length).toBeLessThanOrEqual(3);
+  });
 });
 
 describe("prompt budget", () => {
-  test("core instructions plus every tool declaration fit the budget", () => {
+  test("core instructions plus the always-on tools fit the budget", () => {
     const system = buildSystemPrompt({ today: "2026-10-01" });
-    const tools = JSON.stringify(allTools().map((t) => t.declaration));
+    const tools = JSON.stringify(toolsFor(new Set()).map((t) => t.declaration));
     expect(estimateTokens(system) + estimateTokens(tools)).toBeLessThanOrEqual(CORE_BUDGET);
   });
 
@@ -2494,13 +2558,16 @@ const path = require("path");
 const KNOWLEDGE_DIR = path.join(__dirname, "../../knowledge");
 
 /**
- * A guide is a markdown file with front matter:
+ * An area of the app is a markdown guide with front matter:
  *   ---
  *   area: payments
  *   summary: Recording, editing and refunding payments.
+ *   keywords: paid, payment, refund, upi
  *   tables: payments
  *   ---
- * The core prompt lists every area's summary; read_guide returns the body.
+ * The core prompt lists every area's summary; open_area returns the body and
+ * switches on the area's propose_ tools; keywords let the switchboard open it
+ * up front when a message uses them.
  */
 const parseGuide = (file, text) => {
   const m = String(text).match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -2513,6 +2580,7 @@ const parseGuide = (file, text) => {
     file,
     area: meta.area,
     summary: meta.summary,
+    keywords: meta.keywords ? meta.keywords.split(",").map((k) => k.trim().toLowerCase()).filter(Boolean) : [],
     tables: meta.tables ? meta.tables.split(",").map((t) => t.trim()).filter(Boolean) : [],
     body: m[2].trim(),
   };
@@ -2542,20 +2610,21 @@ Money is rupees, written like ₹12,345.5. Every figure must come from a tool �
 Reading
 - Who owes money: dues. One customer's position: customer_summary. Sales, collections, kg sold or expenses for a period: period_summary.
 - Ids: find (customer by name or phone, size by label like 12 x 16, plates, a customer's orders).
-- Anything else: read_guide for that area, then run_query.
+- Anything else: open_area for that area, then run_query.
 
 Changing data
+- An area's propose_ tools appear once the area is open. If the one you need is missing, call open_area for its area.
 - You never save anything. A propose_ tool shows the person a card; they tap Confirm on it. Then tell them in one line what the card does and to tap Confirm. Never say it is saved or done.
 - Use ids from find. If more than one record matches, list them and ask which. If a detail is missing (amount, size, quantity, rate), ask. Never invent a rate or price.
 - A payment goes against one order. One order with money due: use it. Several: list them with their due and ask.
 - You cannot delete anything. For a delete, or anything you can't do, say so and link the screen.
 
-Links: markdown with app paths only, like [Orders](/orders). Paths are in the app guide. Short answers; a table only for more than 3 rows.
+Links: markdown with app paths only, like [Orders](/orders). Paths are in the app area. Short answers; a table only for more than 3 rows.
 
-Guides (read_guide):
+Areas (open_area):
 {{guides}}
 
-Cards you can propose:
+Cards you can propose, by area:
 {{actions}}
 ```
 
@@ -2571,12 +2640,12 @@ const { guideIndex } = require("../guides");
 
 const CORE = fs.readFileSync(path.join(__dirname, "core.md"), "utf8").trim();
 
-/** The system prompt: core rules + one line per guide + one line per action. */
+/** The system prompt: core rules + one line per area + one line per action. */
 const buildSystemPrompt = ({ today, actions = [] } = {}) =>
   CORE.replaceAll("{{name}}", ASSISTANT_NAME)
     .replace("{{today}}", today)
     .replace("{{guides}}", guideIndex())
-    .replace("{{actions}}", actions.length ? actions.map((a) => `- ${a.toolName}: ${a.summary}`).join("\n") : "- none yet");
+    .replace("{{actions}}", actions.length ? actions.map((a) => `- ${a.area}: ${a.toolName} — ${a.summary}`).join("\n") : "- none yet");
 
 module.exports = { buildSystemPrompt };
 ```
@@ -2609,10 +2678,38 @@ const fitHistory = (messages, budgetTokens) => {
 module.exports = { fitHistory };
 ```
 
+`backend/src/assistant/router.js`:
+
+```js
+"use strict";
+
+const { loadGuides } = require("./guides");
+
+const MAX_OPEN = 3;
+const wordsOf = (text) => new Set(String(text || "").toLowerCase().match(/[a-z0-9]+/g) || []);
+
+/**
+ * The switchboard's free first guess: the areas whose guide keywords appear in
+ * the message, most hits first. A wrong guess costs nothing — Sage opens any
+ * other area itself with open_area.
+ */
+const areasFor = (text, guides = loadGuides()) => {
+  const said = wordsOf(text);
+  return guides
+    .map((g) => ({ area: g.area, hits: g.keywords.filter((k) => said.has(k)).length }))
+    .filter((x) => x.hits > 0)
+    .sort((a, b) => b.hits - a.hits)
+    .slice(0, MAX_OPEN)
+    .map((x) => x.area);
+};
+
+module.exports = { areasFor };
+```
+
 - [ ] **Step 4: Rewrite the knowledge files as guides**
 
 These are documentation files, not code. Each one is written from the existing files named below. The tests in Step 1 enforce these rules:
-- front matter with `area`, `summary` and `tables`;
+- front matter with `area`, `summary`, `keywords` (single lower-case words a person would use for this area; they open it up front) and `tables`;
 - a body of at most 3,200 characters (≈ 800 tokens);
 - app-path links only;
 - no "Jarvis" and no Hindi;
@@ -2628,20 +2725,20 @@ Drop:
 - repetition;
 - anything about the old assistant.
 
-| New file | Front matter (`area` / `summary` / `tables`) | Carry from |
+| New file | Front matter (`area` / `summary` / `keywords` / `tables`) | Carry from |
 |---|---|---|
-| `customers.md` | `customers` / Adding, finding and editing customers / `customers` | `customers.md`; `schema.md` § customers |
-| `orders.md` | `orders` / Creating, finding and editing orders, kg and pieces lines / `orders, order_product_sizes` | `orders.md` (finding, creating, order page, editing); `schema.md` § orders, § order_product_sizes |
-| `catalog.md` | `catalog` / Sizes and plate types: rates, piece prices, weights / `product_sizes, plate_types` | `orders.md` (managing plate types, managing sizes); `schema.md` § plate_types, § product_sizes |
-| `payments.md` | `payments` / Recording, editing and refunding payments; received and due / `payments` | `payments.md`; `schema.md` § payments |
-| `money-sql.md` | `money_sql` / Rules and tested SQL for totals, received, pending and kg sold / `orders, order_product_sizes, payments` | `schema.md` § "Global quirks" (condensed) + the `canonical:pending` and `canonical:volume` blocks verbatim |
-| `invoices.md` | `invoices` / Making invoices, GST, invoice status and dues / `invoices, invoice_items` | `invoices.md`; `schema.md` § invoices, § invoice_items |
-| `dashboard.md` | `dashboard` / What each dashboard figure means and why screens can differ / (none) | `dashboard.md` |
-| `expenses.md` | `expenses` / Adding and finding expenses and their categories / `expenses, expense_categories` | `expenses.md`; `schema.md` § expense_categories, § expenses |
-| `history.md` | `history` / The History screen: who changed what, and when / `audit_logs` | `history.md`; `schema.md` § audit_logs. Add: "metadata.source is app (a screen) or assistant (confirmed on a Sage card)". |
-| `stock.md` | `stock` / Stock on hand, FIFO batches, stock issues and wastage / `inventory_items, inventory_categories, stock_batches, stock_issues, stock_issue_items, stock_movements` | `inventory.md` (checking stock, issues, items, categories, attributes); `schema.md` inventory § items, batches, issues, movements |
-| `purchasing.md` | `purchasing` / Suppliers, purchase orders and receiving material / `suppliers, purchase_orders, purchase_order_items, goods_receipts, goods_receipt_items` | `inventory.md` (POs, receiving, suppliers); `schema.md` inventory § suppliers, POs, receipts |
-| `app.md` | `app` / Every screen's path, for links / (none) | `routes.md` (the table of paths; `/assistant` is "Sage — this assistant") |
+| `customers.md` | `customers` / Adding, finding and editing customers / `customer, customers, shop, party, gstin, phone` / `customers` | `customers.md`; `schema.md` § customers |
+| `orders.md` | `orders` / Creating, finding and editing orders, kg and pieces lines / `order, orders, deliver, delivered, cancel, cancelled, status, pending, progress, completed, kg, pcs, pieces` / `orders, order_product_sizes` | `orders.md` (finding, creating, order page, editing); `schema.md` § orders, § order_product_sizes |
+| `catalog.md` | `catalog` / Sizes and plate types: rates, piece prices, weights / `size, sizes, plate, plates, rate, weight` / `product_sizes, plate_types` | `orders.md` (managing plate types, managing sizes); `schema.md` § plate_types, § product_sizes |
+| `payments.md` | `payments` / Recording, editing and refunding payments; received and due / `paid, pay, pays, payment, payments, refund, upi, cash, cheque, received, advance` / `payments` | `payments.md`; `schema.md` § payments |
+| `money-sql.md` | `money_sql` / Rules and tested SQL for totals, received, pending and kg sold / (none) / `orders, order_product_sizes, payments` | `schema.md` § "Global quirks" (condensed) + the `canonical:pending` and `canonical:volume` blocks verbatim |
+| `invoices.md` | `invoices` / Making invoices, GST, invoice status and dues / `invoice, invoices, gst, billed` / `invoices, invoice_items` | `invoices.md`; `schema.md` § invoices, § invoice_items |
+| `dashboard.md` | `dashboard` / What each dashboard figure means and why screens can differ / `dashboard` / (none) | `dashboard.md` |
+| `expenses.md` | `expenses` / Adding and finding expenses and their categories / `expense, expenses, spent, spend, vendor` / `expenses, expense_categories` | `expenses.md`; `schema.md` § expense_categories, § expenses |
+| `history.md` | `history` / The History screen: who changed what, and when / `history, changed, edited, deleted` / `audit_logs` | `history.md`; `schema.md` § audit_logs. Add: "metadata.source is app (a screen) or assistant (confirmed on a Sage card)". |
+| `stock.md` | `stock` / Stock on hand, FIFO batches, stock issues and wastage / `stock, issue, issued, wastage, material, granules, item, items` / `inventory_items, inventory_categories, stock_batches, stock_issues, stock_issue_items, stock_movements` | `inventory.md` (checking stock, issues, items, categories, attributes); `schema.md` inventory § items, batches, issues, movements |
+| `purchasing.md` | `purchasing` / Suppliers, purchase orders and receiving material / `supplier, suppliers, purchase, po` / `suppliers, purchase_orders, purchase_order_items, goods_receipts, goods_receipt_items` | `inventory.md` (POs, receiving, suppliers); `schema.md` inventory § suppliers, POs, receipts |
+| `app.md` | `app` / Every screen's path, for links / (none) / (none) | `routes.md` (the table of paths; `/assistant` is "Sage — this assistant") |
 
 Then delete the old files that have no new counterpart:
 
@@ -2664,9 +2761,9 @@ const canonical = (name) => {
 
 and rename its `describe("Jarvis canonical queries match the app"` to `describe("the guides' tested SQL matches the app"`. Remove the now-unused `fs` and `path` requires if nothing else uses them.
 
-- [ ] **Step 5: Write `read_guide`, the tool set, the agent loop and `runAssistant`**
+- [ ] **Step 5: Write `open_area`, the tool set, the agent loop and `runAssistant`**
 
-`backend/src/assistant/tools/readGuide.js`:
+`backend/src/assistant/tools/openArea.js`:
 
 ```js
 "use strict";
@@ -2678,14 +2775,14 @@ const { loadGuides } = require("../guides");
 const guides = loadGuides();
 
 module.exports = defineTool({
-  name: "read_guide",
-  description: "The guide for one area of the app: screens, labels, links and its tables. Read it before run_query.",
+  name: "open_area",
+  description: "Open one area of the app: returns its guide (screens, labels, links, tables) and switches on its propose_ tools. Open it before run_query or proposing there.",
   input: z.object({ area: z.enum(guides.map((g) => g.area)) }),
-  run: ({ area }) => guides.find((g) => g.area === area).body,
+  run: ({ area }) => ({ text: guides.find((g) => g.area === area).body, openArea: area }),
 });
 ```
 
-In `backend/src/assistant/tools/index.js`, add `require("./readGuide"),` to `READ_TOOLS` just before `require("./runQuery"),`.
+In `backend/src/assistant/tools/index.js`, add `require("./openArea"),` to `READ_TOOLS` just before `require("./runQuery"),`.
 
 `backend/src/assistant/toolset.js`:
 
@@ -2694,10 +2791,17 @@ In `backend/src/assistant/tools/index.js`, add `require("./readGuide"),` to `REA
 
 const { READ_TOOLS } = require("./tools");
 
-/** Every tool the model gets. Action tools join in the action kit. */
+/** Every tool. Action tools join in the action kit. */
 const allTools = () => [...READ_TOOLS];
 
-module.exports = { allTools };
+/**
+ * The switchboard: a tool without an area is always on; an area's tools are on
+ * only while that area is open. What one round sends stays small however many
+ * features the app grows.
+ */
+const toolsFor = (open, tools = allTools()) => tools.filter((t) => !t.area || open.has(t.area));
+
+module.exports = { allTools, toolsFor };
 ```
 
 `backend/src/assistant/agentLoop.js`:
@@ -2712,7 +2816,7 @@ const STATUS = {
   customer_summary: "Looking up the customer…",
   period_summary: "Adding up the period…",
   find: "Looking that up…",
-  read_guide: "Reading the guide…",
+  open_area: "Reading up on that…",
   run_query: "Looking at the data…",
 };
 const statusFor = (name) => STATUS[name] || (String(name).startsWith("propose_") ? "Preparing a card…" : "Working…");
@@ -2720,6 +2824,8 @@ const statusFor = (name) => STATUS[name] || (String(name).startsWith("propose_")
 /**
  * Stream a model turn, run its tool calls, feed the results back, repeat.
  * Neutral messages: {role:'user', content} · {role:'assistant', content, toolCalls?} · {role:'tool', results}.
+ * `tools` is the declarations, or a function giving them (re-read every round, so
+ * an area opened in one round is available in the next).
  * `executeTool(call)` resolves to { text, action? }; a card goes to onAction.
  */
 const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, onStatus, onAction = () => {}, maxRounds = MAX_ROUNDS }) => {
@@ -2730,7 +2836,8 @@ const runAgent = async ({ system, history, tools, stream, executeTool, onDelta, 
     const allowTools = round < maxRounds;
     let roundText = "";
     const calls = [];
-    for await (const chunk of stream({ system, messages, tools: allowTools ? tools : undefined })) {
+    const declarations = typeof tools === "function" ? tools() : tools;
+    for await (const chunk of stream({ system, messages, tools: allowTools ? declarations : undefined })) {
       if (chunk.text) {
         roundText += chunk.text;
         onDelta(chunk.text);
@@ -2764,7 +2871,8 @@ module.exports = { runAgent };
 
 const { runAgent } = require("./agentLoop");
 const { getChain } = require("./llm");
-const { allTools } = require("./toolset");
+const { allTools, toolsFor } = require("./toolset");
+const { areasFor } = require("./router");
 const { executeTool } = require("./tools/executeTool");
 const { buildSystemPrompt } = require("./prompt/buildSystemPrompt");
 const { fitHistory } = require("./history");
@@ -2774,16 +2882,24 @@ const { todayIST } = require("../services/dashboard/dateRanges");
 /**
  * Answer one message. `history`: saved messages, oldest first, the new question
  * last. `ctx`: { conversationId, userId, requestText } — what a proposal records.
- * `deps` replaces the model stream, tools or prompt in tests.
+ * `deps` replaces the model stream, tools, prompt or open areas in tests and evals.
  */
 const runAssistant = async (history, { onDelta, onStatus, onAction }, ctx = {}, deps = {}) => {
-  const tools = deps.tools || allTools();
+  const every = deps.tools || allTools();
+  const fitted = fitHistory(history, HISTORY_BUDGET);
+  // The switchboard: areas the question's words point at start open; Sage opens others with open_area.
+  const open = new Set(deps.openAreas || areasFor(fitted[fitted.length - 1]?.content));
+  const current = () => toolsFor(open, every);
   return runAgent({
     system: deps.system ?? buildSystemPrompt({ today: todayIST(), actions: deps.actions || [] }),
-    history: fitHistory(history, HISTORY_BUDGET),
-    tools: tools.map((t) => t.declaration),
+    history: fitted,
+    tools: () => current().map((t) => t.declaration),
     stream: deps.stream || ((request) => getChain().stream(request)),
-    executeTool: (call) => executeTool(tools, call, ctx),
+    executeTool: async (call) => {
+      const out = await executeTool(current(), call, ctx);
+      if (out.openArea) open.add(out.openArea);
+      return out;
+    },
     onDelta,
     onStatus,
     onAction,
@@ -2842,7 +2958,7 @@ Run: `cd backend && npm test -- tests/assistantAgent.test.js tests/assistantGuid
 Expected: PASS.
 - If a guide is over budget, shorten that guide.
 - If the prompt budget fails, shorten tool descriptions first, then `core.md`.
-- Raising `CORE_BUDGET` or `GUIDE_BUDGET` is a Ruling with the measured numbers. The budget comes from Groq's 8k tokens/minute.
+- Raising `CORE_BUDGET`, `GUIDE_BUDGET` or `AREA_BUDGET` is a Ruling with the measured numbers. The budgets come from Groq's 8k tokens/minute.
 
 - [ ] **Step 8: Whole suite, then commit**
 
@@ -2850,8 +2966,8 @@ Run: `cd backend && npm test 2>&1 | tail -5`
 Expected: every suite passes.
 
 ```bash
-git add backend/src/assistant/guides.js backend/src/assistant/prompt/core.md backend/src/assistant/prompt/buildSystemPrompt.js backend/src/assistant/tools/readGuide.js backend/src/assistant/tools/index.js backend/src/assistant/toolset.js backend/src/assistant/history.js backend/src/assistant/agentLoop.js backend/src/assistant/index.js backend/src/controllers/assistantController.js backend/knowledge backend/tests/knowledgeQueries.test.js backend/tests/assistantAgent.test.js backend/tests/assistantGuides.test.js
-git commit -m "feat(assistant): Sage answers from a small core prompt and guides read on demand
+git add backend/src/assistant/guides.js backend/src/assistant/router.js backend/src/assistant/prompt/core.md backend/src/assistant/prompt/buildSystemPrompt.js backend/src/assistant/tools/openArea.js backend/src/assistant/tools/index.js backend/src/assistant/toolset.js backend/src/assistant/history.js backend/src/assistant/agentLoop.js backend/src/assistant/index.js backend/src/controllers/assistantController.js backend/knowledge backend/tests/knowledgeQueries.test.js backend/tests/assistantAgent.test.js backend/tests/assistantGuides.test.js
+git commit -m "feat(assistant): Sage answers from a small core prompt; areas switch their guide and tools on when needed
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -3077,6 +3193,7 @@ describe("propose", () => {
     expect(out.text).toMatch(/^Card shown to the person: New customer Om Traders\. They must tap Confirm/);
     expect(out.action.status).toBe("pending");
     expect(actionTool(addShop).declaration).toMatchObject({ name: "propose_add_shop", parameters: { type: "object" } });
+    expect(actionTool(addShop).area).toBe("customers"); // the switchboard turns it on with its area
   });
 });
 
@@ -3377,10 +3494,11 @@ module.exports = { propose, confirm, cancel, completedInForm, formData, present,
 
 const { propose } = require("./actionService");
 
-/** An action as a tool the model calls: it reads one line, the app gets the card. */
+/** An action as a tool the model calls (on while its area is open): it reads one line, the app gets the card. */
 const actionTool = (action) =>
   Object.freeze({
     name: action.toolName,
+    area: action.area,
     description: action.description,
     input: action.input,
     declaration: action.declaration,
@@ -3427,10 +3545,17 @@ const { READ_TOOLS } = require("./tools");
 const { ACTIONS } = require("./actionKit/registry");
 const { actionTool } = require("./actionKit/actionTool");
 
-/** Every tool the model gets: read tools, then one propose_ tool per action. */
+/** Every tool: read tools (always on), then one propose_ tool per action (on with its area). */
 const allTools = () => [...READ_TOOLS, ...ACTIONS.map(actionTool)];
 
-module.exports = { allTools };
+/**
+ * The switchboard: a tool without an area is always on; an area's tools are on
+ * only while that area is open. What one round sends stays small however many
+ * features the app grows.
+ */
+const toolsFor = (open, tools = allTools()) => tools.filter((t) => !t.area || open.has(t.area));
+
+module.exports = { allTools, toolsFor };
 ```
 
 In `backend/src/assistant/index.js` add `const { ACTIONS } = require("./actionKit/registry");` and change the prompt line to:
@@ -3722,6 +3847,8 @@ const { ACTIONS } = require("../src/assistant/actionKit/registry");
 const { loadGuides } = require("../src/assistant/guides");
 const { COMMANDS } = require("../src/commands");
 const { SCREEN_ONLY } = require("../src/assistant/screenOnly");
+const { estimateTokens } = require("../src/assistant/tokens");
+const { AREA_BUDGET } = require("../src/assistant/config");
 
 /** Every POST/PUT/PATCH/DELETE the API serves, as "METHOD /path". */
 const writeRoutes = () => {
@@ -3755,6 +3882,16 @@ describe("every action is complete", () => {
     expect(a.evals.length).toBeGreaterThanOrEqual(3);
     for (const e of a.evals) expect(typeof e.ask === "string" && e.expect && typeof e.expect === "object").toBe(true);
     expect(a.declaration.parameters).toMatchObject({ type: "object" });
+  });
+
+  test.each(loadGuides().map((g) => [g.area, g]))("the %s area, opened, fits its budget", (area, g) => {
+    const tools = ACTIONS.filter((a) => a.area === area).map((a) => a.declaration);
+    expect(estimateTokens(g.body) + estimateTokens(JSON.stringify(tools))).toBeLessThanOrEqual(AREA_BUDGET);
+  });
+
+  test("an area with actions has keywords, so the switchboard can open it up front", () => {
+    const guides = loadGuides();
+    for (const area of new Set(ACTIONS.map((a) => a.area))) expect(guides.find((g) => g.area === area).keywords.length).toBeGreaterThan(0);
   });
 });
 
@@ -4259,7 +4396,7 @@ module.exports = { SCREEN_ONLY };
 - [ ] **Step 7: Run the tests**
 
 Run: `cd backend && npm test -- tests/paymentTypePhone.test.js tests/assistantPhase1.test.js tests/assistantContract.test.js tests/assistantGuides.test.js`
-Expected: PASS, including the prompt budget, which now counts the four `propose_` tools. If the budget fails, shorten action `description`s first, then `summary`s. Each must still say what the action needs.
+Expected: PASS, including the per-area budgets, which count each area's guide plus its `propose_` tools. If an area is over, shorten its action `description`s first, then its guide. Each description must still say what the action needs.
 
 - [ ] **Step 8: Whole suite, then commit**
 
@@ -5758,10 +5895,10 @@ Replace the whole line-59 paragraph with:
 ```markdown
 **Sage — the in-app assistant (rebuilt 2026-10-01; was "Jarvis").** Page `/assistant` + floating button. Answers questions and proposes changes as cards a person confirms; it never saves on its own and never deletes. Spec `docs/superpowers/specs/2026-10-01-sage-actions-design.md`.
 - **Saves are commands** (`backend/src/commands/`): one Zod-checked definition per save, run in a transaction with an `actor`; the screens' routes (`httpRoute`) and Sage's cards both use them. History entries carry `metadata.source` = `app` or `assistant` (+ `assistant_action_id`). Moved so far: `payments.create`, `customers.create`, `orders.create`, `orders.update`.
-- **Assistant** (`backend/src/assistant/`): `config.js` (name, budgets, model chain), `llm.js`/`chain.js`/`providers/openaiCompat.js` (free Groq `gpt-oss-120b` → `qwen3.8-27b` → Cloudflare `gpt-oss-120b` → Groq `gpt-oss-20b`; none trains on our data; a per-minute limit ≤ 8 s is waited out), `prompt/core.md` (~1k tokens) + guides in `backend/knowledge/*.md` read on demand (`read_guide`), typed read tools (`dues`, `customer_summary`, `period_summary`, `find`) built on the dashboard/customer code, `run_query` as the SQL fallback (SELECT-only role + `db/sqlGuard.js` + LIMIT 200 + 5 s).
+- **Assistant** (`backend/src/assistant/`): `config.js` (name, budgets, model chain), `llm.js`/`chain.js`/`providers/openaiCompat.js` (free Groq `gpt-oss-120b` → `qwen3.8-27b` → Cloudflare `gpt-oss-120b` → Groq `gpt-oss-20b`; none trains on our data; a per-minute limit ≤ 8 s is waited out), `prompt/core.md` (~1k tokens). **Areas are switches:** each guide in `backend/knowledge/*.md` is an area (front matter `area / summary / keywords / tables`); a round sends the core prompt, the always-on read tools and only the *open* areas' `propose_` tools (`toolset.toolsFor`). Areas open from keywords in the message (`router.areasFor`, free) or when Sage calls `open_area` (returns the guide). So what a round costs stays flat as features are added; typed read tools (`dues`, `customer_summary`, `period_summary`, `find`) built on the dashboard/customer code, `run_query` as the SQL fallback (SELECT-only role + `db/sqlGuard.js` + LIMIT 200 + 5 s).
 - **Cards** (`actionKit/`): propose = the real command in a rolled-back transaction (catches every refusal, gives the after-figures) → row in `assistant_actions` (15 min) → SSE `action` event → card. Confirm locks the row, re-checks the action's fingerprint, runs the command once. "Open in form" pre-fills the real form and records what the person changed.
-- **Budgets (Groq free = 8k tokens/min/model):** core + tool declarations ≤ 2k tokens, each guide ≤ 800 — tests fail above them.
-- **Adding a feature to Sage:** (1) make its save a command in `src/commands/` and list it in `src/commands/index.js`; (2) add `src/assistant/actions/<name>.js` with `defineAction` (input, resolve, preview, toCommandInput, fingerprint if it depends on changing figures, links, ≥ 3 evals); (3) add or update its guide in `backend/knowledge/`; (4) remove its routes from `src/assistant/screenOnly.js`. The contract test fails until each step is done; a new write endpoint fails it until it is covered or listed screen-only.
+- **Budgets (Groq free = 8k tokens/min/model):** core prompt + always-on tools ≤ 2k tokens; each guide ≤ 800; each opened area (guide + its propose_ tools) ≤ 1.4k — tests fail above them.
+- **Adding a feature to Sage:** (1) make its save a command in `src/commands/` and list it in `src/commands/index.js`; (2) add `src/assistant/actions/<name>.js` with `defineAction` (input, resolve, preview, toCommandInput, fingerprint if it depends on changing figures, links, ≥ 3 evals); (3) add or update its area's guide in `backend/knowledge/` (with keywords people would use); (4) remove its routes from `src/assistant/screenOnly.js`. The contract test fails until each step is done; a new write endpoint fails it until it is covered or listed screen-only.
 - **Checking quality:** `cd backend && NODE_ENV=test node scripts/assistant-eval.js --gate` (local test DB, real free model, ~120k tokens). **Learning:** `NODE_ENV=production node scripts/assistant-report.js --since <date>` lists cancelled / failed / changed-in-form cards — turn them into evals and guide fixes.
 - Env: `GROQ_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `ASSISTANT_DB_URL`. The display name is set only in `backend/src/assistant/config.js` and `frontend/src/app/assistant.js`. **Maintenance rule: a change to a screen updates its guide in the same commit.**
 ```

@@ -121,11 +121,33 @@ All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
   `schema.md` is split so each area's guide holds its own tables. The
   canonical SQL blocks (`<!-- canonical:… -->`, tested by
   `tests/knowledgeQueries.test.js`) move with their area and stay tested.
-- **`read_guide(area)`** returns one guide. The model reads the guide for an
+- **`open_area(area)`** returns one guide. The model reads the guide for an
   area before writing SQL about it.
 - **Prompt budget test:** core instructions + all tool declarations must stay
   ≤ 2k tokens, and each guide ≤ 800 tokens (estimated as characters ÷ 4).
   Fails the suite if exceeded.
+
+## 2b. Areas as switches (how Sage scales past phase 1)
+
+Phase 3 brings roughly 25 actions. Sending every tool's declaration on every
+round would cost ~5k tokens a round against Groq's 8k tokens/minute, and a
+small model chooses worse among 30 tools than among 8. So each **area** (one
+guide in `backend/knowledge/`) is a switch:
+
+- **Always on:** the core prompt (with one line per area and one per action)
+  and the read tools (`dues`, `customer_summary`, `period_summary`, `find`,
+  `open_area`, `run_query`).
+- **On while the area is open:** that area's `propose_*` tools.
+- **Opening:** a free keyword match on the message opens up to 3 likely areas
+  before the first model call (guide front matter `keywords:`); Sage opens any
+  other area itself with `open_area(area)`, which also returns the guide.
+  A wrong guess costs nothing.
+- **Rejected alternatives:** a router model call first (extra latency and
+  quota on every message, and a misroute leaves Sage without the right tools);
+  one agent per area (several model calls per message; areas overlap).
+- **Budgets (tests):** core + always-on tools ≤ 2k tokens; each guide ≤ 800;
+  each opened area (guide + its `propose_` tools) ≤ 1.4k. What one round costs
+  stays flat however many features are added.
 
 ## 3. Tools
 
@@ -135,7 +157,7 @@ All OpenAI-compatible, so one adapter (`openaiCompatProvider.js`) serves them.
 | `customer_summary(customer_id)` | read | One customer: owes, credit, total business, received, orders (date, sizes, total, received, due, status), recent payments. Same code as the customer page (`buildCustomerSummary`). |
 | `period_summary(preset \| from,to)` | read | Sales, collected, kg sold, expenses by category for a period (`this_month`, `last_month`, `this_fy`, `all`, or custom dates). Same code as the dashboard period card (`computePeriod`). |
 | `run_query(sql)` | read | Fallback for anything the typed tools don't cover. As today: SELECT-only role, `sqlGuard`, LIMIT 200, 5 s timeout. |
-| `read_guide(area)` | read | Returns one guide. |
+| `open_area(area)` | read | Returns one guide. |
 | `find(kind, text, …)` | read | `customer` (uses `customerSimilar` scoring plus phone match), `product_size` (label like "12 x 16"), `plate_type`, `order` (a customer's orders, newest first, with due, label = date + sizes). Returns a few compact lines with IDs. |
 | `propose_<action>(…)` | action | One per registered action. Returns a one-line summary to the model and a card to the app. |
 
