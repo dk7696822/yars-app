@@ -162,7 +162,7 @@ module.exports = defineAction({
   preview: async (resolved, ctx) => ({ title, rows, warnings }),
   command: require("../../commands/payments/createPayment"),  // the save the screens use
   toCommandInput: (resolved) => ({ order_id, amount, … }),     // execute = runCommand(command, toCommandInput(resolved), ctx)
-  touches: (resolved) => [{ model: "Order", id }],          // for the changed-since check
+  fingerprint: async (payload, { models, transaction }) => ({ received, status, updated }), // for the changed-since check
   formLink: (resolved) => `/orders/${id}?pay=assistant:${actionId}`,
   evals: [ { ask: "Sharma Traders paid 5000 by UPI", expect: { tool: "propose_record_payment", args: { amount: 5000, payment_method: "UPI" } } }, … ],
 });
@@ -243,8 +243,9 @@ the link.
 2. Already confirmed → return the stored result (taps are safe to repeat).
    Cancelled / expired → 409 with the reason.
 3. Expired (15 min) → mark expired, 409.
-4. Every record in `touches` still has the `updated_at` it had at propose
-   time → otherwise mark failed: "This order changed after Sage suggested this
+4. The action's `fingerprint` (e.g. for a payment: the order's received
+   amount, status and `updated_at`) is still what it was at propose time →
+   otherwise mark failed: "This order changed after Sage suggested the payment
    — ask again."
 5. Run `execute` for real in one transaction with
    `actor.source = "assistant"`. Mark confirmed, store `result_id` and the
@@ -256,12 +257,12 @@ the link.
 ### Table `assistant_actions` (additive migration)
 
 `id` uuid · `conversation_id` → assistant_conversations · `message_id` →
-assistant_messages, null until the reply is saved · `user_id` · `name` ·
-`payload` jsonb (validated input with IDs) · `card` jsonb · `touched` jsonb
-(`[{model, id, updated_at}]`) · `status`
-(`pending|confirmed|cancelled|expired|failed|completed_in_form`) ·
-`result_id` · `error` · `outcome` jsonb (for the learning report) ·
-`expires_at` · `created_at` · `updated_at`.
+assistant_messages, null until the reply is saved · `user_id` (no FK) · `name` ·
+`request_text` · `payload` jsonb (the command input) · `context` jsonb (e.g. the
+customer, for "Open in form") · `card` jsonb · `fingerprint` jsonb · `status`
+(`pending|confirmed|cancelled|expired|failed|completed_in_form`) · `result_id` ·
+`result_link` · `form_link` · `error` · `outcome` jsonb (for the learning report) ·
+`expires_at` · `confirmed_at` · `created_at` · `updated_at`.
 
 ## 6. App (frontend)
 
