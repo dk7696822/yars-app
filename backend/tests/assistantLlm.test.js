@@ -10,6 +10,11 @@ describe("model chain from config", () => {
     expect(entries[0]).toMatchObject({ model: "openai/gpt-oss-120b", options: { reasoning_effort: "low" } });
   });
 
+  test("Cloudflare gets a maximum length, or its streamed answers stop at ~512 tokens", () => {
+    const cf = buildEntries({ CLOUDFLARE_ACCOUNT_ID: "acc", CLOUDFLARE_API_TOKEN: "t" })[0];
+    expect(cf.options).toMatchObject({ max_tokens: 2048 });
+  });
+
   test("a provider without its key is left out", () => {
     expect(buildEntries({ GROQ_API_KEY: "g" }).every((e) => e.label.startsWith("groq:"))).toBe(true);
     expect(buildEntries({ CLOUDFLARE_ACCOUNT_ID: "acc", CLOUDFLARE_API_TOKEN: "t" }).map((e) => e.label)).toEqual(["cloudflare:@cf/openai/gpt-oss-120b"]);

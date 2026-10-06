@@ -6,6 +6,7 @@ const STATUS = {
   dues: "Checking dues…",
   customer_summary: "Looking up the customer…",
   period_summary: "Adding up the period…",
+  list_orders: "Listing orders…",
   find: "Looking that up…",
   open_area: "Reading up on that…",
   run_query: "Looking at the data…",
@@ -23,6 +24,7 @@ const statusFor = (name) => STATUS[name] || (String(name).startsWith("propose_")
  */
 const FALLBACK = "I couldn't come up with an answer — please try rephrasing.";
 const ASK_AGAIN = "(That reply came out garbled and was not shown. Answer the person again in plain words, or call a tool.)";
+const CUT_OFF = "(That reply was cut off by the length limit and was not shown. Answer again shorter: the totals and at most 10 rows, then link the screen for the rest.)";
 
 /**
  * Free models sometimes leak their reasoning, raw tool markup or a tool call
@@ -72,11 +74,22 @@ const runRounds = async ({ system, history, tools, stream, executeTool, onDelta,
   for (let round = 0; round <= maxRounds; round += 1) {
     const allowTools = round < maxRounds;
     let roundText = "";
+    let truncated = false;
     const calls = [];
     const declarations = typeof tools === "function" ? tools() : tools;
     for await (const chunk of stream({ system, messages, tools: allowTools ? declarations : undefined })) {
       if (chunk.text) roundText += chunk.text;
       if (chunk.toolCalls) calls.push(...chunk.toolCalls);
+      if (chunk.truncated) truncated = true;
+    }
+
+    // A cut-off answer is incomplete: never shown; asked again, shorter.
+    if (truncated) {
+      console.warn("assistant: hid a cut-off reply");
+      if (retried) return finalText || FALLBACK;
+      retried = true;
+      messages.push({ role: "user", content: CUT_OFF });
+      continue;
     }
 
     // A round's text is shown only once it is known to be clean.

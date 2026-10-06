@@ -160,6 +160,14 @@ describe("broken replies never reach the person", () => {
 
   test("leaked reasoning without a colon is still caught", garbled("analysis  The user wants to refund ₹500 to Bombay"));
 
+  test("an answer cut off mid-way is not shown; the model is asked for a shorter one", async () => {
+    const stream = fakeStream([[{ text: "| Aug 21 | Relax Mens Wear | ₹7,500" }, { truncated: true }], [{ text: "10 orders in August — see [Orders](/orders)." }]]);
+    const deltas = [];
+    const final = await runAgent(base({ stream, executeTool: jest.fn(), onDelta: (t) => deltas.push(t) }));
+    expect([final, deltas]).toEqual(["10 orders in August — see [Orders](/orders).", ["10 orders in August — see [Orders](/orders)."]]);
+    expect(stream.requests[1].messages.at(-1).content).toMatch(/cut off/);
+  });
+
   test("broken twice: the person gets the plain fallback, not the garbage", async () => {
     const stream = fakeStream([[{ text: "analysis: hmm" }], [{ text: "analysis: hmm again" }]]);
     const deltas = [];

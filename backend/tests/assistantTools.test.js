@@ -89,6 +89,27 @@ describe("read tools", () => {
     expect(await run("period_summary", { preset: "custom", from: "2026-09-10", to: "2026-09-01" })).toBe("From date must be on or before To date");
   });
 
+  test("list_orders gives the Orders screen's own count, total, due and rows", async () => {
+    const { buildOrderList } = require("../src/services/lists/orderList");
+    const from = `${todayIST().slice(0, 7)}-01`;
+    const to = todayIST();
+    const screen = buildOrderList(await loadOrders(db), { from, to, limit: "100" }, todayIST());
+    const text = await run("list_orders", { from, to });
+    expect(text.split("\n")[0]).toBe(`${screen.summary.count} orders · total ${rupee(screen.summary.total)} · due ${rupee(screen.summary.due)}`);
+    expect(text).toContain("Sharma Traders | 12 x 16 10 kg | Pending | total ₹3,300 | due ₹2,300");
+    expect(await run("list_orders", { from: to, to: from })).toMatch(/From date must be on or before To date|^0 orders/);
+  });
+
+  test("list_orders shows at most 25 rows and links the full list on the screen", () => {
+    const { formatOrderList } = require("../src/assistant/tools/orderListText");
+    const row = (i) => ({ orderDate: "2026-08-10", cancelled: false, customer: { name: `Shop ${i}` }, items: [{ size: "12 x 16", quantity: 10, unit: "KG" }], status: "DELIVERED", total: 100, due: 0 });
+    const text = formatOrderList({ summary: { count: 30, total: 3000, due: 0, cancelled: 0 }, rows: Array.from({ length: 30 }, (_, i) => row(i + 1)) }, { from: "2026-08-01", to: "2026-08-31" });
+    const lines = text.split("\n");
+    expect(lines[0]).toBe("30 orders · total ₹3,000 · due ₹0");
+    expect(lines.filter((l) => l.startsWith("2026-08-10 |"))).toHaveLength(25);
+    expect(lines.at(-1)).toBe("…and 5 more: [Orders](/orders?period=custom&from=2026-08-01&to=2026-08-31)");
+  });
+
   test("run_query answers with rows", async () => {
     expect(await run("run_query", { sql: "SELECT 1 AS n" })).toBe('{"rowCount":1,"rows":[{"n":1}]}');
   });

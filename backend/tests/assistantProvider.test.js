@@ -43,6 +43,12 @@ describe("OpenAiCompatProvider", () => {
     expect(body.messages[0]).toEqual({ role: "system", content: "s" });
   });
 
+  test("an answer cut off by the length limit is flagged", async () => {
+    const fetchFn = jest.fn().mockResolvedValue(sse([{ choices: [{ delta: { content: "| Aug 21 | Relax" } }] }, { choices: [{ delta: {}, finish_reason: "length" }] }, "[DONE]"]));
+    const p = new OpenAiCompatProvider({ key: "cloudflare", baseUrl: "https://x/v1", apiKey: "k", fetchFn });
+    expect(await collect(p.stream({ model: "m", system: "s", messages: [] }))).toEqual([{ text: "| Aug 21 | Relax" }, { truncated: true }]);
+  });
+
   test("replays tool rounds in OpenAI shape", () => {
     const p = new OpenAiCompatProvider({ key: "groq", baseUrl: "https://x/v1", apiKey: "k" });
     const out = p.toMessages("s", [

@@ -40,7 +40,8 @@ const PROVIDERS = {
 const MODEL_CHAIN = [
   { provider: "groq", model: "openai/gpt-oss-120b", options: { reasoning_effort: "low" } },
   { provider: "groq", model: "qwen/qwen3.8-27b" },
-  { provider: "cloudflare", model: "@cf/openai/gpt-oss-120b", options: { reasoning_effort: "low" } },
+  // Cloudflare stops streamed answers at ~512 tokens unless a maximum is given (measured 2026-10-06).
+  { provider: "cloudflare", model: "@cf/openai/gpt-oss-120b", options: { reasoning_effort: "low", max_tokens: 2048 } },
   { provider: "groq", model: "openai/gpt-oss-20b", options: { reasoning_effort: "low" } },
 ];
 

@@ -5,6 +5,7 @@ const READ_TOOLS = [
   require("./dues"),
   require("./customerSummary"),
   require("./periodSummary"),
+  require("./listOrders"),
   require("./find"),
   require("./openArea"),
   require("./runQuery"),

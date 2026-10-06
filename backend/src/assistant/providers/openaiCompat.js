@@ -85,16 +85,19 @@ class OpenAiCompatProvider {
 
     // Tool-call arguments arrive as JSON fragments that only parse once complete.
     const calls = new Map();
+    let finish = null;
     const handleLine = (line) => {
       if (!line.startsWith("data:")) return null;
       const data = line.slice(5).trim();
       if (data === "[DONE]") return null;
-      let delta;
+      let choice;
       try {
-        delta = JSON.parse(data).choices?.[0]?.delta;
+        choice = JSON.parse(data).choices?.[0];
       } catch {
         return null; // keep-alive noise / truncated tail
       }
+      if (choice?.finish_reason) finish = choice.finish_reason;
+      const delta = choice?.delta;
       if (!delta) return null;
       (delta.tool_calls || []).forEach((tc, pos) => {
         const idx = tc.index ?? pos;
@@ -127,6 +130,9 @@ class OpenAiCompatProvider {
       const text = handleLine(tail);
       if (text) yield { text };
     }
+
+    // Stopped by the length limit: the answer is incomplete and must not be shown as if whole.
+    if (finish === "length") yield { truncated: true };
 
     if (calls.size) {
       yield {
