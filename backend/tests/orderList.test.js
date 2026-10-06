@@ -68,6 +68,16 @@ describe("buildOrderList", () => {
     expect([ids(p3), p3.hasMore]).toEqual([["e"], false]);
   });
 
+  test("a date range combines with the Due chip", () => {
+    expect(ids(buildOrderList(ORDERS, { chip: "due", from: "2026-09-01", to: "2026-09-30" }, TODAY))).toEqual(["a"]);
+    expect(ids(buildOrderList(ORDERS, { from: "2026-08-01", to: "2026-08-31" }, TODAY))).toEqual(["c"]);
+  });
+
+  test("a malformed or reversed range is refused with a clear message", () => {
+    expect(() => buildOrderList(ORDERS, { from: "2026-13-01", to: "2026-08-31" }, TODAY)).toThrow("Dates must look like 2026-08-01");
+    expect(() => buildOrderList(ORDERS, { from: "2026-08-31", to: "2026-08-01" }, TODAY)).toThrow("From date must be on or before To date");
+  });
+
   test("unknown chip is refused", () => {
     expect(() => buildOrderList(ORDERS, { chip: "late" }, TODAY)).toThrow(ListError);
   });

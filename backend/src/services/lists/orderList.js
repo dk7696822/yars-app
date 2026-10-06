@@ -10,6 +10,13 @@ const { monthStart, monthEnd } = require("../dashboard/dateRanges");
 
 class ListError extends Error {}
 
+/** A real calendar date written YYYY-MM-DD. */
+const isDate = (s) => {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+};
+
 const CHIPS = ["all", "due", "in_progress", "this_month"];
 
 const paging = ({ page, limit } = {}, def = 30, max = 100) => ({
@@ -60,6 +67,8 @@ const buildOrderList = (orders, query, today) => {
   const q = String(query.search || "").trim().toLowerCase();
   const from = chip === "this_month" ? monthStart(today) : query.from;
   const to = chip === "this_month" ? monthEnd(today) : query.to;
+  for (const d of [from, to]) if (d && !isDate(d)) throw new ListError("Dates must look like 2026-08-01");
+  if (from && to && from > to) throw new ListError("From date must be on or before To date");
 
   const matches = ({ row, f }) =>
     (!q || row.customer.name.toLowerCase().includes(q) || row.items.some((i) => i.size.toLowerCase().includes(q))) &&
