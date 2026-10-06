@@ -9,7 +9,7 @@ tables: orders, order_product_sizes
 An order = customer + date + one plate type + size lines. Each line is sold by **Kg** (kg × rate per kg) or **Pcs** (pieces × a price like "1,000 pcs cost ₹375"). Total = line amounts + plate charge (custom or the plate type's) − round off. Status: Pending → In progress → Completed → Delivered, or Cancelled (not counted in totals or dues).
 
 ## Finding
-[Orders](/orders): grouped by day, newest first, with **Due ₹…** or **Paid ✓**. Search customer or size; chips **All · Due · In progress · This month**. **⋯ → Download Excel**.
+[Orders](/orders): grouped by day, newest first, with **Due ₹…** or **Paid ✓**. Search customer or size; chips **All · Due · In progress**, and **Any time · This month · Last month · Custom…** (Custom: one tap for a recent month like Aug 2026, or From/To dates). The line under the chips gives the count, total and due for what is shown. **⋯ → Download Excel** exports the same range.
 
 ## Creating ([New order](/orders/new))
 Three steps, **Back** on each:
